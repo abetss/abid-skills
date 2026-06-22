@@ -1,6 +1,6 @@
 {
   "name": "meta-skilling",
-  "description": "Meta tooling: create/improve skills, discover skills, agent architecture guidance, teaching, and conversation handoff.",
+  "description": "Meta tooling: create/improve skills, discover skills, agent architecture guidance, and turn findings into navigable HTML artifacts.",
   "version": "0.1.0",
   "author": { "name": "Abid Ghods" }
 }

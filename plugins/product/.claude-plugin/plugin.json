@@ -1,0 +1,6 @@
+{
+  "name": "product",
+  "description": "Product & design workflow: design discovery, ASCII/HTML wireframes, Storybook variants, design iteration, component prop modeling, and product guides.",
+  "version": "0.1.0",
+  "author": { "name": "Abid Ghods" }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "engineering",
+  "description": "Engineering workflow: planning suite (plan-prep, task breakdown, sequential/supervised execution, review guides, todos), code cleanup/review/debugging, engineering docs (SOP, troubleshooting, conventions, architecture, changelog), plus code-reviewer/architect/explorer agents.",
+  "version": "0.1.0",
+  "author": { "name": "Abid Ghods" }
+}

@@ -1,6 +1,0 @@
-{
-  "name": "planning",
-  "description": "Engineering planning suite: requirements intake, plan-prep, task breakdown, sequential/supervised task execution, review guides, and todos.",
-  "version": "0.1.0",
-  "author": { "name": "Abid Ghods" }
-}

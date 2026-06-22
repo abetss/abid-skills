@@ -1,6 +1,6 @@
 # abid-skills
 
-A Claude Code **plugin marketplace**. One repo, many small plugins — each a grouped
+A Claude Code **plugin marketplace**. One repo, a few domain plugins — each a grouped
 toolkit of skills (and a few agents). Add the marketplace once, then install only the
 toolkits you want. Skills installed by a plugin can also be toggled individually after
 install via the `/plugin` UI (Installed → select plugin → enable/disable a component).
@@ -9,8 +9,8 @@ install via the `/plugin` UI (Installed → select plugin → enable/disable a c
 
 ```text
 /plugin marketplace add abtinghods/<this-repo>     # add once (use your GitHub owner/repo)
-/plugin install planning@abid-skills               # then install just the toolkits you want
-/plugin install design@abid-skills
+/plugin install engineering@abid-skills            # then install just the toolkits you want
+/plugin install product@abid-skills
 ```
 
 Browse everything interactively with `/plugin` (Discover tab). Disable a whole plugin
@@ -20,13 +20,10 @@ with `/plugin disable <name>@abid-skills`.
 
 | Plugin | What's inside |
 |--------|---------------|
-| **planning** | plan-prep, create-plan-task, architect-solution, executing-single-plan-task, executing-plan-task-list-sequential, execute-all-supervised, write-review-guide, write-todo, grill-me |
-| **code-quality** | code-simplifier, inline-code-review-responder, debugging + agents: code-reviewer, code-architect, code-explorer |
-| **design** | design-discovery, design-in-asci, design-iterate, design-in-storybook, view-model-props |
+| **product** | design-discovery, design-in-asci, design-iterate, design-in-storybook, view-model-props, product-guide-writer |
+| **engineering** | plan-prep, create-plan-task, architect-solution, executing-single-plan-task, executing-plan-task-list-sequential, execute-all-supervised, write-review-guide, write-todo, code-simplifier, inline-code-review-responder, debugging, sop-writer, troubleshooting-writer, conventions-writer, write-architecture-docs, changelog-generator + agents: code-reviewer, code-architect, code-explorer |
 | **qa** | qa-execution, qa-exploratory, manual-qa-case-writing + agent: qa-runner |
-| **docs-knowledge** | sop-writer, troubleshooting-writer, conventions-writer, product-guide-writer, write-architecture-docs, changelog-generator |
-| **artifacts** | capture-findings, generating-html-artifacts |
-| **meta-skilling** | skill-creating, find-skills, agentic-ai-architect, teach, handoff |
+| **meta-skilling** | skill-creating, find-skills, agentic-ai-architect, capture-findings, generating-html-artifacts |
 
 ## Structure
 

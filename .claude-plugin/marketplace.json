@@ -9,19 +9,14 @@
   },
   "plugins": [
     {
-      "name": "planning",
-      "source": "./plugins/planning",
-      "description": "Engineering planning suite: plan-prep, task breakdown, sequential/supervised task execution, review guides, todos, and plan grilling."
+      "name": "product",
+      "source": "./plugins/product",
+      "description": "Product & design workflow: design discovery, ASCII/HTML wireframes, Storybook variants, design iteration, component prop modeling, and product guides."
     },
     {
-      "name": "code-quality",
-      "source": "./plugins/code-quality",
-      "description": "Code cleanup and review: simplifier, inline review responder, systematic debugging, plus code-reviewer/architect/explorer agents."
-    },
-    {
-      "name": "design",
-      "source": "./plugins/design",
-      "description": "UI design workflow: discovery, ASCII/HTML wireframes, Storybook variants, iteration rounds, and component prop modeling."
+      "name": "engineering",
+      "source": "./plugins/engineering",
+      "description": "Engineering workflow: planning suite, code cleanup/review/debugging, engineering docs (SOP, troubleshooting, conventions, architecture, changelog), plus code-reviewer/architect/explorer agents."
     },
     {
       "name": "qa",
@@ -29,19 +24,9 @@
       "description": "QA workflow: scripted and exploratory QA runs, manual QA case writing, and the qa-runner agent."
     },
     {
-      "name": "docs-knowledge",
-      "source": "./plugins/docs-knowledge",
-      "description": "Documentation writers: SOPs, troubleshooting guides, conventions, product guides, architecture docs, and changelogs."
-    },
-    {
-      "name": "artifacts",
-      "source": "./plugins/artifacts",
-      "description": "Turn findings into polished, navigable self-contained HTML artifacts and keep markdown + HTML in sync."
-    },
-    {
       "name": "meta-skilling",
       "source": "./plugins/meta-skilling",
-      "description": "Meta tooling: create/improve skills, discover skills, agent architecture guidance, teaching, and conversation handoff."
+      "description": "Meta tooling: create/improve skills, discover skills, agent architecture guidance, and turn findings into navigable HTML artifacts."
     }
   ]
 }

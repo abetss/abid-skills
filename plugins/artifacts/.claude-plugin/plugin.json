@@ -1,6 +1,0 @@
-{
-  "name": "artifacts",
-  "description": "Turn findings into polished, navigable self-contained HTML artifacts and keep markdown+HTML in sync.",
-  "version": "0.1.0",
-  "author": { "name": "Abid Ghods" }
-}
