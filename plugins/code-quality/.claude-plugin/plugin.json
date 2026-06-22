@@ -1,0 +1,6 @@
+{
+  "name": "code-quality",
+  "description": "Code cleanup and review helpers: simplifier, inline review responder, systematic debugging, plus code-reviewer/architect/explorer agents.",
+  "version": "0.1.0",
+  "author": { "name": "Abid Ghods" }
+}

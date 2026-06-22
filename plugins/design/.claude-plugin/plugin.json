@@ -1,0 +1,6 @@
+{
+  "name": "design",
+  "description": "UI design workflow: discovery, ASCII/HTML wireframes, Storybook variants, iteration rounds, and component prop modeling.",
+  "version": "0.1.0",
+  "author": { "name": "Abid Ghods" }
+}

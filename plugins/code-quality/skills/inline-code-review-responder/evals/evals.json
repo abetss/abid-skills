@@ -1,0 +1,26 @@
+{
+  "skill_name": "inline-code-review-responder",
+  "evals": [
+    {
+      "id": 1,
+      "name": "mixed-directives-and-questions-typescript",
+      "prompt": "I just made some edits to src/billing/invoiceCalculator.ts and src/billing/__tests__/invoiceCalculator.test.ts and dropped a few inline notes for you. Go through them and resolve.",
+      "expected_output": "Skill scopes search to changed files (git diff). Finds three markers: (a) a directive 'rename `calc` to `calculateInvoice`' — applies the rename across both files and removes the marker; (b) a question '// code review: why are we rounding before tax?' — leaves a `code review ai response:` line explaining the reasoning, original marker preserved; (c) a directive 'use Decimal from big.js here' — agent isn't sure if the project already imports big.js, so leaves a clarifying response asking whether to add the dep. Final report groups by file with marker→action.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "directive-agent-disagrees-pushback",
+      "prompt": "respond to my code reviews",
+      "expected_output": "One marker in a changed file: '// code review: just catch the error and return null, no need to log'. Agent recognizes this would silently swallow a real failure mode (e.g. DB write failures users would never see), so instead of silently applying it, leaves a `code review ai response:` line with concrete pushback — names the failure mode and proposes logging at warn level — and leaves the original marker in place. Does not apply the change.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "mixed-comment-syntaxes-and-no-op-cases",
+      "prompt": "/inline-code-review-responder",
+      "expected_output": "Changed files include a Python file (`# code review: extract this into a helper`), an HTML/JSX file (`<!-- code review: should this be a button instead of a div? -->`), a TypeScript test file with `// code review:` inside a string literal in a fixture (must be skipped — it's data, not feedback), and a previously-resolved thread that already has `// code review ai response:` from a prior round but no new `code review:` (must be left alone). Skill applies the Python extraction, responds to the HTML question, skips the string-literal one, and leaves the resolved thread untouched. Reports zero false positives.",
+      "files": []
+    }
+  ]
+}
