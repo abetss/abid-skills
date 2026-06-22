@@ -8,7 +8,7 @@ install via the `/plugin` UI (Installed → select plugin → enable/disable a c
 ## Install
 
 ```text
-/plugin marketplace add abtinghods/<this-repo>     # add once (use your GitHub owner/repo)
+/plugin marketplace add abetss/abid-skills         # add once
 /plugin install engineering@abid-skills            # then install just the toolkits you want
 /plugin install product@abid-skills
 ```
