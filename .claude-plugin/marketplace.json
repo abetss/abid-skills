@@ -11,7 +11,7 @@
     {
       "name": "product",
       "source": "./plugins/product",
-      "description": "Product & design workflow: design discovery, ASCII/HTML wireframes, Storybook variants, design iteration, component prop modeling, and product guides."
+      "description": "Product & design workflow: design discovery, ASCII/HTML wireframes, Storybook variants, and design iteration."
     },
     {
       "name": "engineering",
