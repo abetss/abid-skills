@@ -20,7 +20,6 @@ Choose between alternative approaches so that the solution is:
 ## Methods
 
 - **Delegate to the `architect-solution` skill** — It dispatches parallel `code-architect` agents with different design lenses, synthesizes approaches, and drives decisions with the user
-- **Use `review-db-schema` skill** — When decisions involve database schema changes
 
 ## Process
 

@@ -60,7 +60,6 @@ This skill orchestrates but delegates heavy work:
 | Tool | Used by | What it does |
 |------|---------|--------------|
 | `architect-solution` skill | Component 3 | Multi-perspective architecture decisions via `code-architect` agents |
-| `review-db-schema` skill | Component 3 | Database schema decision review |
 | `create-plan-task` skill | Component 6 | Writes each `task-NN.md` (four-section template, subagent dispatch, file verification). Plan-prep invokes in `from-plan-prep` mode so `task-list.md` is not double-updated. Same skill is invoked standalone mid-execution for ad-hoc additions. |
 | `code-reviewer` agent (sonnet) | Component 6 | Per-task and grand code reviews |
 | `manual-qa-case-writing` skill | Component 5 | Writes/updates `qa.md` for the Grand QA cycle (default step 1) |
