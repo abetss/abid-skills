@@ -20,8 +20,8 @@ with `/plugin disable <name>@abid-skills`.
 
 | Plugin | What's inside |
 |--------|---------------|
-| **product** | design-discovery, design-in-asci, design-iterate, design-in-storybook |
-| **engineering** | plan-prep, create-plan-task, architect-solution, executing-single-plan-task, executing-plan-task-list-sequential, execute-all-supervised, write-review-guide, write-todo, view-model-props, product-guide-writer, code-simplifier, inline-code-review-responder, debugging, sop-writer, troubleshooting-writer, conventions-writer, write-architecture-docs, changelog-generator, release, commit-git, code-review-team + agents: code-reviewer, code-architect, code-explorer |
+| **product** | design-discovery, design-in-asci, design-iterate, design-in-storybook, write-requirements |
+| **engineering** | plan-prep, create-plan-task, architect-solution, executing-single-plan-task, executing-plan-task-list-sequential, execute-all-supervised, write-review-guide, write-todo, view-model-props, product-guide-writer, code-simplifier, inline-code-review-responder, debugging, sop-writer, troubleshooting-writer, conventions-writer, document-kb, write-architecture-docs, changelog-generator, never-again, release, commit-git, code-review-team + agents: code-reviewer, code-architect, code-explorer |
 | **qa** | qa-execution, qa-exploratory, manual-qa-case-writing + agent: qa-runner |
 | **meta-skilling** | skill-creating, find-skills, agentic-ai-architect, capture-findings, generating-html-artifacts |
 

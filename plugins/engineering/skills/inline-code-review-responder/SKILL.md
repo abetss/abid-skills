@@ -1,18 +1,18 @@
 ---
 name: inline-code-review-responder
-description: Resolves inline code review comments the user left as `// code review: <feedback>` (or the equivalent in `#`, `/* */`, `<!-- -->`, etc.). Scoped to changed files only. For each marker, either applies the requested change and removes the marker, or — if the comment reads as a question or the agent has its own clarifying question — leaves a `code review ai response: <reply>` line directly beneath. Use when the user says "respond to my code reviews", "address my inline comments", "go through my code review notes", or invokes `/inline-code-review-responder`.
+description: Resolves inline code review comments the user left as `// code review: <feedback>` or `// todo human review: <feedback>` (or the equivalent in `#`, `/* */`, `<!-- -->`, etc.). Scoped to changed files only. For each marker, either applies the requested change and removes the marker, or — if the comment reads as a question or the agent has its own clarifying question — leaves a `code review ai response: <reply>` line directly beneath. Use when the user says "respond to my code reviews", "address my inline comments", "go through my code review notes", or invokes `/inline-code-review-responder`.
 ---
 
 # Inline Code Review Responder
 
-The user leaves feedback for you inline by adding a comment with the `code review:` anchor — for example `// code review: rename this to userId`. Your job is to find every one of those, in the changed files only, and resolve it.
+The user leaves feedback for you inline by adding a comment with the `code review:` anchor — for example `// code review: rename this to userId`. Some users use `todo human review:` for the same purpose (e.g. `// todo human review: is this safe under concurrent writes?`) — treat it as an equivalent anchor with identical behavior. Your job is to find every one of those, in the changed files only, and resolve it.
 
 ## How to find the comments
 
 Scope is **only changed files** in the working tree. Don't sweep the whole repo — that would pick up stale markers on unrelated branches and waste tokens.
 
 1. List changed files: `git diff --name-only HEAD` (covers both staged and unstaged). If the user is mid-rebase or has untracked files they care about, also include `git status --porcelain` results — but ignore deleted files.
-2. Within each changed file, grep for the literal anchor `code review:` (case-insensitive). The comment prefix varies by language — `//`, `#`, `/* */`, `<!-- -->`, `--`, `;`. Match the anchor, then walk back to the comment start to extract the feedback text.
+2. Within each changed file, grep for the literal anchors `code review:` and `todo human review:` (case-insensitive). The comment prefix varies by language — `//`, `#`, `/* */`, `<!-- -->`, `--`, `;`. Match the anchor, then walk back to the comment start to extract the feedback text.
 3. Make sure you don't confuse `code review:` with `code review ai response:`. The response form is *your prior reply* — leave it in place; it's a record of an earlier round.
 
 If there are no markers, say so plainly and stop. Don't hallucinate work.
