@@ -1,11 +1,27 @@
 ---
 name: capture-findings
 description: Captures the AI's findings, analysis, research, or summary into a markdown file and renders it as a polished navigable HTML artifact via the generating-html-artifacts skill, then keeps the two in sync on later edits. Use when the user invokes /capture-findings, gives a name for a writeup, or says "capture this", "write up your findings", "save this as a report or artifact", "make me a writeup", "turn this into a doc or page". Also use to UPDATE an existing capture — "update the named doc or markdown", "add a section to it", "the markdown is updated, regenerate or refresh the HTML", "sync the HTML to the markdown". Output is a folder named after the title holding the markdown source and its HTML artifact.
+model: haiku
+context: fork
 ---
 
 # Capture findings
 
 Writes what the AI wants the user to see into a markdown file, then converts that file into an HTML artifact — and re-renders when either side changes. The markdown is the editable source of truth; the HTML is the rendered, shareable view. Both live in a folder named after the title so the artifact can grow nested pages later.
+
+## How this skill runs
+
+This skill runs in a **forked subagent** (`context: fork`) on the **haiku** model so the markdown-composing and HTML-generation work stays out of the main conversation context. A fork does **not** inherit the conversation — it sees only this skill body plus `$ARGUMENTS`. So the invoking (main) agent must pass everything needed in the arguments:
+
+- the **content to capture** — the findings/analysis/summary text, *with its full detail*: the
+  reasoning, the options weighed, the tradeoffs, the specifics. Pass the depth, not a pre-condensed
+  blurb; this skill turns a clean overview + full detail into a click-to-expand artifact, but it
+  can only preserve depth that reaches it. And
+- the **name/slug** for the output (if the user gave one).
+
+Work only from `$ARGUMENTS` and files already on disk. Never assume access to prior conversation. For Update / Re-render modes, the existing `<slug>/<slug>.md` on disk is the source of truth.
+
+$ARGUMENTS
 
 ## Naming and layout
 
@@ -73,6 +89,64 @@ Put the substance the user should see, structured for reading:
 - Links where useful.
 
 Keep it content. Presentation — contrast, spacing, navigation, theming — is the HTML skill's job, not yours here.
+
+### Preserve depth — summarize forward, not away
+
+The most common failure of this skill is over-summarizing: distilling each decision or finding
+down to a one-line "Recommend: …" and dropping the reasoning behind it. A reader can't act on a
+verdict without the *why* — the problem it solves, the options that lost, the tradeoffs. A clean
+overview is good as the **first** thing the reader sees; it is not enough as the **only** thing.
+(Work only with the detail you were given in `$ARGUMENTS` — don't invent reasoning to fill a
+fold. If the arguments are already thin, capture them faithfully rather than padding.)
+
+So for any item that carries real depth (a decision, a recommendation, an analyzed option, a
+finding), write **both** layers:
+
+- **Summary** — the title and a one-line takeaway. This is what the reader scans. Keep it tight.
+- **`<!-- more -->`** — an HTML-comment fold marker on its own line.
+- **Detail** — everything you'd otherwise throw away: the context/problem, the options
+  considered and why each won or lost, the tradeoffs, the consequences, concrete specifics
+  (field names, values, examples). This is the part that makes the verdict trustworthy.
+
+```markdown
+### 14 · User / auth stub
+
+**Recommend:** minimal `users` table, one seeded row.
+
+<!-- more -->
+
+**The decision.** We need a `user_id` to hang episodes and turns off of, but real auth is out
+of scope for the baseline.
+
+**Options.**
+- *Hardcoded `user_id` constant* — least code today, but `Episode.user_id` / `Turn.author_id`
+  aren't real foreign keys, so adding auth later means a schema migration and a backfill.
+- *Minimal `users` table, one seeded row* — a few more lines now; the foreign keys are real
+  from day one and the auth retrofit is just "stop seeding, start inserting".
+
+**Why this one.** The retrofit cost dominates. A one-row table is still a stub but avoids a
+painful migration.
+
+​```mermaid
+erDiagram
+  USER ||--o{ EPISODE : owns
+  EPISODE ||--o{ TURN : has
+​```
+```
+
+Only fold when there's genuinely more to show. A short item with nothing behind it stays a plain
+section — don't invent a fold or pad the detail. The fold protects depth; it doesn't create it.
+The `generating-html-artifacts` skill turns each `<!-- more -->` section into a click-to-expand
+card, so the overview stays scannable and the detail is one click away.
+
+### Diagrams
+
+When structure, flow, a data model, or a decision tree is easier shown than told, add a fenced
+```mermaid``` block (in the detail, not the summary). Write plain Mermaid — the HTML skill
+pre-renders it to an inline, theme-aware diagram. Match the shape to the idea: `flowchart` for
+stages/pipelines/decisions, `erDiagram` for data models, `stateDiagram-v2` for lifecycles,
+`sequenceDiagram` for call order. Keep each diagram to one idea; two small diagrams beat one
+crowded one.
 
 ## Dispatching the HTML render
 
