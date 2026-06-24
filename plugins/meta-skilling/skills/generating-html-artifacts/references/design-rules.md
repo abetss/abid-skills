@@ -83,7 +83,7 @@ Surfaces must be visibly distinct from the page background while keeping text co
 
 A common failure is setting `--background` and `--card` both to white — then cards disappear into the page. Always give `--background` an off-white (light) / slightly-elevated-dark (dark) value distinct from `--card`, and give cards a visible `--border`.
 
-**Code blocks FOLLOW the theme — light surface + dark syntax in light mode, dark surface + bright syntax in dark mode.** The surface is `--code-bg` (off-white `#edece4` light / near-black `#16191d` dark), base text is `--code-fg`, and syntax pulls from `--code-keyword` / `--code-string` / `--code-comment` / `--code-number` / `--code-fn` — *all of which flip* between themes. This is the rule's most common failure mode in two directions:
+**Code blocks FOLLOW the theme — light surface + dark syntax in light mode, dark surface + bright syntax in dark mode.** The surface is `--code-bg` (off-white `#f1f1ee` light / near-black `#16191d` dark), base text is `--code-fg`, and syntax pulls from `--code-keyword` / `--code-string` / `--code-comment` / `--code-number` / `--code-fn` — *all of which flip* between themes. This is the rule's most common failure mode in two directions:
 
 - **Don't pin code to a fixed-dark surface.** A dark code panel sitting in a light page reads as "not following the light theme." Let `--code-bg`/`--code-fg` flip.
 - **Don't hardcode light hex for code text** (e.g. `color:#E8E6DE` on `pre`, or `.fn{color:#C9B98A}`). Those vanish on the light panel in light mode. Route base text through `--code-fg` and identifiers through `--code-fn`.
