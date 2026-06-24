@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,91 +7,120 @@
 <style>
   /* ---- palette: light (default) ---- */
   :root{
-    --bg:#f7f7f5; --surface:#ffffff; --ink:#1a1d21; --ink-2:#33383f;
-    --line:#d9d8d4; --accent:#1c6b46; --accent-soft:#e6f1ec; --accent-ink:#10472d;
+      --card-foreground:var(--foreground);--primary-foreground:#ffffff;--secondary-foreground:#ffffff;--code-comment:#5b6168;--code-keyword:#9c3a2c;--code-string:#155e3b;--code-number:#7a4f00;--code-fn:#6f42c1;--success:#1c6b46;--warning:#8a5a00;--destructive:#b4453a;
+    /* code surface FOLLOWS the theme (light here, dark in @media); --inverse stays dark in both themes for dark buttons / inverted panels */
+    --code-bg:#edece4; --code-fg:#1a1d21; --inverse:#16191d; --inverse-foreground:#f2f3f4;
+    --background:#f7f7f5; --card:#ffffff; --foreground:#1a1d21; --muted-foreground:#33383f;
+    --border:#d9d8d4; --primary:#1c6b46; --accent:#e6f1ec; --accent-foreground:#10472d;
     --radius:14px; --maxw:880px;
     color-scheme:light dark; font-synthesis:none;
   }
-  /* ---- palette: dark (auto) ---- */
+  /* ---- palette: dark (auto-follows the OS setting; no toggle) ---- */
   @media (prefers-color-scheme: dark){
     :root{
-      --bg:#14171a; --surface:#1d2126; --ink:#f2f3f4; --ink-2:#cdd2d8;
-      --line:#2c323a; --accent:#5bbd8a; --accent-soft:#16352a; --accent-ink:#9fe3c0;
+        --primary-foreground:#06210f;--secondary-foreground:#06210f;--success:#5bbd8a;--warning:#e0b357;--destructive:#e0897a;
+      --code-bg:#16191d; --code-fg:#f2f3f4; --code-comment:#9aa0a8; --code-keyword:#7fd0a3; --code-string:#c9d99a; --code-number:#e0b083; --code-fn:#c9b98a;
+      --background:#14171a; --card:#1d2126; --foreground:#f2f3f4; --muted-foreground:#cdd2d8;
+      --border:#2c323a; --primary:#5bbd8a; --accent:#16352a; --accent-foreground:#9fe3c0;
     }
-  }
-  /* ---- palette: manual overrides ---- */
-  [data-theme="light"]{
-    --bg:#f7f7f5; --surface:#ffffff; --ink:#1a1d21; --ink-2:#33383f;
-    --line:#d9d8d4; --accent:#1c6b46; --accent-soft:#e6f1ec; --accent-ink:#10472d;
-  }
-  [data-theme="dark"]{
-    --bg:#14171a; --surface:#1d2126; --ink:#f2f3f4; --ink-2:#cdd2d8;
-    --line:#2c323a; --accent:#5bbd8a; --accent-soft:#16352a; --accent-ink:#9fe3c0;
   }
 
   *{box-sizing:border-box}
   html{-webkit-text-size-adjust:100%}
   body{
-    margin:0; background:var(--bg); color:var(--ink);
+    margin:0; background:var(--background); color:var(--foreground);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
     line-height:1.7; font-size:18px; letter-spacing:.1px;
   }
-  .skip{position:absolute; left:-9999px; top:0; background:var(--accent); color:#fff;
+  .skip{position:absolute; left:-9999px; top:0; background:var(--primary); color:#fff;
         padding:12px 18px; border-radius:0 0 10px 0; z-index:100; font-weight:700}
   .skip:focus{left:0}
-  a{color:var(--accent); text-decoration:none; border-bottom:1px solid transparent}
-  a:hover{border-bottom-color:var(--accent)}
-  :focus-visible{outline:3px solid var(--accent); outline-offset:2px; border-radius:4px}
+  a{color:var(--primary); text-decoration:none; border-bottom:1px solid transparent}
+  a:hover{border-bottom-color:var(--primary)}
+  :focus-visible{outline:3px solid var(--primary); outline-offset:2px; border-radius:4px}
 
   .layout{display:grid; grid-template-columns:240px minmax(0,1fr); gap:0; max-width:1180px; margin:0 auto}
   /* sidebar TOC */
   nav.toc{position:sticky; top:0; align-self:start; max-height:100vh; overflow:auto;
-          padding:40px 18px 40px 28px; border-right:1px solid var(--line)}
+          padding:40px 18px 40px 28px; border-right:1px solid var(--border)}
   nav.toc .toc-title{font-size:14px; letter-spacing:.12em; text-transform:uppercase;
-                     color:var(--ink-2); font-weight:700; margin:0 0 14px}
-  nav.toc a{display:block; padding:8px 12px; border-radius:8px; color:var(--ink-2);
+                     color:var(--muted-foreground); font-weight:700; margin:0 0 14px}
+  nav.toc a{display:block; padding:8px 12px; border-radius:8px; color:var(--muted-foreground);
             font-size:16px; border-bottom:none; margin-bottom:2px}
-  nav.toc a:hover{background:var(--accent-soft); color:var(--accent-ink)}
-  nav.toc a[aria-current="true"]{background:var(--accent-soft); color:var(--accent-ink); font-weight:700}
+  nav.toc a:hover{background:var(--accent); color:var(--accent-foreground)}
+  nav.toc a[aria-current="true"]{background:var(--accent); color:var(--accent-foreground); font-weight:700}
 
   main{padding:48px 40px 120px; max-width:var(--maxw)}
+  .page-footer{margin-top:64px; padding-top:24px; border-top:1px solid var(--border)}
+  .page-footer p{font-size:16px; color:var(--muted-foreground)}
   header.page{margin-bottom:48px}
   h1{font-size:40px; line-height:1.15; margin:0 0 20px; letter-spacing:-.5px}
-  .lead{font-size:21px; color:var(--ink); max-width:68ch; margin:0}
+  .lead{font-size:21px; color:var(--foreground); max-width:68ch; margin:0}
   h2{font-size:28px; margin:0 0 12px; letter-spacing:-.3px}
   h3{font-size:21px; margin:24px 0 8px}
   p,li{font-size:18px}
   section{margin-top:56px}
-  .card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:24px 26px}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:24px 26px}
 
-  /* theme toggle */
-  .toolbar{position:fixed; top:16px; right:18px; z-index:50}
-  .toggle{display:inline-flex; align-items:center; gap:8px; background:var(--surface);
-          color:var(--ink); border:1px solid var(--line); border-radius:999px;
-          padding:9px 16px; font-size:15px; font-weight:600; cursor:pointer}
-  .toggle:hover{border-color:var(--accent)}
+  /* code block — surface + text FOLLOW the theme (light-on-light, dark-on-dark), high contrast in both.
+     Syntax classes (.kw/.fn/.str/.cm/.num) pull from the themed --code-* tokens, so they flip too. */
+  pre.code{background:var(--code-bg); color:var(--code-fg); border:1px solid var(--border);
+           border-radius:10px; padding:16px 18px; overflow-x:auto;
+           font:14px/1.6 ui-monospace,Menlo,Monaco,Consolas,monospace}
+  pre.code .kw{color:var(--code-keyword)} pre.code .fn{color:var(--code-fn)}
+  pre.code .str{color:var(--code-string)} pre.code .cm{color:var(--code-comment)} pre.code .num{color:var(--code-number)}
+  /* dark button / inverted panel — stays dark in BOTH themes (use --inverse, never --card or theme inks) */
+  .btn-inverse{background:var(--inverse); color:var(--inverse-foreground); border:none;
+               border-radius:8px; padding:10px 16px; font-weight:600; cursor:pointer}
+
+  /* expandable detail card: summary always visible, full detail behind a click.
+     Native <details> = keyboard-accessible disclosure with no JS. */
+  details.item{background:var(--card); border:1px solid var(--border);
+               border-radius:var(--radius); padding:4px 26px; margin:20px 0}
+  details.item>summary{list-style:none; cursor:pointer; padding:20px 0;
+               display:flex; align-items:flex-start; gap:14px}
+  details.item>summary::-webkit-details-marker{display:none}
+  details.item>summary::after{content:"▸"; margin-left:auto; color:var(--primary);
+               font-size:18px; line-height:1.4; flex:none}
+  details.item[open]>summary::after{content:"▾"}
+  details.item>summary h3{margin:0; font-size:21px}
+  .item-summary{flex:1}              /* the always-visible front: title + recommend line */
+  .item-detail{padding:4px 0 24px; border-top:1px solid var(--border); margin-top:4px}
+  .item-detail>:first-child{margin-top:16px}
+
+  /* pre-rendered diagrams (see scripts/render_diagrams.py): one figure, two SVGs,
+     the right one shown per theme. */
+  figure.diagram{margin:28px 0; padding:24px; background:var(--background);
+                 border:1px solid var(--border); border-radius:var(--radius);
+                 overflow-x:auto; text-align:center}
+  figure.diagram svg{max-width:100%; height:auto}
+  /* mermaid sizes label boxes with its own (headless) font; the viewer's font can be
+     wider and clip the text. Let the centered labels spill instead of clipping. */
+  figure.diagram foreignObject{overflow:visible}
+  figure.diagram .nodeLabel,figure.diagram .edgeLabel,figure.diagram .er.entityLabel{white-space:nowrap}
+  figure.diagram figcaption{margin-top:14px; font-size:16px; color:var(--muted-foreground)}
+  .diagram-dark{display:none}
+  .diagram-light{display:block}
+  @media (prefers-color-scheme:dark){
+    .diagram-light{display:none}
+    .diagram-dark{display:block}
+  }
 
   @media (max-width:820px){
     .layout{grid-template-columns:1fr}
-    nav.toc{position:static; max-height:none; border-right:none; border-bottom:1px solid var(--line);
+    nav.toc{position:static; max-height:none; border-right:none; border-bottom:1px solid var(--border);
             padding:24px 20px}
     main{padding:32px 20px 80px}
     h1{font-size:32px}
   }
   @media (prefers-reduced-motion: no-preference){
     html{scroll-behavior:smooth}
-    .toggle,nav.toc a{transition:background .15s,border-color .15s,color .15s}
+    nav.toc a{transition:background .15s,border-color .15s,color .15s}
   }
 </style>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
-
-<div class="toolbar">
-  <button class="toggle" id="themeToggle" type="button" aria-label="Toggle light or dark theme">
-    <span id="themeIcon">☾</span><span id="themeLabel">Dark</span>
-  </button>
-</div>
 
 <div class="layout">
   <nav class="toc" aria-label="Contents">
@@ -109,7 +138,31 @@
     <section id="intro" aria-labelledby="intro-h">
       <h2 id="intro-h">Section title</h2>
       <p>Body content. Replace this scaffold with real sections.</p>
+
+      <!-- Expandable item: summary shows by default, full detail on click.
+           Use this for decisions/findings that need a quick scan AND deep detail. -->
+      <details class="item">
+        <summary>
+          <div class="item-summary">
+            <h3>12 · Per-skill annotation schema</h3>
+            <p><strong>Recommend:</strong> one-line takeaway the reader scans first.</p>
+          </div>
+        </summary>
+        <div class="item-detail">
+          <p>The full reasoning: the problem, the options considered, the tradeoffs,
+             and why this recommendation. Don't flatten this away.</p>
+          <!-- inline a pre-rendered diagram fragment here when it clarifies -->
+          <figure class="diagram" role="group" aria-label="example">
+            <div class="diagram-svg diagram-light"><!-- light SVG from render_diagrams.py --></div>
+            <div class="diagram-svg diagram-dark" aria-hidden="true"><!-- dark SVG --></div>
+          </figure>
+        </div>
+      </details>
     </section>
+
+    <footer class="page-footer">
+      <p>Generated artifact · edit the markdown source and re-render.</p>
+    </footer>
   </main>
 </div>
 
@@ -125,18 +178,6 @@ Body content...
 
 <script>
   (function(){
-    var root=document.documentElement, btn=document.getElementById('themeToggle');
-    var icon=document.getElementById('themeIcon'), label=document.getElementById('themeLabel');
-    function sysDark(){return window.matchMedia('(prefers-color-scheme: dark)').matches;}
-    function current(){return root.dataset.theme || (sysDark()?'dark':'light');}
-    function render(){var d=current()==='dark'; icon.textContent=d?'☀':'☾'; label.textContent=d?'Light':'Dark';}
-    try{var saved=localStorage.getItem('artifact-theme'); if(saved){root.dataset.theme=saved;}}catch(e){}
-    render();
-    btn.addEventListener('click',function(){
-      var next=current()==='dark'?'light':'dark'; root.dataset.theme=next;
-      try{localStorage.setItem('artifact-theme',next);}catch(e){} render();
-    });
-
     // scrollspy for the sidebar TOC
     var links=[].slice.call(document.querySelectorAll('nav.toc a'));
     var map={}; links.forEach(function(a){var id=a.getAttribute('href').slice(1); map[id]=a;});

@@ -58,16 +58,18 @@ def main():
         errors.append("Missing <!DOCTYPE html>.")
     if not re.search(r"<html[^>]*\blang=", low):
         warnings.append("Missing lang attribute on <html>.")
+    # Landmarks and a single <h1> are accessibility niceties, not hard requirements —
+    # report them as warnings so purpose-built layouts (decks, boards) aren't blocked.
     for tag, label in [("<main", "<main> landmark"),
                        ("<nav", "<nav> landmark"),
                        ("<header", "<header> landmark"),
                        ("<footer", "<footer> landmark")]:
         if tag not in low:
-            errors.append(f"Missing {label}.")
+            warnings.append(f"Missing {label} (accessibility nicety).")
     if low.count("<h1") == 0:
-        errors.append("No <h1> found.")
+        warnings.append("No <h1> found — most artifacts should have one title.")
     elif low.count("<h1") > 1:
-        warnings.append(f"{low.count('<h1')} <h1> elements — there should be exactly one.")
+        warnings.append(f"{low.count('<h1')} <h1> elements — usually there should be one.")
 
     # --- self-contained ---
     if re.search(r'<link[^>]+href=["\']https?://', low) or re.search(r'<script[^>]+src=["\']https?://', low):
@@ -75,15 +77,13 @@ def main():
     if "@import url(http" in low.replace(" ", ""):
         errors.append("CSS @import of a remote URL — artifact must be self-contained.")
 
-    # --- dark mode ---
+    # --- dark mode (auto-only; no toggle) ---
     if "prefers-color-scheme: dark" not in low and "prefers-color-scheme:dark" not in low:
-        errors.append("No 'prefers-color-scheme: dark' — ship light AND dark palettes.")
-    if "data-theme" not in low:
-        warnings.append("No [data-theme] override found — the manual theme toggle may be missing.")
+        errors.append("No 'prefers-color-scheme: dark' — ship light AND dark palettes (auto, no toggle).")
 
-    # --- skip link ---
+    # --- skip link (accessibility nicety) ---
     if not re.search(r'href=["\']#(main|content|skip)', low):
-        warnings.append("No skip link to #main found.")
+        warnings.append("No skip link to #main found (accessibility nicety).")
 
     # --- source mirror ---
     if 'type="text/markdown"' not in low and "type='text/markdown'" not in low:
@@ -111,6 +111,21 @@ def main():
             errors.append(f"body font-size is {bm.group(1)}px — must be >=18px.")
     else:
         warnings.append("Could not find an explicit body font-size — confirm body text is >=18px.")
+
+    # --- undefined surface tokens (an undefined var(--x) used as a color/fill renders BLACK) ---
+    critical = ["card", "code-bg", "code-fg", "inverse", "inverse-foreground"]
+    for tok in critical:
+        used = re.search(r"var\(\s*--" + re.escape(tok) + r"\s*\)", html)
+        defined = re.search(r"--" + re.escape(tok) + r"\s*:", html)
+        if used and not defined:
+            errors.append(f"--{tok} is used via var() but never defined — "
+                          f"undefined custom properties render as black/transparent, not a fallback.")
+
+    # --- blocking dialogs (freeze the page + any automated QA) ---
+    dialogs = sorted({m for m in re.findall(r"\b(alert|confirm|prompt)\s*\(", html)})
+    if dialogs:
+        warnings.append(f"Blocking dialog(s) used ({', '.join(d + '()' for d in dialogs)}) — "
+                        "replace with inline UI; they freeze the page and break QA.")
 
     # --- gray text ---
     grays = set()
