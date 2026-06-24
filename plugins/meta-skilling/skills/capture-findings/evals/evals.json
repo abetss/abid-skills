@@ -1,0 +1,64 @@
+{
+  "skill_name": "capture-findings",
+  "notes": "Content + depth evals (NOT layout/routing — that belongs to generating-html-artifacts). These test that capture-findings (a) produces the <slug>/<slug>.md + <slug>.html pair and opens the HTML, (b) preserves depth — keeps the reasoning/options/tradeoffs it was handed, never distilling each item to a one-line verdict, (c) applies progressive disclosure judiciously — folds (or a drill-down) for items with genuine depth, plain sections for thin ones, no forced/empty folds and no invented detail, and (d) delegates rendering to generating-html-artifacts so the HTML still meets that skill's contract. All cases are Create mode (self-contained in the prompt). Update and Re-render modes require a pre-seeded <slug>/<slug>.md on disk and are verified manually, not here. The grader reads the produced .md/.html source; it does not render — a browser QA pass still covers visual correctness in both themes.",
+  "shared_assertions": [
+    {"text": "Output is a folder named after a kebab-case slug containing BOTH <slug>/<slug>.md (markdown source of truth) and <slug>/<slug>.html (rendered artifact)"},
+    {"text": "The .md is clean, readable markdown: one H1 title, a short lead/takeaway, logical ##/### sections, real - / 1. lists and | tables for tabular data (not div-faked)"},
+    {"text": "The HTML was produced via the generating-html-artifacts skill and meets that skill's contract: passes scripts/validate_artifact.py with zero ERRORS, ships auto light+dark (prefers-color-scheme, no toggle), and embeds the markdown verbatim as the <script type=\"text/markdown\" id=\"artifact-source\"> mirror"},
+    {"text": "Depth is preserved (lossless): every reasoning/option/tradeoff/specific present in the input survives into the .md — no item is reduced to a bare one-line verdict with the 'why' dropped"},
+    {"text": "Progressive disclosure is applied with judgment: items with genuine depth get a <!-- more --> fold (or an equivalent drill-down), each with a tight scannable summary up front; items with nothing behind them stay plain sections — no forced/empty folds"},
+    {"text": "No invented content: detail not present in the input is NOT fabricated to fill a fold; thin input is captured faithfully rather than padded"},
+    {"text": "Reports both file paths and opens the .html for the user"}
+  ],
+  "evals": [
+    {
+      "id": 0,
+      "name": "multi-decision-depth-preserved",
+      "prompt": "Capture this as a writeup called schema-decisions. We made three baseline data-model calls. (1) User/auth stub: we picked a minimal users table with one seeded row over a hardcoded user_id constant — the constant is less code now but Episode.user_id / Turn.author_id wouldn't be real foreign keys, so auth later means a migration + backfill; the one-row table makes the retrofit just 'stop seeding, start inserting'. (2) Soft deletes: we chose a deleted_at timestamp column over a separate archive table, because most queries already filter by status and an archive table doubles the write path; downside is every read must remember the filter, mitigated with a default scope. (3) IDs: we chose UUIDv7 over auto-increment for sortability without leaking row counts, accepting 16-byte keys. Keep all the reasoning.",
+      "expected_output": "A schema-decisions/ folder with schema-decisions.md and schema-decisions.html. The markdown has an H1 + lead, then three items each with a one-line recommend summary AND a <!-- more --> fold holding the full options/tradeoffs/why for that decision (the FK-migration reasoning, the write-path / default-scope tradeoff, the sortability-vs-key-size tradeoff). Nothing is distilled to just the verdict. HTML rendered via generating-html-artifacts, opened.",
+      "files": [],
+      "assertions": [
+        {"text": "All three decisions are captured with their full reasoning intact (the alternative considered, the tradeoff, and why the chosen option won) — not just the three verdicts"},
+        {"text": "Each of the three carries a short scannable summary line plus a <!-- more --> fold containing the detail"},
+        {"text": "The specific tradeoffs survive: foreign-keys-need-a-migration (decision 1), doubles-the-write-path / default-scope (decision 2), 16-byte-key cost (decision 3)"}
+      ]
+    },
+    {
+      "id": 1,
+      "name": "mixed-depth-no-forced-folds",
+      "prompt": "Write this up as deploy-notes. Big one: we switched the deploy from a single blue/green cutover to a canary rollout — 5% for 10 min, then 25%, then 100%, with auto-rollback on error-rate > 2%. We chose this over blue/green because blue/green doubled our infra cost during the window and gave us no early signal; the canary catches a bad release on 5% of traffic. The tradeoff is a slower full rollout (~30 min) and we needed per-stage health gates. Also, three quick housekeeping notes with no further detail: bumped the node image to 20.11, moved the staging URL to staging.internal, and the deploy Slack channel is now #deploys-v2.",
+      "expected_output": "A deploy-notes/ folder. The canary decision gets a summary + <!-- more --> fold with the cost/early-signal reasoning and the slow-rollout/health-gate tradeoffs. The three housekeeping notes stay as plain bullet/section content with NO fold (nothing behind them). HTML rendered + opened.",
+      "files": [],
+      "assertions": [
+        {"text": "The canary-rollout decision is captured with a fold preserving the why (blue/green cost + no early signal) and the tradeoff (slower rollout, per-stage health gates)"},
+        {"text": "The three housekeeping notes (node 20.11, staging.internal, #deploys-v2) appear as plain content WITHOUT folds — no forced/empty disclosure on items with no depth"},
+        {"text": "No detail is invented to pad the housekeeping notes into folds"}
+      ]
+    },
+    {
+      "id": 2,
+      "name": "thin-input-captured-faithfully",
+      "prompt": "Capture this as standup-summary: Today I fixed the login redirect loop (was a stale cookie), reviewed Mia's PR for the export feature, and started looking into the slow dashboard query. Blocked on nothing.",
+      "expected_output": "A standup-summary/ folder with a short, faithful markdown writeup (H1 + a few bullets) and its HTML. Because the input is thin, there are NO folds and NO invented reasoning — it just captures what was given. HTML rendered + opened.",
+      "files": [],
+      "assertions": [
+        {"text": "Captures the three items faithfully as a short writeup; does not fabricate reasoning, options, or tradeoffs that weren't in the input"},
+        {"text": "No <!-- more --> folds are used (there is no depth to hide); the output stays a plain scannable section"},
+        {"text": "Still produces the standup-summary/ folder with both .md and .html and opens the HTML"}
+      ]
+    },
+    {
+      "id": 3,
+      "name": "findings-with-diagram",
+      "prompt": "Capture our auth-refactor findings as auth-refactor. Background: we replaced session cookies with short-lived JWTs plus a refresh token. The token flow: client logs in, gets a 15-min access JWT + a 30-day refresh token (httpOnly cookie); on 401 the client silently calls /refresh to mint a new access token; refresh tokens rotate on use and are revocable server-side. We chose rotation-on-use over static refresh tokens because a leaked static token is valid for 30 days, whereas a rotated one is detectable (reuse of an old token signals theft and we revoke the family). Tradeoff: we need a server-side token-family table. Include a diagram of the refresh flow. Open question: do we need to handle refresh races from multiple tabs?",
+      "expected_output": "An auth-refactor/ folder. The markdown keeps the full reasoning for rotation-on-use (leaked-static-token risk vs. detectable-reuse) and its tradeoff (token-family table) behind a fold, includes a ```mermaid``` block for the refresh flow (sequenceDiagram or flowchart) in the detail, and keeps the open question. HTML rendered via generating-html-artifacts with the mermaid pre-rendered to dual-theme inline SVG; opened.",
+      "files": [],
+      "assertions": [
+        {"text": "The rotation-on-use reasoning and its tradeoff (server-side token-family table) are preserved, not flattened to a verdict"},
+        {"text": "A mermaid diagram of the refresh flow is included in the markdown source (a fenced ```mermaid``` block), placed in the detail rather than the summary"},
+        {"text": "The open question (multi-tab refresh races) is carried over, not dropped"},
+        {"text": "In the rendered HTML the mermaid block is pre-rendered to inline SVG with light + dark variants (no CDN mermaid at view time)"}
+      ]
+    }
+  ]
+}

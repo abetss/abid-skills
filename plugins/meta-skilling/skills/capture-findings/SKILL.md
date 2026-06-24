@@ -1,6 +1,6 @@
 ---
 name: capture-findings
-description: Captures the AI's findings, analysis, research, or summary into a markdown file and renders it as a polished navigable HTML artifact via the generating-html-artifacts skill, then keeps the two in sync on later edits. Use when the user invokes /capture-findings, gives a name for a writeup, or says "capture this", "write up your findings", "save this as a report or artifact", "make me a writeup", "turn this into a doc or page". Also use to UPDATE an existing capture — "update the named doc or markdown", "add a section to it", "the markdown is updated, regenerate or refresh the HTML", "sync the HTML to the markdown". Output is a folder named after the title holding the markdown source and its HTML artifact.
+description: Captures and presents the output you want to show the user — findings, analysis, research, a writeup — into a markdown file, generates a HTML artifact from it (via generating-html-artifacts), opens the HTML for the user, and keeps the two in sync on later edits. Argument guide, Pass the content you'd otherwise print in the terminal; the structuring and rendering are handled for you. Use when the gives a name for a writeup, or says "capture this", "write up your findings", "save this as a report or artifact", "make me a writeup", "turn this into a doc or page". Also use to UPDATE an existing capture — "update the named doc or markdown", "add a section to it", "the markdown is updated, regenerate or refresh the HTML", "sync the HTML to the markdown". Output is a folder named after the title holding the markdown source and its HTML artifact.
 model: haiku
 context: fork
 ---
@@ -98,6 +98,12 @@ verdict without the *why* — the problem it solves, the options that lost, the 
 overview is good as the **first** thing the reader sees; it is not enough as the **only** thing.
 (Work only with the detail you were given in `$ARGUMENTS` — don't invent reasoning to fill a
 fold. If the arguments are already thin, capture them faithfully rather than padding.)
+
+The goal is **progressive disclosure**: the reader sees the high level first and goes deeper
+only if they want to — like zooming a map. The fold below is the default way to express that (it
+becomes a click-to-expand card), but it is one strategy, not a rule — a long self-contained
+finding can instead become its own linked detail page, and a short item with nothing behind it
+stays a plain section. Choose per item; don't force a fold everywhere. Feel free to be creative about this considering high UX.
 
 So for any item that carries real depth (a decision, a recommendation, an analyzed option, a
 finding), write **both** layers:

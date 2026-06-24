@@ -1,1 +1,4 @@
 .DS_Store
+
+# skill-creator eval run artifacts
+*-workspace/

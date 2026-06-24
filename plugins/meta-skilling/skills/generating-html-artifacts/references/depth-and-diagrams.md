@@ -20,6 +20,10 @@ reasoning, the options that lost, and the tradeoffs behind it. The fix is progre
 disclosure: keep the clean overview as the always-visible front of each card, and put the full
 depth one click away. Nothing is summarized *out* of existence — it's summarized *forward*.
 
+The fold (below) is the most common way to express this, not the only one — a long, self-contained
+finding can instead live on its own linked detail view. Pick the form that fits; the principle
+(overview first, depth on demand) is what matters.
+
 ## The fold marker
 
 When a section's markdown contains an HTML comment `<!-- more -->`, treat it as a fold:

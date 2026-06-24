@@ -1,6 +1,6 @@
 ---
 name: generating-html-artifacts
-description: Generates spacious, high-contrast, keyboard-navigable, agent-readable self-contained HTML artifacts. Use when the user asks to create, generate, build, render, or export an artifact, report, doc, dashboard, summary, plan, map, or page as HTML — when they mention an "HTML artifact", want output as a single .html file, or hand you an existing .html file and ask to apply this skill / improve its readability, contrast, spacing, theming, or navigation.
+description: Generates spacious, high-contrast, keyboard-navigable, agent-readable self-contained HTML artifacts from a source you provide — a markdown file path or the raw output to render. Use when the user asks to create, generate, build, render, or export an artifact, report, doc, dashboard, summary, plan, map, or page as HTML — when they mention an "HTML artifact", want output as a single .html file, or hand you an existing .html file and ask to apply this skill / improve its readability, contrast, spacing, theming, or navigation.
 model: haiku
 context: fork
 ---
@@ -38,7 +38,7 @@ These are summarized from `references/design-rules.md`. When in doubt, read that
 6. **Light + dark, both — auto only.** Ship both palettes via `prefers-color-scheme`; the theme follows the OS setting. **No toggle, no `[data-theme]`, no `localStorage`.** Pull accent/fonts from `brand.md`.
 7. **Keyboard-friendly (recommended, not required).** Visible focus rings (never `outline:none` without a replacement) and real interactive elements (`button`, `a`) where it's cheap. A skip link to `#main` and strict landmarks are nice-to-have, not mandatory — the validator reports them as warnings.
 8. **Semantic + agent-readable.** Use `header`/`nav`/`main`/`section`/`footer`, one `h1`, ordered headings, real `ul`/`table`. Embed a raw-content mirror in a `<script type="text/markdown" id="artifact-source">` block so an agent can extract the exact source without parsing the DOM.
-9. **Preserve depth — never flatten.** If the source has detail (reasoning, options, tradeoffs, diagrams), the artifact must keep it. Show a scannable summary up front, but put the full detail one click away — don't summarize it out of existence. Honor `<!-- more -->` folds and render ```mermaid``` blocks as diagrams. See `references/depth-and-diagrams.md`.
+9. **Render faithfully — never summarize *away*.** Every piece of detail in the source (reasoning, options, tradeoffs, specifics, diagrams) must stay **reachable** in the output — don't drop it. You absolutely *should* shape what's visible at first glance: that's presentation's job. Do it through **progressive disclosure** — high level first, deeper on demand (think zooming a map) — so the surface is compact but nothing is lost. A TLDR + click-to-expand fold (`<!-- more -->` → `<details>` card) is one strategy; a linked drill-down view is another; pick what fits, and don't force a fold where there's nothing behind it. Render ```mermaid``` blocks as diagrams. See `references/depth-and-diagrams.md`.
 
 ## Workflow
 
