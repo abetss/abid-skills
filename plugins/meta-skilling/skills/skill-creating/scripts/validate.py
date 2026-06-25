@@ -27,7 +27,7 @@ BANNED_NAME_WORDS = {"helper", "utility", "manager", "tool", "handler"}
 LINE_BUDGET_SOFT = 500  # warning
 DESCRIPTION_MIN = 10
 DESCRIPTION_MAX = 1024
-FIRST_PERSON_TOKENS = {"i ", "i'll", "i've", "my ", "we'll", "we've", "you'll"}
+FIRST_PERSON_TOKENS = {"i", "i'll", "i've", "my", "we'll", "we've", "you'll"}
 TRIGGER_PHRASES = (
     "use when",
     "when the user",
@@ -110,11 +110,62 @@ def is_kebab_case(s: str) -> bool:
 
 
 def has_first_person(description: str) -> bool:
-    lower = description.lower()
+    # Strip quoted trigger phrases first — they're verbatim user utterances
+    # ("respond to my code reviews"), not the skill's own voice. Then match
+    # whole words so "i" doesn't fire inside "UI" and "my" doesn't fire inside
+    # a quoted phrase.
+    prose = re.sub(r'"[^"]*"', " ", description.lower())
     for token in FIRST_PERSON_TOKENS:
-        if token in f" {lower} ":
+        if re.search(r"(?<![\w'])" + re.escape(token) + r"(?![\w'])", prose):
             return True
     return False
+
+
+def parse_arguments_field(value: str) -> list[str]:
+    """Parse the `arguments` frontmatter value into a list of names.
+
+    Accepts a YAML inline list `[a, b]` or a space/comma-separated string `a b`.
+    """
+    v = value.strip()
+    if v.startswith("[") and v.endswith("]"):
+        v = v[1:-1]
+    parts = re.split(r"[,\s]+", v.strip())
+    return [p.strip() for p in parts if p.strip()]
+
+
+def check_arguments(fields: dict[str, str], body: str, report: Report) -> None:
+    """Validate argument declarations and their use in the body.
+
+    - `arguments` declared without `argument-hint` loses the autocomplete hint.
+    - A declared argument should be referenced bare (`$name`) in the body, never
+      backticked — backticks render the literal label instead of substituting the value.
+    """
+    arg_field = fields.get("arguments")
+    hint = fields.get("argument-hint")
+    names = parse_arguments_field(arg_field) if arg_field else []
+
+    if names and not hint:
+        report.warn(
+            "`arguments` is declared but `argument-hint` is missing — add a hint so the "
+            "slash-command autocomplete shows the expected arguments"
+        )
+
+    for name in names:
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name):
+            continue  # only check plain identifier names
+        esc = re.escape(name)
+        backticked = re.search(r"`\$\{?" + esc + r"\}?`", body)
+        bare = re.search(r"(?<![\w`])\$" + esc + r"\b", body)
+        if backticked:
+            report.warn(
+                f"argument `${name}` appears backticked in the body — backticks render the "
+                f"literal label instead of substituting the value; write it bare as ${name}"
+            )
+        elif not bare:
+            report.warn(
+                f"declared argument `{name}` is never referenced as ${name} in the body — "
+                f"reference it or drop it from `arguments`"
+            )
 
 
 def check_frontmatter(fields: dict[str, str], skill_path: Path, report: Report) -> None:
@@ -256,6 +307,7 @@ def validate(skill_path: Path) -> Report:
     body = "\n".join(text.splitlines()[body_offset:])
 
     check_frontmatter(fields, skill_path, report)
+    check_arguments(fields, body, report)
     check_links(body, skill_path, report)
     check_memory_consistency(body, skill_path, report)
     check_line_count(body, report)
