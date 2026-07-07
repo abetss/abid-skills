@@ -36,7 +36,20 @@ Lead with capability, not with a trigger clause. Claude matches descriptions aga
 - **Name the trigger surface.** Capability alone is not enough — Claude needs to know what user phrases should fire it.
 - **Be pushy.** Claude under-triggers skills by default. Enumerate specific phrases, keywords, file types, and contexts that should trigger the skill, even ones that feel redundant.
 - **No XML angle brackets.** `<` and `>` are forbidden in frontmatter (security restriction).
-- **No first-person.** (Repeating because this is the most common failure.)
+- **Caller-agnostic.** Don't name what invokes the skill or describe what it does before or after. A skill can't know its caller — a person, the model, another skill, a CLI — so caller-specific text is noise at best and wrong when the caller changes.
+- **No implementation detail.** Say *what* the skill accomplishes and *when* to use it — not how it works inside, which files or tools it touches, or an exhaustive list of every case it covers.
+
+## Leave out implementation and callers — keep the trigger signal
+
+Two different things get cut for two different reasons. Cut **implementation and caller** detail because the model deciding whether to invoke doesn't need it and it crowds out what matters. Do **not** cut **trigger** detail to save space — named phrases and contexts are the whole job of the description.
+
+Bad (names callers, leaks internals, buries the trigger):
+
+> The shared body-writer used by the importer flow and the `refresh` CLI; it owns the research depth and the house format so both stay consistent. Use to write or upgrade a record's body.
+
+Good (capability + trigger, caller-agnostic):
+
+> Writes a rich, researched description of a saved resource. Use when the user wants to create or upgrade a resource's notes — "flesh this out", "make this richer", or after saving a new link.
 
 ## Why under-triggering happens
 

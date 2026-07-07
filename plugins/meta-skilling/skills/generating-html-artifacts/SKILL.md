@@ -56,7 +56,7 @@ Copy this checklist and track progress:
 - [ ] 9. Validate: python scripts/validate_artifact.py <file.html>
 - [ ] 10. Fix every error and review warnings; re-run until clean
 - [ ] 11. If you invented a reusable layout, save a candidate + note it in your summary (see "Growing the library")
-- [ ] 12. QA in a browser, BOTH themes: open the file, flip prefers-color-scheme, and confirm code follows the theme, no diagram shapes overlap, every interaction works, and the console is error-free (see design-rules.md "Generation-time pitfalls")
+- [ ] 12. The output is a **self-contained static HTML** — you don't need to verify or QA a simple content/document artifact (`validate_artifact.py` in steps 9–10 already checks the hard rules). If you want to eyeball it, just **open the file** (`open <file>.html`) — **never spin up a web server for it**. Only when the artifact has rendered diagrams or interactive JS, open the file once and check both themes: no shapes overlap, interactions work, console is error-free (see design-rules.md "Generation-time pitfalls")
 ```
 
 **Step 2 — layout choice:** see "Choosing the layout" below.

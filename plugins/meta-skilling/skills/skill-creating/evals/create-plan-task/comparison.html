@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>create-plan-task — Before vs. After Fixes</title>
+  <style>
+    :root {
+      --card-foreground:var(--foreground);--primary-foreground:#ffffff;--accent-foreground:#10472d;--secondary-foreground:#ffffff;--code-comment:#5b6168;--code-keyword:#9c3a2c;--code-string:#155e3b;--code-number:#7a4f00;--code-fn:#6f42c1;--success:#1c6b46;--warning:#8a5a00;--destructive:#b4453a;
+      --code-bg: #f1f1ee;
+      --inverse: #16191d;
+      --inverse-foreground: #f2f3f4;
+      --code-fg: #1a1d21;
+      --background:    #f7f7f5;
+      --foreground:    #1a1d21;
+      --primary:     #1c6b46;
+      --accent:      #e6f1ec;
+      --secondary:    #788C5D;
+      --muted: #edefea;
+      --border: #d9d8d4;
+      --muted-foreground: #33383f;
+      --card:    #ffffff;
+
+      --serif: ui-serif, Georgia, 'Times New Roman', serif;
+      --sans:  system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      --mono:  ui-monospace, 'SF Mono', Menlo, Monaco, monospace;
+    }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+        --primary-foreground:#06210f;--accent-foreground:#9fe3c0;--secondary-foreground:#06210f;--success:#5bbd8a;--warning:#e0b357;--destructive:#e0897a;
+      --code-bg: #16191d; --code-fg: #f2f3f4;
+      --code-comment:#9aa0a8;--code-keyword:#7fd0a3;--code-string:#c9d99a;--code-number:#e0b083;--code-fn:#c9b98a;
+      --background: #14171a;
+      --foreground: #f2f3f4;
+      --primary: #5bbd8a;
+      --accent: #16352a;
+      --secondary: #9DB47E;
+      --muted: #222830;
+      --border: #2c323a;
+      --muted-foreground: #aab1ba;
+      --card: #1d2126;
+    }
+  }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--background);
+      color: var(--foreground);
+      line-height: 1.55;
+      padding: 56px 32px 120px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page { max-width: 1200px; margin: 0 auto; }
+
+    /* ---------- header ---------- */
+
+    header.page-head { margin-bottom: 44px; max-width: 960px; }
+    .eyebrow {
+      font-size: 15px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted-foreground);
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 40px;
+      line-height: 1.15;
+      color: var(--foreground);
+      margin-bottom: 12px;
+      letter-spacing: -0.01em;
+    }
+    .intro {
+      font-size: 20px;
+      line-height: 1.5;
+      color: var(--foreground);
+      max-width: 820px;
+      margin-bottom: 32px;
+    }
+
+    /* ---------- layout ---------- */
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 220px;
+      gap: 48px;
+      align-items: start;
+    }
+    @media (max-width: 1000px) { .layout { grid-template-columns: 1fr; } .toc { display: none; } }
+
+    main { max-width: 900px; }
+
+    section { margin-bottom: 64px; scroll-margin-top: 24px; }
+    h2 {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 28px;
+      color: var(--foreground);
+      margin-bottom: 20px;
+      letter-spacing: -0.01em;
+    }
+
+    /* ---------- table of contents ---------- */
+
+    .toc {
+      position: sticky;
+      top: 32px;
+      border-left: 2px solid var(--border);
+      padding-left: 18px;
+      font-size: 15px;
+    }
+    .toc .t-head {
+      font-family: var(--mono);
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted-foreground);
+      margin-bottom: 14px;
+      font-weight: 600;
+    }
+    .toc a {
+      display: block;
+      color: var(--foreground);
+      text-decoration: none;
+      padding: 6px 0;
+      border-left: 2px solid transparent;
+      padding-left: 12px;
+      margin-left: -12px;
+      transition: color 0.2s;
+    }
+    .toc a:hover { color: var(--primary); }
+    .toc a[aria-current="true"] {
+      color: var(--primary);
+      border-left-color: var(--primary);
+      font-weight: 600;
+    }
+
+    /* ---------- summary table ---------- */
+
+    .summary-table {
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 56px;
+    }
+    .summary-table table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 16px;
+    }
+    .summary-table th {
+      background: var(--muted);
+      padding: 16px 18px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--foreground);
+      border-bottom: 1.5px solid var(--border);
+      font-family: var(--sans);
+      font-size: 16px;
+    }
+    .summary-table td {
+      padding: 16px 18px;
+      border-bottom: 1.5px solid var(--border);
+      color: var(--foreground);
+    }
+    .summary-table tr:last-child td { border-bottom: none; }
+    .summary-table .num { color: var(--primary); font-weight: 600; }
+    .summary-table .kind {
+      font-family: var(--mono);
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted-foreground);
+    }
+    .summary-table .assert {
+      font-family: var(--mono);
+      font-size: 15px;
+      color: var(--code-fg);
+      background: var(--code-bg);
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+
+    /* ---------- fix card ---------- */
+
+    .fix-card {
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      margin-bottom: 48px;
+      scroll-margin-top: 24px;
+    }
+    .fix-card h3 {
+      font-family: var(--serif);
+      font-size: 24px;
+      font-weight: 500;
+      color: var(--foreground);
+      margin-bottom: 16px;
+      letter-spacing: -0.01em;
+    }
+    .fix-card .meta {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 24px;
+      font-size: 15px;
+    }
+    .fix-card .meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .fix-card .meta-label {
+      font-family: var(--mono);
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted-foreground);
+    }
+    .fix-card .meta-value {
+      color: var(--foreground);
+      font-weight: 500;
+    }
+    .fix-card .why {
+      font-size: 17px;
+      line-height: 1.6;
+      margin-bottom: 24px;
+      max-width: 820px;
+      color: var(--foreground);
+    }
+
+    /* ---------- before/after panels ---------- */
+
+    .ba {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin: 24px 0;
+    }
+    @media (max-width: 800px) { .ba { grid-template-columns: 1fr; } }
+    .ba .panel {
+      background: var(--muted);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .ba .panel-head {
+      padding: 14px 18px;
+      background: var(--card);
+      border-bottom: 1.5px solid var(--border);
+      font-family: var(--mono);
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 600;
+      color: var(--foreground);
+    }
+    .ba .panel-head.after { color: var(--primary); }
+    .ba .panel-body {
+      padding: 18px;
+      flex: 1;
+      overflow-x: auto;
+    }
+
+    /* ---------- code blocks ---------- */
+
+    .code {
+      background: var(--code-bg);
+      border-radius: 10px;
+      padding: 16px 18px;
+      overflow-x: auto;
+      font-size: 16px;
+    }
+    .code pre {
+      font-family: var(--mono);
+      font-size: 16px;
+      line-height: 1.65;
+      color: var(--code-fg);
+      white-space: pre;
+      margin: 0;
+    }
+    .code .kw  { color: var(--code-keyword); }
+    .code .str { color: var(--code-string); }
+    .code .cm  { color: var(--code-comment); }
+    .code .num { color: var(--code-number); }
+    .code .fn  { color: var(--code-fn); }
+    .code .add { background: rgba(120,140,93,.22); display: inline-block; width: 100%; }
+    .code .del { background: rgba(217,119,87,.18); display: inline-block; width: 100%; text-decoration: line-through; text-decoration-color: rgba(217,119,87,.6); }
+
+    .code-text {
+      font-family: var(--mono);
+      font-size: 16px;
+      line-height: 1.65;
+      color: var(--code-fg);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* ---------- assertion badge ---------- */
+
+    .assertion {
+      margin-top: 20px;
+      padding: 12px 16px;
+      background: var(--accent);
+      border: 1.5px solid var(--primary);
+      border-radius: 10px;
+      font-size: 15px;
+    }
+    .assertion .label {
+      font-family: var(--mono);
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted-foreground);
+      margin-bottom: 4px;
+    }
+    .assertion .badge {
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--foreground);
+    }
+
+    /* ---------- where to focus ---------- */
+
+    .focus { display: flex; flex-direction: column; gap: 18px; }
+    .focus .item {
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      display: flex;
+      gap: 18px;
+    }
+    .focus .n {
+      font-family: var(--mono);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--inverse-foreground);
+      background: var(--primary);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 0;
+    }
+    .focus .t {
+      font-weight: 600;
+      color: var(--foreground);
+      font-size: 18px;
+      margin-bottom: 6px;
+    }
+    .focus .d {
+      font-size: 16px;
+      color: var(--muted-foreground);
+      line-height: 1.6;
+    }
+    .focus .d code {
+      font-family: var(--mono);
+      font-size: 15px;
+      background: var(--code-bg);
+      color: var(--code-fg);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    /* fixed-dark code surface for nested code tokens */
+    .code {
+      --foreground: var(--code-fg);
+      --muted-foreground: var(--code-comment);
+      --primary: var(--code-keyword);
+      --secondary: var(--code-string);
+      color: var(--code-fg);
+    }
+
+    a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      html {
+        scroll-behavior: smooth;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <header class="page-head">
+      <div class="eyebrow">Skill Eval · create-plan-task</div>
+      <h1>Original vs. Gold Fixes</h1>
+      <p class="intro">Six side-by-side comparisons showing how the <code>create-plan-task</code> skill changed when corrected against the authoring rules. Each fix shows the before (original) and after (gold) versions, the rule it satisfies, why it matters, and which assertion checks it.</p>
+    </header>
+
+    <div class="layout">
+      <main id="main">
+
+        <!-- ======================= SUMMARY TABLE ======================= -->
+
+        <section id="summary">
+          <h2>Summary of the 6 fixes</h2>
+          <div class="summary-table">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 6%">#</th>
+                  <th style="width: 32%">What changed</th>
+                  <th style="width: 28%">Rule</th>
+                  <th style="width: 20%">Assertion</th>
+                  <th style="width: 14%">Kind</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="num">1</span></td>
+                  <td>Description drops "Invoked by plan-prep"</td>
+                  <td>Caller-agnostic (R1)</td>
+                  <td><span class="assert">M4</span></td>
+                  <td><span class="kind">mechanical</span></td>
+                </tr>
+                <tr>
+                  <td><span class="num">2</span></td>
+                  <td>Body detects state, not invocation</td>
+                  <td>Caller-agnostic (R1)</td>
+                  <td><span class="assert">J1, M5</span></td>
+                  <td><span class="kind">judgment</span></td>
+                </tr>
+                <tr>
+                  <td><span class="num">3</span></td>
+                  <td>Rename propagated without breaking</td>
+                  <td>Behavior-preserving</td>
+                  <td><span class="assert">J2</span></td>
+                  <td><span class="kind">judgment</span></td>
+                </tr>
+                <tr>
+                  <td><span class="num">4</span></td>
+                  <td>Declare args; use bare $name</td>
+                  <td>Declare args (R3) + bare $name (R4)</td>
+                  <td><span class="assert">M2, M3</span></td>
+                  <td><span class="kind">mechanical</span></td>
+                </tr>
+                <tr>
+                  <td><span class="num">5</span></td>
+                  <td>Fix broken markdown link</td>
+                  <td>Structural / valid links</td>
+                  <td><span class="assert">M1</span></td>
+                  <td><span class="kind">mechanical</span></td>
+                </tr>
+                <tr>
+                  <td><span class="num">6</span></td>
+                  <td>Keep legitimate plan-prep references</td>
+                  <td>Don't over-correct</td>
+                  <td><span class="assert">J3</span></td>
+                  <td><span class="kind">judgment</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ======================= FIX 1 ======================= -->
+
+        <section id="fix-1">
+          <div class="fix-card">
+            <h3>Fix 1: Remove the caller clause from description</h3>
+            <div class="meta">
+              <div class="meta-item">
+                <div class="meta-label">Rule</div>
+                <div class="meta-value">Caller-agnostic (R1)</div>
+              </div>
+              <div class="meta-item">
+                <div class="meta-label">Assertion</div>
+                <div class="meta-value">M4</div>
+              </div>
+            </div>
+
+            <p class="why"><strong>Why:</strong> A description must say <em>what the skill does</em> and <em>when to use it</em> — never name who invokes it. "Invoked by plan-prep" couples the skill to a specific caller. The gold keeps the two scenarios (initial breakdown / mid-execution) but frames them as <em>when to use it</em>, so the skill reads identically no matter who triggers it.</p>
+
+            <div class="ba">
+              <div class="panel">
+                <div class="panel-head">Before (original)</div>
+                <div class="panel-body">
+                  <div class="code-text">description: Create one implementation task in a plan-prep work folder. Writes a task/task-NN.md file with the full Context / Implementation / Verification / Post verification tasks structure, and inserts an entry in task/task-list.md. <span class="del">Invoked by plan-prep (Phase 2) during initial breakdown AND standalone when new bugs or scope arise mid-execution.</span> Triggers on "add a task", "new task", "another task to the plan", "create plan task", or "/create-plan-task".</div>
+                </div>
+              </div>
+              <div class="panel">
+                <div class="panel-head after">After (gold)</div>
+                <div class="panel-body">
+                  <div class="code-text">description: Create one implementation task in a plan-prep work folder. Writes a task/task-NN.md file with the full Context / Implementation / Verification / Post verification tasks structure, and adds its task/task-list.md entry when one isn't already present. <span class="add">Use when adding a task to an existing plan — during initial plan breakdown or when new bugs or scope surface mid-execution.</span> Triggers on "add a task", "new task", "another task to the plan", "create plan task", or "/create-plan-task".</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="assertion">
+              <div class="label">Assertion checked</div>
+              <div class="badge">M4 — Description must not name the invoking caller</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ======================= FIX 2 ======================= -->
+
+        <section id="fix-2">
+          <div class="fix-card">
+            <h3>Fix 2: Decide from STATE, not from the caller</h3>
+            <div class="meta">
+              <div class="meta-item">
+                <div class="meta-label">Rule</div>
+                <div class="meta-value">Caller-agnostic (R1)</div>
+              </div>
+              <div class="meta-item">
+                <div class="meta-label">Assertion</div>
+                <div class="meta-value">J1 (judgment), M5</div>
+              </div>
+            </div>
+
+            <p class="why"><strong>Why:</strong> This is the headline fix. The original keyed behavior on <em>who</em> called it and a magic <code>mode: from-plan-prep</code> marker the caller had to pass. The gold reads the distinguishing fact directly from the file: <em>does a task-list entry already exist?</em> Same behavior, zero coupling — it now works no matter how it's launched. This is the kind of fix a linter cannot detect, which is why the eval grades it by judgment (J1).</p>
+
+            <div class="ba">
+              <div class="panel">
+                <div class="panel-head">Before (original)</div>
+                <div class="panel-body">
+                  <div class="code"><pre><span class="kw">## Modes
+
+This skill has two invocation modes. Detect mode from how the skill was invoked:</span>
+
+| Mode | How it's invoked | task-list.md behavior |
+|------|------------------|------------------------|
+| from-plan-prep | Called by plan-prep (Phase 2). Caller passes mode: from-plan-prep marker. | Entry already exists. Do not insert. Only create task-NN.md file. |
+| standalone | Default. User invokes directly mid-execution. | Entry does not exist. Insert it. |</pre></div>
+                </div>
+              </div>
+              <div class="panel">
+                <div class="panel-head after">After (gold)</div>
+                <div class="panel-body">
+                  <div class="code"><pre><span class="kw">## task-list.md: insert an entry, or not
+
+Whether to add a task-list.md entry depends on **whether one already exists for this task** — read it from the file, don't branch on how the skill was started.</span> After computing the next task number (Step 1), look in task-list.md for an entry pointing to task-{NN}.md:
+
+| State of task-list.md | Behavior |
+|-------------------------|----------|
+| Entry already present — full wave structure written up front when plan was broken down. | Do not insert. Only create task-NN.md file. |
+| No entry yet — task added mid-execution (bug, scope shift, etc.). | Insert it after the last [ x] line in ## Tasks. |</pre></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="assertion">
+              <div class="label">Assertions checked</div>
+              <div class="badge">J1 — Logic decouples from caller; branches on observable state instead</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ======================= FIX 3 ======================= -->
+
+        <section id="fix-3">
+          <div class="fix-card">
+            <h3>Fix 3: Propagate the rename without breaking behavior</h3>
+            <div class="meta">
+              <div class="meta-item">
+                <div class="meta-label">Rule</div>
+                <div class="meta-value">Behavior-preserving</div>
+              </div>
+              <div class="meta-item">
+                <div class="meta-label">Assertion</div>
+                <div class="meta-value">J2 (judgment)</div>
+              </div>
+            </div>
+
+            <p class="why"><strong>Why:</strong> A decoupling rewrite must stay behavior-preserving and internally consistent — no dangling references to the removed modes. Every spot that referenced the old <code>from-plan-prep</code> / <code>standalone</code> framing was updated to the state-based framing. This is a judgment call: a half-done rename is worse than none, because it leaves contradictory instructions.</p>
+
+            <div class="ba">
+              <div class="panel">
+                <div class="panel-head">Before (original)</div>
+                <div class="panel-body">
+                  <div class="code"><pre>### Step 6 — Update task-list.md (standalone mode only)
+In from-plan-prep mode, skip this step.
+In standalone mode:
+  - ...
+
+Next: "Run the task with executing-single-plan-task"
+  (standalone) / return control to plan-prep
+  (from-plan-prep)
+
+Subagent does the writing. Same pattern as
+  plan-prep Phase 2.
+
+Gotchas:
+- Updating task-list.md in from-plan-prep mode
+  (causes duplicate entries)</pre></div>
+                </div>
+              </div>
+              <div class="panel">
+                <div class="panel-head after">After (gold)</div>
+                <div class="panel-body">
+                  <div class="code"><pre">### Step 6 — Update task-list.md
+  (only when no entry exists yet)
+If an entry for this task already exists
+  (Step "task-list.md: insert an entry, or not"),
+  skip this step. Otherwise:
+  - ...
+
+Next: "Run the task with executing-single-plan-task"
+
+Subagent does the writing. Same
+  orchestrate-then-verify pattern used
+  elsewhere in the project.
+
+Gotchas:
+- Inserting a second task-list.md entry
+  when one already exists for the task
+  (causes duplicates)</pre></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="assertion">
+              <div class="label">Assertion checked</div>
+              <div class="badge">J2 — Rename is complete and consistent throughout the document</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ======================= FIX 4 ======================= -->
+
+        <section id="fix-4">
+          <div class="fix-card">
+            <h3>Fix 4: Declare arguments and reference them bare</h3>
+            <div class="meta">
+              <div class="meta-item">
+                <div class="meta-label">Rule</div>
+                <div class="meta-value">Declare args (R3) + bare $name (R4)</div>
+              </div>
+              <div class="meta-item">
+                <div class="meta-label">Assertion</div>
+                <div class="meta-value">M2, M3</div>
+              </div>
+            </div>
+
+            <p class="why"><strong>Why:</strong> The skill had an <code>argument-hint</code> but never declared <code>arguments</code>, and referred to inputs as "First/Second positional arg." Declaring them and using bare <code>$work_folder</code> / <code>$task_description</code> makes the inputs real substitutable values and self-documenting.</p>
+
+            <div class="ba">
+              <div class="panel">
+                <div class="panel-head">Before (original)</div>
+                <div class="panel-body">
+                  <div class="code"><pre">argument-hint: [optional: work folder path]
+  [optional: short task description]
+---
+
+## Inputs
+- **First positional arg (optional):** path
+  to the work folder ...
+- **Second positional arg (optional):**
+  short description of the task ...
+
+If the user did not pass a work folder path,
+  auto-detect:</pre></div>
+                </div>
+              </div>
+              <div class="panel">
+                <div class="panel-head after">After (gold)</div>
+                <div class="panel-body">
+                  <div class="code"><pre">argument-hint: [optional: work folder path]
+  [optional: short task description]
+arguments: [work_folder, task_description]
+---
+
+## Inputs
+- **$work_folder (optional):** path to the
+  work folder ...
+- **$task_description (optional):** short
+  description of the task ...
+
+If $work_folder was not provided,
+  auto-detect:</pre></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="assertion">
+              <div class="label">Assertions checked</div>
+              <div class="badge">M2, M3 — Arguments declared and substitution references are bare (not backtick-wrapped)</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ======================= FIX 5 ======================= -->
+
+        <section id="fix-5">
+          <div class="fix-card">
+            <h3>Fix 5: Fix the broken markdown link</h3>
+            <div class="meta">
+              <div class="meta-item">
+                <div class="meta-label">Rule</div>
+                <div class="meta-value">Structural / valid links</div>
+              </div>
+              <div class="meta-item">
+                <div class="meta-label">Assertion</div>
+                <div class="meta-value">M1</div>
+              </div>
+            </div>
+
+            <p class="why"><strong>Why:</strong> Inside an example block, <code>](task-NN.md)</code> parses as a real relative link to a file that doesn't exist → validator error. Using the <code>{NN}</code> placeholder marks it as a template, which the validator correctly skips. This is partly a validator limitation, but the placeholder is the right authoring fix either way.</p>
+
+            <div class="ba">
+              <div class="panel">
+                <div class="panel-head">Before (original)</div>
+                <div class="panel-body">
+                  <div class="code"><pre">In task/task-list.md, add this line:
+
+- [ ] <span class="del">[Task NN: Name](task-NN.md)</span>
+      — [one-line description]
+      [depends on: Task XX / "none"]</pre></div>
+                </div>
+              </div>
+              <div class="panel">
+                <div class="panel-head after">After (gold)</div>
+                <div class="panel-body">
+                  <div class="code"><pre">In task/task-list.md, add this line:
+
+- [ ] <span class="add">[Task {NN}: Name](task-{NN}.md)</span>
+      — [one-line description]
+      [depends on: Task XX / "none"]</pre></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="assertion">
+              <div class="label">Assertion checked</div>
+              <div class="badge">M1 — All relative links in code examples are valid or use template placeholders</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ======================= FIX 6 ======================= -->
+
+        <section id="fix-6">
+          <div class="fix-card">
+            <h3>Fix 6: KEEP legitimate plan-prep references</h3>
+            <div class="meta">
+              <div class="meta-item">
+                <div class="meta-label">Rule</div>
+                <div class="meta-value">Don't over-correct</div>
+              </div>
+              <div class="meta-item">
+                <div class="meta-label">Assertion</div>
+                <div class="meta-value">J3 (judgment)</div>
+              </div>
+            </div>
+
+            <p class="why"><strong>Why:</strong> The distinction between coupling and legitimacy is the whole point of Rule 1. "Invoked by plan-prep" (who calls me) is coupling and was removed. "plan-prep.md must exist first" (a prerequisite the user satisfies) is not coupling and was kept intentionally. A naive fix that deletes every mention of plan-prep would fail J3.</p>
+
+            <div class="ba">
+              <div class="panel">
+                <div class="panel-head">Before and After (unchanged — intentionally kept)</div>
+                <div class="panel-body">
+                  <div class="code"><pre">The work folder must already contain
+  plan-prep.md and task/task-list.md — this
+  skill does not bootstrap a plan from scratch.
+
+## Prerequisites
+1. {work-folder}/plan-prep.md exists.
+   If not:
+   > "I can't add a task without a
+   > plan-prep.md in this work folder.
+   > Run the plan-prep skill first to
+   > establish requirements, landscape,
+   > and flow."</pre></div>
+                </div>
+              </div>
+              <div class="panel">
+                <div class="panel-head">Why this stayed (the guard)</div>
+                <div class="panel-body">
+                  <p style="font-size: 16px; line-height: 1.6; color: var(--foreground);">These references are legitimate because they describe a <strong>prerequisite the user runs first</strong> and the <strong>artifact</strong> (plan-prep.md) — not coupling to a specific caller. Removing them would be over-correction and would break a real constraint the skill has.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="assertion">
+              <div class="label">Assertion checked</div>
+              <div class="badge">J3 — Prerequisite references to plan-prep are preserved; only caller-coupling is removed</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ======================= WHERE TO FOCUS ======================= -->
+
+        <section id="focus">
+          <h2>Where to focus when reviewing</h2>
+          <div class="focus">
+            <div class="item">
+              <div class="n">1</div>
+              <div>
+                <div class="t">Fix 2 + Fix 3: The decoupling and propagation</div>
+                <div class="d">These are the caller-agnostic decoupling (J1) and its behavior-preserving propagation (J2) — the value a linter cannot measure. They are the differentiator between mechanical fixes and real understanding of the rule.</div>
+              </div>
+            </div>
+            <div class="item">
+              <div class="n">2</div>
+              <div>
+                <div class="t">Fix 6: The trap</div>
+                <div class="d">The easy mistake is over-correcting and scrubbing the legitimate prerequisite references. Gold keeps them on purpose. This is judgment call J3.</div>
+              </div>
+            </div>
+            <div class="item">
+              <div class="n">3</div>
+              <div>
+                <div class="t">Fixes 1, 4, 5: The baseline</div>
+                <div class="d">Mechanical and a competent agent may get them even without the skill. They are the floor, not the ceiling — what matters is whether the agent understood the decoupling logic deep enough to propagate it correctly.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+      <nav class="toc">
+        <div class="t-head">In this document</div>
+        <a href="#summary">Summary table</a>
+        <a href="#fix-1">Fix 1: Description</a>
+        <a href="#fix-2">Fix 2: State-based logic</a>
+        <a href="#fix-3">Fix 3: Propagate rename</a>
+        <a href="#fix-4">Fix 4: Declare args</a>
+        <a href="#fix-5">Fix 5: Fix link</a>
+        <a href="#fix-6">Fix 6: Keep prerequisites</a>
+        <a href="#focus">Where to focus</a>
+      </nav>
+    </div>
+
+  </div>
+
+  <script type="text/markdown" id="artifact-source">
+# create-plan-task — original vs. gold fixes
+
+This is the reference fix set for an output-quality eval of the **skill-creating** meta-skill.
+We took one real skill, `create-plan-task`, which already broke several skill-authoring rules,
+and hand-built the corrected **gold** version. Each fix below shows the **original** (before) and
+the **gold** (after) side by side, the rule it satisfies, why it matters, and which eval
+assertion checks it. The bolded assertions (J1–J3) are *judgment* checks a linter cannot see —
+they are the point of the eval.
+
+Reader's job: compare before vs. after per fix and see exactly what "following the rules" changed.
+
+## Summary of the 6 fixes
+
+| # | What changed | Rule | Assertion | Kind |
+|---|--------------|------|-----------|------|
+| 1 | Description drops the caller clause "Invoked by plan-prep" | Caller-agnostic (R1) | M4 | mechanical |
+| 2 | Body stops detecting "how it was invoked"; decides from task-list state | Caller-agnostic (R1) | **J1**, M5 | judgment |
+| 3 | The rename is propagated everywhere without breaking behavior | Behavior-preserving | **J2** | judgment |
+| 4 | Declares `arguments` and references them bare as `$name` | Declare args (R3) + bare $name (R4) | M2, M3 | mechanical |
+| 5 | Fixes a broken markdown link in an example | Structural / valid links | M1 | mechanical |
+| 6 | KEEPS legitimate plan-prep prerequisite references (no over-scrub) | Don't over-correct | **J3** | judgment |
+
+---
+
+## Fix 1 — Description: remove the caller clause
+
+**Rule:** Caller-agnostic (R1). A description must say *what the skill does* and *when to use it* —
+never name who invokes it. **Assertion: M4.**
+
+**Before (original)**
+```yaml
+description: Create one implementation task in a plan-prep work folder. Writes a `task/task-NN.md`
+  file with the full Context / Implementation / Verification / Post verification tasks structure,
+  and inserts an entry in `task/task-list.md`. Invoked by `plan-prep` (Phase 2) during initial
+  breakdown AND standalone when new bugs or scope arise mid-execution. Triggers on "add a task",
+  "new task", "another task to the plan", "create plan task", or "/create-plan-task".
+```
+
+**After (gold)**
+```yaml
+description: Create one implementation task in a plan-prep work folder. Writes a `task/task-NN.md`
+  file with the full Context / Implementation / Verification / Post verification tasks structure,
+  and adds its `task/task-list.md` entry when one isn't already present. Use when adding a task to
+  an existing plan — during initial plan breakdown or when new bugs or scope surface mid-execution.
+  Triggers on "add a task", "new task", "another task to the plan", "create plan task", or
+  "/create-plan-task".
+```
+
+**Why:** "Invoked by `plan-prep` (Phase 2)" couples the skill to a specific caller. The gold keeps
+the same two scenarios (initial breakdown / mid-execution) but frames them as *when to use it*, so
+the skill reads identically no matter who triggers it.
+
+---
+
+## Fix 2 — Body: decide from STATE, not from the caller (the headline fix)
+
+**Rule:** Caller-agnostic (R1). Don't branch on how the skill was invoked; branch on observable
+state or an explicit argument. **Assertions: J1 (judgment), M5.**
+
+**Before (original)**
+```markdown
+## Modes
+
+This skill has two invocation modes. Detect mode from how the skill was invoked:
+
+| Mode | How it's invoked | task-list.md behavior |
+|------|------------------|------------------------|
+| `from-plan-prep` | Called by `plan-prep` (Phase 2 of `how-does-the-work-break-down.md`). The
+  caller passes a marker like "mode: from-plan-prep" in the invocation message. | The task-list.md
+  entry already exists (Phase 1 wrote the full wave structure). **Do not insert a new entry.** Only
+  create the `task-NN.md` file. |
+| `standalone` | Default. User invokes the skill directly mid-execution to add a new task (newly-
+  found bug, scope shift, etc.). | The task-list.md entry does not exist. **Insert it after the
+  last `- [x]` line in the `## Tasks` section**, under a `### Wave N — Added during execution`
+  heading (create the heading if missing). |
+```
+
+**After (gold)**
+```markdown
+## task-list.md: insert an entry, or not
+
+Whether to add a `task-list.md` entry depends on **whether one already exists for this task** —
+read it from the file, don't branch on how the skill was started. After computing the next task
+number (Step 1), look in `task-list.md` for an entry pointing to `task-{NN}.md`:
+
+| State of `task-list.md` | Behavior |
+|-------------------------|----------|
+| **Entry already present** — the full wave structure was written up front when the plan was broken
+  down. | **Do not insert a new entry.** Only create the `task-NN.md` file. |
+| **No entry yet** — a task added mid-execution (newly-found bug, scope shift, etc.). | **Insert it
+  after the last `- [x]` line in the `## Tasks` section**, under a `### Wave N — Added during
+  execution` heading (create the heading if missing). |
+```
+
+**Why:** The original keyed behavior on *who* called it — and on a magic `mode: from-plan-prep`
+marker the caller had to pass. The distinguishing fact was always observable: *does a task-list
+entry already exist?* The gold reads that from the file. Same behavior, zero coupling — and it now
+works no matter how it's launched. This is exactly the kind of fix `validate.py` cannot detect,
+which is why the eval grades it by judgment (J1).
+
+---
+
+## Fix 3 — Propagate the rename without breaking behavior
+
+**Rule:** A decoupling rewrite must stay behavior-preserving and internally consistent — no
+dangling references to the removed modes. **Assertion: J2 (judgment).**
+
+Every spot that referenced the old modes was updated to the state-based framing:
+
+**Before → After**
+```diff
+- - `{work-folder}/task/task-list.md` — updated only in `standalone` mode.
++ - `{work-folder}/task/task-list.md` — updated only when no entry for the task exists yet.
+
+- ### Step 6 — Update task-list.md (standalone mode only)
+- In `from-plan-prep` mode, **skip this step** — the entry already exists.
+- In `standalone` mode:
++ ### Step 6 — Update task-list.md (only when no entry exists yet)
++ If an entry for this task already exists (Step "task-list.md: insert an entry, or not"), **skip this step**.
++ Otherwise:
+
+- - Next: "Run the task with `executing-single-plan-task` skill" (standalone) / return control to plan-prep (from-plan-prep)
++ - Next: "Run the task with `executing-single-plan-task` skill"
+
+- - **Subagent does the writing.** ... Same pattern as `plan-prep` Phase 2.
++ - **Subagent does the writing.** ... Same orchestrate-then-verify pattern used elsewhere in the project.
+
+- - Updating task-list.md in `from-plan-prep` mode (causes duplicate entries)
++ - Inserting a second task-list.md entry when one already exists for the task (causes duplicates)
+```
+
+**Why:** A half-done rename is worse than none — it leaves contradictory instructions. The four
+behaviors the skill guarantees all survive: it still creates exactly one `task-NN.md`, still adds a
+list entry only when none exists (no duplicates), still keeps Final Validation last, and still skips
+the clarifying chat when the task is already fully specified.
+
+---
+
+## Fix 4 — Declare arguments, reference them bare
+
+**Rule:** Inputs must be declared as `arguments` (R3) and referenced bare as `$name` in the body
+(R4) — backticks render the literal label instead of substituting the value. **Assertions: M2, M3.**
+
+**Before (original)**
+```markdown
+argument-hint: [optional: work folder path] [optional: short task description]
+---
+...
+## Inputs
+- **First positional arg (optional):** path to the work folder ...
+- **Second positional arg (optional):** short description of the task ...
+...
+If the user did not pass a work folder path, auto-detect:
+```
+
+**After (gold)**
+```markdown
+argument-hint: [optional: work folder path] [optional: short task description]
+arguments: [work_folder, task_description]
+---
+...
+## Inputs
+- **$work_folder (optional):** path to the work folder ...
+- **$task_description (optional):** short description of the task ...
+...
+If $work_folder was not provided, auto-detect:
+```
+
+**Why:** The skill had an `argument-hint` but never declared `arguments`, and referred to inputs as
+"First/Second positional arg." Declaring them and using bare `$work_folder` / `$task_description`
+makes the inputs real substitutable values and self-documenting.
+
+---
+
+## Fix 5 — Fix the broken link
+
+**Rule:** Markdown links must resolve; `validate.py` errors on a broken relative link. **Assertion: M1.**
+
+**Before → After**
+```diff
+-      - [ ] [Task NN: Name](task-NN.md) — [one-line description] [depends on: Task XX / "none"]
++      - [ ] [Task {NN}: Name](task-{NN}.md) — [one-line description] [depends on: Task XX / "none"]
+```
+
+**Why:** Inside an example block, `](task-NN.md)` parses as a real relative link to a file that
+doesn't exist → a validator error. Using the `{NN}` placeholder marks it as a template, which the
+validator correctly skips. (Borderline: this is partly a validator limitation — it doesn't ignore
+fenced code — but the placeholder is the right authoring fix either way.)
+
+---
+
+## Fix 6 — KEEP the legitimate plan-prep references (the guard)
+
+**Rule:** Removing caller-coupling must not become over-scrubbing. References to plan-prep as a
+*prerequisite the user runs first* or as the *artifact* (`plan-prep.md`) are legitimate and stay.
+**Assertion: J3 (judgment).**
+
+**Unchanged in both original and gold (intentionally kept)**
+```markdown
+The work folder must already contain `plan-prep.md` and `task/task-list.md` — this skill does not
+bootstrap a plan from scratch.
+
+## Prerequisites
+1. `{work-folder}/plan-prep.md` exists. If not:
+   > "I can't add a task without a `plan-prep.md` in this work folder. Run the `plan-prep` skill
+   > first to establish requirements, landscape, and flow."
+```
+
+**Why:** The distinction is the whole point of Rule 1. "Invoked by plan-prep" (who calls me) is
+coupling and was removed. "plan-prep.md must exist first" (a prerequisite the user satisfies) is
+not coupling and was kept. A naive fix that deletes every mention of plan-prep would fail J3.
+
+---
+
+## Where to focus when reviewing
+
+- **Fix 2 + Fix 3 are the real test.** They are the caller-agnostic decoupling and its
+  behavior-preserving propagation — the value a linter can't measure.
+- **Fix 6 is the trap.** The easy mistake is over-correcting and scrubbing the legitimate
+  prerequisite references. Gold keeps them on purpose.
+- Fixes 1, 4, 5 are mechanical and a competent agent may get them even without the skill — they
+  are the baseline, not the differentiator.
+  </script>
+
+  <script>
+    // Scrollspy: update TOC links as sections come into view
+    const links = document.querySelectorAll('.toc a[href^="#"]');
+    const sections = document.querySelectorAll('section[id], main[id]');
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        let current = null;
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const id = entry.target.getAttribute('id');
+            if (id && entry.boundingClientRect.top < window.innerHeight / 2) {
+              current = id;
+            }
+          }
+        });
+
+        links.forEach((link) => {
+          link.removeAttribute('aria-current');
+        });
+        if (current) {
+          const activeLink = document.querySelector(`.toc a[href="#${current}"]`);
+          if (activeLink) {
+            activeLink.setAttribute('aria-current', 'true');
+          }
+        }
+      },
+      { threshold: 0 }
+    );
+
+    sections.forEach((section) => {
+      observer.observe(section);
+    });
+  </script>
+</body>
+</html>

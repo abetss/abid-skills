@@ -1,63 +1,49 @@
 {
   "skill_name": "capture-findings",
-  "notes": "Content + depth evals (NOT layout/routing — that belongs to generating-html-artifacts). These test that capture-findings (a) produces the <slug>/<slug>.md + <slug>.html pair and opens the HTML, (b) preserves depth — keeps the reasoning/options/tradeoffs it was handed, never distilling each item to a one-line verdict, (c) applies progressive disclosure judiciously — folds (or a drill-down) for items with genuine depth, plain sections for thin ones, no forced/empty folds and no invented detail, and (d) delegates rendering to generating-html-artifacts so the HTML still meets that skill's contract. All cases are Create mode (self-contained in the prompt). Update and Re-render modes require a pre-seeded <slug>/<slug>.md on disk and are verified manually, not here. The grader reads the produced .md/.html source; it does not render — a browser QA pass still covers visual correctness in both themes.",
-  "shared_assertions": [
-    {"text": "Output is a folder named after a kebab-case slug containing BOTH <slug>/<slug>.md (markdown source of truth) and <slug>/<slug>.html (rendered artifact)"},
-    {"text": "The .md is clean, readable markdown: one H1 title, a short lead/takeaway, logical ##/### sections, real - / 1. lists and | tables for tabular data (not div-faked)"},
-    {"text": "The HTML was produced via the generating-html-artifacts skill and meets that skill's contract: passes scripts/validate_artifact.py with zero ERRORS, ships auto light+dark (prefers-color-scheme, no toggle), and embeds the markdown verbatim as the <script type=\"text/markdown\" id=\"artifact-source\"> mirror"},
-    {"text": "Depth is preserved (lossless): every reasoning/option/tradeoff/specific present in the input survives into the .md — no item is reduced to a bare one-line verdict with the 'why' dropped"},
-    {"text": "Progressive disclosure is applied with judgment: items with genuine depth get a <!-- more --> fold (or an equivalent drill-down), each with a tight scannable summary up front; items with nothing behind them stay plain sections — no forced/empty folds"},
-    {"text": "No invented content: detail not present in the input is NOT fabricated to fill a fold; thin input is captured faithfully rather than padded"},
-    {"text": "Reports both file paths and opens the .html for the user"}
-  ],
+  "notes": "Two end-to-end evals over the SAME content, differing only in how the input arrives. Both are only meaningful if the skill is ACTUALLY invoked end-to-end (running inline, dispatching the generate-markdown subagent to write the .md, really calling generating-html-artifacts, really writing files) — not by an agent hand-following SKILL.md. Eval 0: content is a markdown file on disk (the easy path). Eval 1 (the important one): the content lives inline in the chat prompt, the way an assistant prints findings to the terminal before the user types /capture-findings. Because the skill now runs inline it CAN see the conversation; eval 1 passes only if the agent gathers that on-screen content and forwards it in full to the composer subagent (no over-summarizing across the handoff). Same assertions both: the .md faithfully holds the input, the .html holds everything the .md does, and the .html uses progressive disclosure.",
   "evals": [
     {
       "id": 0,
-      "name": "multi-decision-depth-preserved",
-      "prompt": "Capture this as a writeup called schema-decisions. We made three baseline data-model calls. (1) User/auth stub: we picked a minimal users table with one seeded row over a hardcoded user_id constant — the constant is less code now but Episode.user_id / Turn.author_id wouldn't be real foreign keys, so auth later means a migration + backfill; the one-row table makes the retrofit just 'stop seeding, start inserting'. (2) Soft deletes: we chose a deleted_at timestamp column over a separate archive table, because most queries already filter by status and an archive table doubles the write path; downside is every read must remember the filter, mitigated with a default scope. (3) IDs: we chose UUIDv7 over auto-increment for sortability without leaking row counts, accepting 16-byte keys. Keep all the reasoning.",
-      "expected_output": "A schema-decisions/ folder with schema-decisions.md and schema-decisions.html. The markdown has an H1 + lead, then three items each with a one-line recommend summary AND a <!-- more --> fold holding the full options/tradeoffs/why for that decision (the FK-migration reasoning, the write-path / default-scope tradeoff, the sortability-vs-key-size tradeoff). Nothing is distilled to just the verdict. HTML rendered via generating-html-artifacts, opened.",
-      "files": [],
+      "name": "capture-from-markdown-file",
+      "prompt": "I just walked you through a long analysis and proposal (it's in evals/files/proposal.md — treat that text as what I want captured). Capture it as a writeup called skill-authoring-upgrade. /capture-findings",
+      "expected_output": "A skill-authoring-upgrade/ folder containing BOTH skill-authoring-upgrade.md and skill-authoring-upgrade.html. The markdown holds the full proposal; the HTML renders it with progressive disclosure and contains everything the markdown does.",
+      "files": [
+        "evals/files/proposal.md"
+      ],
       "assertions": [
-        {"text": "All three decisions are captured with their full reasoning intact (the alternative considered, the tradeoff, and why the chosen option won) — not just the three verdicts"},
-        {"text": "Each of the three carries a short scannable summary line plus a <!-- more --> fold containing the detail"},
-        {"text": "The specific tradeoffs survive: foreign-keys-need-a-migration (decision 1), doubles-the-write-path / default-scope (decision 2), 16-byte-key cost (decision 3)"}
+        {
+          "text": "Both files exist: skill-authoring-upgrade/skill-authoring-upgrade.md AND skill-authoring-upgrade/skill-authoring-upgrade.html"
+        },
+        {
+          "text": "The markdown file contains the content of the input: every substantive part — all 6 meta-instructions, the file-by-file plan, the two new capabilities, the pulled references, and the 4 choices A–D — nothing summarized away"
+        },
+        {
+          "text": "The HTML file contains all the content that is in the markdown file (visible content and/or the embedded source mirror) — nothing dropped in rendering"
+        },
+        {
+          "text": "The HTML file uses progressive disclosure: a scannable overview up front with the deep detail behind expandable folds / drill-down, not a flat dump"
+        }
       ]
     },
     {
       "id": 1,
-      "name": "mixed-depth-no-forced-folds",
-      "prompt": "Write this up as deploy-notes. Big one: we switched the deploy from a single blue/green cutover to a canary rollout — 5% for 10 min, then 25%, then 100%, with auto-rollback on error-rate > 2%. We chose this over blue/green because blue/green doubled our infra cost during the window and gave us no early signal; the canary catches a bad release on 5% of traffic. The tradeoff is a slower full rollout (~30 min) and we needed per-stage health gates. Also, three quick housekeeping notes with no further detail: bumped the node image to 20.11, moved the staging URL to staging.internal, and the deploy Slack channel is now #deploys-v2.",
-      "expected_output": "A deploy-notes/ folder. The canary decision gets a summary + <!-- more --> fold with the cost/early-signal reasoning and the slow-rollout/health-gate tradeoffs. The three housekeeping notes stay as plain bullet/section content with NO fold (nothing behind them). HTML rendered + opened.",
+      "name": "capture-from-chat-context-inline",
+      "prompt": "I've now read everything: the current skill-creating skill (SKILL.md + 8 references + memory.md + validate.py + scaffold.py), the official skill-creator workflow, the agentskills.io evals page, and the full Claude skills doc (including the verbatim Inject dynamic context, Run skills in a subagent, frontmatter, and $name substitution sections).\n\nHere's what I found and exactly what I propose. No files edited yet — I want your sign-off first (and on the wording of the meta-instructions especially).\n\n## Where the skill actually lives\n\nCanonical source = the marketplace git repo: …/Ork/open_source/abid-plugins/plugins/meta-skilling/skills/skill-creating (remote abetss/abid-skills). The ~/.claude/skills/skill-creating copy and the plugin cache are byte-identical derivatives. I'll edit the source repo, then (your call) sync the ~/.claude/skills copy so it's live immediately; the plugin cache refreshes on reinstall.\n\n## The 6 generic meta-instructions (derived from your enrich-bookmark diff)\n\nThese are the core deliverable. Each is generic, with generic examples only. Please validate the wording:\n\n1. **Caller-agnostic.** A skill cannot know what will invoke it — a person typing /name, the model auto-loading it, another skill, or a CLI. Don't name callers, branch on \"who called me,\" or describe what the caller does before/after. If the skill needs something the caller has, take it as an argument or derive it at load time.\n2. **Description = capability + when, nothing else.** It's the only thing seen before invoking, so state what the skill accomplishes and the phrases/contexts that should trigger it — and exclude implementation details, internal mechanics, exhaustive enumerations, and the identity of whatever calls it. Lean, but never at the cost of trigger signal.\n3. **Declare arguments explicitly.** If a skill takes ≥1 argument, declare argument-hint (autocomplete shape, optional ones marked) and arguments (named, mapped to positions in order); document each argument's meaning/optionality in the body.\n4. **Reference arguments as bare $name.** In the body, write a declared argument bare ($name), never backticked — bare expands to the runtime value, backticked renders the literal label. (Confirms your existing feedback_skill_arg_vars_bare memory.)\n5. **Prefer injected dynamic context over hand-derived values.** When a value can be computed at load time, inject it with !`command` (or a ```! block) so the skill arrives carrying real data. Note: only documented substitutions expand; undocumented {placeholders} are literal text.\n6. **Every line must earn its place.** Cut words that don't change what the model does: defensive over-explanation, restating the obvious, belt-and-suspenders caveats, re-narrating steps owned elsewhere. Explain why over dictating how.\n\n## One tension I want to flag (Think-Before-Coding)\n\nYour new enrich-bookmark description (\"…Use whenever you need to produce or upgrade\") is leaner but went too far — it lost its trigger surface and will under-trigger. So meta-instruction #2 deliberately says \"lean but keep capability-first + named triggers,\" reconciling with the skill's existing pushiness guidance rather than contradicting it. (I'm not touching enrich-bookmark — just making sure the meta-rule doesn't teach under-triggering.)\n\n## How they land in the skill (file-by-file, surgical)\n\n- references/description-writing.md — add #1 (caller-agnostic) + #2 (exclusions) with a generic before/after example.\n- NEW references/arguments-and-dynamic-context.md — #3, #4, #5: the argument-hint/arguments fields, the $name/$N/$ARGUMENTS substitution table, the bare-vs-backtick rule, and !`command`/```! injection with its gotchas (line-start only, runs once, not re-scanned). This is pulled from the Claude docs you asked for.\n- references/anti-patterns.md — add short entries: naming callers, backticked $arg, hardcoding an injectable value, defensive bloat.\n- SKILL.md — add an Authoring principles block (the 6 as one-liners + links), an \"Arguments & dynamic context\" process step, two new Hard rules (#3/#4), and trim the now-duplicated lines so the body stays lean. Update the \"Read before you start\" list.\n- references/script-quality.md / scaffold.py / templates/ — left alone unless the audit flags them.\n\n## Two new capabilities you asked for\n\n- NEW agents/necessity-auditor.md — a subagent brief that reviews a target skill line-by-line (and clause/word within a line), classifying each as load-bearing / redundant / defensive-bloat / overfit, and returns a prioritized cut-list + a leaner rewrite. SKILL.md gets a \"run the necessity audit before finishing\" step. How to run it = the \"Run skills in a subagent\" doc you asked for, which I'll capture in NEW references/subagents.md.\n- Evals pairing — SKILL.md gains an opt-in step: offer to pair with you on 2–3 realistic test prompts and the with/without-skill baseline loop, backed by NEW references/evaluating.md (pulled from agentskills.io). For the heavy automation it points to the official skill-creator plugin rather than reimplementing benchmarks.\n\n## Pulled references (your 3 sources → files in the skill)\n\n1. agentskills.io evaluating-skills → references/evaluating.md\n2. Claude docs \"Inject dynamic context\" → into references/arguments-and-dynamic-context.md\n3. Claude docs \"Run skills in a subagent\" → references/subagents.md\n4. Anthropic skill-creator → pointer + distilled method in evaluating.md, not a full verbatim vendored copy (see decision B).\n\n## Then: answer \"what's extra\" by dogfooding\n\nAfter the edits, I'll run the new necessity-auditor on skill-creating itself + validate.py, give you the cut-list (likely candidates: SKILL.md's \"Anti-patterns\"/\"Hard rules\" duplicating the references, memory.md's TOC), and apply only the trims you approve.\n\n## 4 choices (my recommendation in bold — approve all or adjust)\n\n- A. Extend validate.py with 2 deterministic checks (backticked $declared-arg in body → warn; arguments without argument-hint or vice-versa → warn)? → **Yes** (cheap, enforces #3/#4).\n- B. Anthropic skill-creator: pointer + distilled method (not a stale full vendored copy)? → **Yes**; I can vendor the full text too if you prefer.\n- C. Sync the ~/.claude/skills/skill-creating copy after editing source so it's live now? → **Yes**.\n- D. Evals depth: lightweight opt-in pairing + point to official skill-creator (not building a full benchmark harness into this skill)? → **Yes**.\n\nIf this looks right, say go (or adjust any of A–D / the meta-instruction wording) and I'll implement, validate, dogfood the audit, and hand you the cut-list.\n\n/capture-findings skill-authoring-upgrade",
+      "expected_output": "A skill-authoring-upgrade/ folder containing BOTH skill-authoring-upgrade.md and skill-authoring-upgrade.html. The content to capture is present only in the conversation (the analysis above the command), NOT in any file — so the inline skill must read that chat content and forward it in full to the generate-markdown subagent. Success = the same faithful, progressive-disclosure artifact as eval 0, proving the skill captures on-screen output, not just a file path.",
       "files": [],
       "assertions": [
-        {"text": "The canary-rollout decision is captured with a fold preserving the why (blue/green cost + no early signal) and the tradeoff (slower rollout, per-stage health gates)"},
-        {"text": "The three housekeeping notes (node 20.11, staging.internal, #deploys-v2) appear as plain content WITHOUT folds — no forced/empty disclosure on items with no depth"},
-        {"text": "No detail is invented to pad the housekeeping notes into folds"}
-      ]
-    },
-    {
-      "id": 2,
-      "name": "thin-input-captured-faithfully",
-      "prompt": "Capture this as standup-summary: Today I fixed the login redirect loop (was a stale cookie), reviewed Mia's PR for the export feature, and started looking into the slow dashboard query. Blocked on nothing.",
-      "expected_output": "A standup-summary/ folder with a short, faithful markdown writeup (H1 + a few bullets) and its HTML. Because the input is thin, there are NO folds and NO invented reasoning — it just captures what was given. HTML rendered + opened.",
-      "files": [],
-      "assertions": [
-        {"text": "Captures the three items faithfully as a short writeup; does not fabricate reasoning, options, or tradeoffs that weren't in the input"},
-        {"text": "No <!-- more --> folds are used (there is no depth to hide); the output stays a plain scannable section"},
-        {"text": "Still produces the standup-summary/ folder with both .md and .html and opens the HTML"}
-      ]
-    },
-    {
-      "id": 3,
-      "name": "findings-with-diagram",
-      "prompt": "Capture our auth-refactor findings as auth-refactor. Background: we replaced session cookies with short-lived JWTs plus a refresh token. The token flow: client logs in, gets a 15-min access JWT + a 30-day refresh token (httpOnly cookie); on 401 the client silently calls /refresh to mint a new access token; refresh tokens rotate on use and are revocable server-side. We chose rotation-on-use over static refresh tokens because a leaked static token is valid for 30 days, whereas a rotated one is detectable (reuse of an old token signals theft and we revoke the family). Tradeoff: we need a server-side token-family table. Include a diagram of the refresh flow. Open question: do we need to handle refresh races from multiple tabs?",
-      "expected_output": "An auth-refactor/ folder. The markdown keeps the full reasoning for rotation-on-use (leaked-static-token risk vs. detectable-reuse) and its tradeoff (token-family table) behind a fold, includes a ```mermaid``` block for the refresh flow (sequenceDiagram or flowchart) in the detail, and keeps the open question. HTML rendered via generating-html-artifacts with the mermaid pre-rendered to dual-theme inline SVG; opened.",
-      "files": [],
-      "assertions": [
-        {"text": "The rotation-on-use reasoning and its tradeoff (server-side token-family table) are preserved, not flattened to a verdict"},
-        {"text": "A mermaid diagram of the refresh flow is included in the markdown source (a fenced ```mermaid``` block), placed in the detail rather than the summary"},
-        {"text": "The open question (multi-tab refresh races) is carried over, not dropped"},
-        {"text": "In the rendered HTML the mermaid block is pre-rendered to inline SVG with light + dark variants (no CDN mermaid at view time)"}
+        {
+          "text": "Both files exist: skill-authoring-upgrade/skill-authoring-upgrade.md AND skill-authoring-upgrade/skill-authoring-upgrade.html"
+        },
+        {
+          "text": "The markdown file contains the content of the input: every substantive part — all 6 meta-instructions, the file-by-file plan, the two new capabilities, the pulled references, and the 4 choices A–D — nothing summarized away"
+        },
+        {
+          "text": "The HTML file contains all the content that is in the markdown file (visible content and/or the embedded source mirror) — nothing dropped in rendering"
+        },
+        {
+          "text": "The HTML file uses progressive disclosure: a scannable overview up front with the deep detail behind expandable folds / drill-down, not a flat dump"
+        }
       ]
     }
   ]

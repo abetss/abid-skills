@@ -19,9 +19,4 @@ Only `SKILL.md` is required. Every subfolder below is optional — add one only 
 
 Use forward slashes in all file paths, even on Windows. Windows-style backslash paths cause errors on Unix systems. Relative links (`references/naming.md`) only — no `@path/file.md` force-load syntax.
 
-## Anti-patterns
-
-- **`@path/file.md` cross-references.** These force-load the referenced file into context whether Claude needs it or not. Use plain relative markdown links — Claude decides when to read them.
-- **Dumping everything into SKILL.md because there's no hard limit.** Over 500 lines the body starts crowding out the rest of the conversation. Split into `references/` as soon as a topic gets detailed.
-- **Empty folders "in case we need them later".** Add folders when you have content for them, not before.
-- **README.md inside the skill folder.** Use the repo-level README instead.
+Failure modes for folder structure are collected in `anti-patterns.md` (empty folders, `@path` force-loads, `README.md` in the folder, dumping everything into SKILL.md).

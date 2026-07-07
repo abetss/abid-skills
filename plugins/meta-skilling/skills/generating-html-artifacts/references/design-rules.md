@@ -136,7 +136,7 @@ Keep the mirror in sync with the visible content. It is the canonical machine-re
 
 ## Generation-time pitfalls (QA every output)
 
-The templates are correct, but *adapting* them re-introduces these bugs. Every one of them only shows up when you open the artifact — so **open every generated artifact in a browser and check it in both light and dark before declaring done** (flip `prefers-color-scheme`, don't just read the code).
+The templates are correct, but *adapting* them re-introduces these bugs — and `validate_artifact.py` already catches the hard rules automatically. A **simple content/document artifact is self-contained static HTML and needs no browser check** — opening the file is enough. But the pitfalls below only surface when you open an **interactive or diagram** artifact, so for those **open the file in a browser** (`open <file>.html` — never spin up a web server) and check both light and dark before declaring done (flip `prefers-color-scheme`, don't just read the code).
 
 - **Quotes — get the context right (two different rules):**
   - *Inside `<script>` JS strings:* an apostrophe in content (`'You've connected'`) inside a single-quoted string is a syntax error that kills the *entire* script — every handler silently stops. Use double quotes (`"You're set"`) or escape (`\'`).

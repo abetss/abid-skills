@@ -7,6 +7,7 @@ A skill that doesn't trigger is dead weight; a skill that triggers badly is nois
 - Triggering tests (should/should-not queries)
 - Functional tests (does the output work)
 - Trigger debugging with a fresh session
+- Test across the models you'll run on
 - The "iterate on a single task first" loop
 - Under- vs over-triggering diagnostics
 
@@ -59,6 +60,16 @@ Claude will paraphrase the description back. Compare its paraphrase to your inte
 - Paraphrase is missing a context you care about → add that context to the description
 - Paraphrase includes a context you don't want → add a negative scope clause or tighten the domain
 - Paraphrase is generic ("helps with files") → description is too vague; add specific phrases and keywords
+
+## Test across the models you'll run on
+
+A skill is an addition to a model, so its effectiveness rides on the underlying model. If the skill will run on more than one (e.g. Haiku for cheap/fast paths, Sonnet, Opus), test it on each:
+
+- **Haiku** (fast, economical) — does the skill give *enough* guidance, or does it assume reasoning the smaller model won't do unprompted?
+- **Sonnet** (balanced) — is the skill clear and efficient?
+- **Opus** (strong reasoning) — does the skill avoid over-explaining things the model already knows?
+
+What's perfect for Opus can be too terse for Haiku. Aim for instructions that hold up on the weakest model you'll target. If a skill is pinned to one model (e.g. via a subagent), test only that one.
 
 ## Iterate on a single task first
 
