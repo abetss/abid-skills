@@ -1,5 +1,5 @@
 ---
-name: abid/skill-creating
+name: skill-creating
 description: Creates and improves Claude skills — scaffolds folders, writes triggering descriptions, applies progressive disclosure, validates structure, and adds memory or templates. Invoke only via the `/skill-creating` slash command.
 disable-model-invocation: true
 ---

@@ -1,6 +1,6 @@
 ---
 name: inline-code-review-responder
-description: Resolves inline code review comments the user left as `// code review: <feedback>` or `// todo human review: <feedback>` (or the equivalent in `#`, `/* */`, `<!-- -->`, etc.). Scoped to changed files only. For each marker, either applies the requested change and removes the marker, or — if the comment reads as a question or the agent has its own clarifying question — leaves a `code review ai response: <reply>` line directly beneath. Use when the user says "respond to my code reviews", "address my inline comments", "go through my code review notes", or invokes `/inline-code-review-responder`.
+description: 'Resolves inline code review comments the user left as `// code review: <feedback>` or `// todo human review: <feedback>` (or the equivalent in `#`, `/* */`, `<!-- -->`, etc.). Scoped to changed files only. For each marker, either applies the requested change and removes the marker, or — if the comment reads as a question or the agent has its own clarifying question — leaves a `code review ai response: <reply>` line directly beneath. Use when the user says "respond to my code reviews", "address my inline comments", "go through my code review notes", or invokes `/inline-code-review-responder`.'
 ---
 
 # Inline Code Review Responder

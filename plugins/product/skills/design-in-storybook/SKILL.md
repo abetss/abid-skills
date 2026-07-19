@@ -1,7 +1,7 @@
 ---
 name: design-in-storybook
 description: Build UI component variants in the project's Storybook. Scaffolds .tsx and .stories.tsx files for the variants in a given folder, applies the project's design system, and verifies visual rendering via Chrome MCP.
-argument-hint: [component or feature name]
+argument-hint: "[component or feature name]"
 ---
 
 # Design in Storybook

@@ -1,7 +1,7 @@
 ---
 name: plan-prep
 description: Modular engineering planning — from requirements intake through implementation-ready tasks. Composable Step selected per feature. Replaces separate plan-prep and plan-implement workflows.
-argument-hint: [work folder path]
+argument-hint: "[work folder path]"
 ---
 
 # Plan Preparation & Implementation Planning

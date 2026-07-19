@@ -1,7 +1,7 @@
 ---
 name: design-discovery
 description: Team-based design process that discovers all roles, pages, states, flows, interactions, and accessibility contracts for a UI feature before any visual design begins.
-argument-hint: [feature name or requirements path]
+argument-hint: "[feature name or requirements path]"
 ---
 
 # Design Discovery

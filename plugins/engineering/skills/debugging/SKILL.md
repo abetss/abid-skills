@@ -1,7 +1,7 @@
 ---
 name: debugging
 description: Use when encountering any bug, test failure, unexpected behavior, performance problem, build failure, or production incident.
-argument-hint: [bug description, error message, or issue reference]
+argument-hint: "[bug description, error message, or issue reference]"
 ---
 
 # Debugging

@@ -1,7 +1,7 @@
 ---
 name: create-plan-task
 description: Create one implementation task in a plan-prep work folder. Writes a `task/task-NN.md` file with the full Context / Implementation / Verification / Post verification tasks structure, and adds its `task/task-list.md` entry when one isn't already present. Use when adding a task to an existing plan — during initial plan breakdown or when new bugs or scope surface mid-execution. Triggers on "add a task", "new task", "another task to the plan", "create plan task", or "/create-plan-task".
-argument-hint: [optional: work folder path] [optional: short task description]
+argument-hint: "[optional: work folder path] [optional: short task description]"
 arguments: [work_folder, task_description]
 ---
 

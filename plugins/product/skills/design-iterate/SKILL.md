@@ -1,7 +1,7 @@
 ---
 name: design-iterate
 description: Use when designing or refining a UI component or page through multiple iterations of variants and feedback rounds.
-argument-hint: [feature or component name]
+argument-hint: "[feature or component name]"
 ---
 
 # Design Iterate
