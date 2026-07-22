@@ -1,0 +1,215 @@
+<!--
+COMPONENT: flowchart
+WHEN: a process, pipeline, or decision flow where each step has detail worth showing on demand (what runs, how long, how it can fail). Steps are real buttons — clicking or keyboard-activating one highlights it and swaps its detail into the sticky side panel.
+AVOID: for static structure diagrams with no per-step detail (use diagram-mermaid), or for ASCII box diagrams (use diagram-excalidraw).
+SCHEMA: per flowchart — a sequence of steps (each: key, title, one-line meta, variant, and a detail block with heading + meta + body + optional pre.code sample); branches come after a decision step as labeled parallel lanes.
+VARIANTS: step variants via classes — default process step, .is-decision (accent-tinted gate), .is-failure (destructive border, red lane), .is-terminal (success border).
+ASSEMBLY: copy the <style> block into the page's == COMPONENT STYLES == slot, the HTML
+  fragment into a <section>, and the <script> just before the scrollspy script.
+  Multiple instances per page are supported (the script loops over every .c-flowchart).
+  Keep each detail block's data-step matching its button's data-step.
+-->
+<style>
+  .c-flowchart{display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:32px; align-items:start}
+
+  /* ---- flow column (boxes + arrows) ---- */
+  .c-flowchart-flow{background:var(--card); border:1px solid var(--border);
+                    border-radius:var(--radius); padding:32px}
+  .c-flowchart-step{display:block; width:100%; max-width:460px; margin:0 auto;
+                    padding:14px 20px; text-align:center; cursor:pointer; font-family:inherit;
+                    color:var(--foreground); background:var(--card);
+                    border:2px solid var(--border); border-radius:12px}
+  .c-flowchart-step-title{display:block; font-size:18px; font-weight:600; line-height:1.4}
+  .c-flowchart-step-meta{display:block; margin-top:2px; font-size:15px; color:var(--muted-foreground)}
+  .c-flowchart-step:hover{border-color:var(--primary)}
+  .c-flowchart-step.is-decision{background:var(--accent); color:var(--accent-foreground)}
+  .c-flowchart-step.is-decision .c-flowchart-step-meta{color:var(--accent-foreground)}
+  .c-flowchart-step.is-failure{border-color:var(--destructive)}
+  .c-flowchart-step.is-terminal{border-color:var(--success)}
+  .c-flowchart-step.is-active{border-color:var(--primary); box-shadow:0 0 0 2px var(--primary)}
+
+  .c-flowchart-arrow{position:relative; width:2px; height:28px; margin:4px auto; background:var(--border)}
+  .c-flowchart-arrow::after{content:""; position:absolute; left:50%; bottom:-1px;
+                            transform:translateX(-50%);
+                            border:6px solid transparent; border-top:8px solid var(--muted-foreground)}
+  .c-flowchart-arrow.is-negative{width:0; background:none; border-left:2px dashed var(--destructive)}
+  .c-flowchart-arrow.is-negative::after{border-top-color:var(--destructive)}
+
+  .c-flowchart-branches{display:grid; grid-template-columns:1fr 1.4fr; gap:32px; margin-top:8px}
+  .c-flowchart-edgelabel{display:block; margin:0 0 4px; text-align:center;
+                         font-size:14px; font-weight:700; letter-spacing:.06em;
+                         text-transform:uppercase; color:var(--muted-foreground)}
+  .c-flowchart-edgelabel.is-negative{color:var(--destructive)}
+  .c-flowchart-loopnote{margin:8px 0 0; text-align:center; font-size:14px; color:var(--muted-foreground)}
+
+  .c-flowchart-legend{display:flex; flex-wrap:wrap; gap:24px; margin-top:24px;
+                      padding-top:16px; border-top:1px solid var(--border);
+                      font-size:14px; color:var(--foreground)}
+  .c-flowchart-legend span{display:inline-flex; align-items:center; gap:8px}
+  .c-flowchart-chip{width:24px; height:16px; border:2px solid var(--border);
+                    border-radius:5px; background:var(--card)}
+  .c-flowchart-chip.is-decision{background:var(--accent)}
+  .c-flowchart-chip.is-failure{border-color:var(--destructive)}
+  .c-flowchart-chip.is-terminal{border-color:var(--success)}
+
+  /* ---- sticky detail panel ---- */
+  .c-flowchart-panel{position:sticky; top:24px; background:var(--card);
+                     border:1px solid var(--border); border-radius:var(--radius); padding:24px}
+  .c-flowchart-hint{margin:0 0 16px; font-size:14px; font-weight:700; letter-spacing:.08em;
+                    text-transform:uppercase; color:var(--muted-foreground)}
+  .c-flowchart-detail-title{margin:0 0 4px; font-size:20px}
+  .c-flowchart-detail-meta{margin:0 0 12px; font-size:15px; color:var(--muted-foreground)}
+  .c-flowchart-detail p{font-size:17px; margin:0 0 12px}
+
+  @media (max-width:900px){
+    .c-flowchart{grid-template-columns:1fr}
+    .c-flowchart-panel{position:static}
+  }
+  @media (max-width:700px){
+    .c-flowchart-branches{grid-template-columns:1fr}
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .c-flowchart-step{transition:border-color .15s, box-shadow .15s}
+  }
+</style>
+
+<div class="c-flowchart">
+  <div class="c-flowchart-flow">
+    <button type="button" class="c-flowchart-step" data-step="branch" aria-pressed="false">
+      <span class="c-flowchart-step-title">Push a branch</span>
+      <span class="c-flowchart-step-meta">trigger · instant</span>
+    </button>
+    <div class="c-flowchart-arrow" aria-hidden="true"></div>
+    <button type="button" class="c-flowchart-step" data-step="ci" aria-pressed="false">
+      <span class="c-flowchart-step-title">CI checks</span>
+      <span class="c-flowchart-step-meta">lint + tests · ~6 min</span>
+    </button>
+    <div class="c-flowchart-arrow" aria-hidden="true"></div>
+    <button type="button" class="c-flowchart-step is-decision" data-step="review" aria-pressed="false">
+      <span class="c-flowchart-step-title">Review approved?</span>
+      <span class="c-flowchart-step-meta">decision · one maintainer</span>
+    </button>
+
+    <div class="c-flowchart-branches">
+      <div class="c-flowchart-branch">
+        <span class="c-flowchart-edgelabel is-negative">changes requested</span>
+        <div class="c-flowchart-arrow is-negative" aria-hidden="true"></div>
+        <button type="button" class="c-flowchart-step is-failure" data-step="revise" aria-pressed="false">
+          <span class="c-flowchart-step-title">Revise and push again</span>
+          <span class="c-flowchart-step-meta">back to the author</span>
+        </button>
+        <p class="c-flowchart-loopnote">↩ loops back to CI checks</p>
+      </div>
+      <div class="c-flowchart-branch">
+        <span class="c-flowchart-edgelabel">approved</span>
+        <div class="c-flowchart-arrow" aria-hidden="true"></div>
+        <button type="button" class="c-flowchart-step" data-step="merge" aria-pressed="false">
+          <span class="c-flowchart-step-title">Squash merge to main</span>
+          <span class="c-flowchart-step-meta">github · ~10 s</span>
+        </button>
+        <div class="c-flowchart-arrow" aria-hidden="true"></div>
+        <button type="button" class="c-flowchart-step" data-step="deploy" aria-pressed="false">
+          <span class="c-flowchart-step-title">Deploy to production</span>
+          <span class="c-flowchart-step-meta">actions · ~4 min</span>
+        </button>
+        <div class="c-flowchart-arrow" aria-hidden="true"></div>
+        <button type="button" class="c-flowchart-step is-terminal" data-step="done" aria-pressed="false">
+          <span class="c-flowchart-step-title">Live on prod</span>
+          <span class="c-flowchart-step-meta">terminal · status posted</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="c-flowchart-legend">
+      <span><i class="c-flowchart-chip" aria-hidden="true"></i> step</span>
+      <span><i class="c-flowchart-chip is-decision" aria-hidden="true"></i> decision</span>
+      <span><i class="c-flowchart-chip is-failure" aria-hidden="true"></i> failure path</span>
+      <span><i class="c-flowchart-chip is-terminal" aria-hidden="true"></i> terminal</span>
+    </div>
+  </div>
+
+  <aside class="c-flowchart-panel" aria-live="polite">
+    <p class="c-flowchart-hint">Select a step for details</p>
+
+    <div class="c-flowchart-detail" data-step="branch">
+      <h3 class="c-flowchart-detail-title">Push a branch</h3>
+      <p class="c-flowchart-detail-meta">trigger · instant</p>
+      <p>Any push to a feature branch opens (or updates) the pull request and queues the CI
+         workflow. Nothing reaches <code>main</code> until every later step passes.</p>
+      <pre class="code">git push -u origin feat/search-filters</pre>
+    </div>
+
+    <div class="c-flowchart-detail" data-step="ci" hidden>
+      <h3 class="c-flowchart-detail-title">CI checks</h3>
+      <p class="c-flowchart-detail-meta">github actions · ~6 min</p>
+      <p>Runs ESLint, <code>tsc --noEmit</code>, and the Vitest suite in parallel jobs.
+         A red job blocks merge and posts the failing shard back to the PR.</p>
+      <pre class="code">jobs:
+  verify:
+    run: pnpm lint &amp;&amp; pnpm typecheck &amp;&amp; pnpm test</pre>
+    </div>
+
+    <div class="c-flowchart-detail" data-step="review" hidden>
+      <h3 class="c-flowchart-detail-title">Review approved?</h3>
+      <p class="c-flowchart-detail-meta">decision · one maintainer approval required</p>
+      <p>Branch protection requires one approving review from a maintainer with no
+         unresolved threads. Requested changes send the branch back to the author;
+         CI re-runs on the next push.</p>
+    </div>
+
+    <div class="c-flowchart-detail" data-step="revise" hidden>
+      <h3 class="c-flowchart-detail-title">Revise and push again</h3>
+      <p class="c-flowchart-detail-meta">failure path · author</p>
+      <p>The author addresses the review comments, amends or adds commits, and pushes.
+         The loop back through CI is expected — median is two rounds per PR.</p>
+    </div>
+
+    <div class="c-flowchart-detail" data-step="merge" hidden>
+      <h3 class="c-flowchart-detail-title">Squash merge to main</h3>
+      <p class="c-flowchart-detail-meta">github · ~10 s</p>
+      <p>The PR is squash-merged so <code>main</code> stays one commit per change.
+         The merge commit tags the release notes draft automatically.</p>
+      <pre class="code">gh pr merge --squash --auto</pre>
+    </div>
+
+    <div class="c-flowchart-detail" data-step="deploy" hidden>
+      <h3 class="c-flowchart-detail-title">Deploy to production</h3>
+      <p class="c-flowchart-detail-meta">github actions · ~4 min</p>
+      <p>The deploy workflow builds the image, pushes it to the registry, and rolls it
+         out. A failed health check aborts the rollout and reverts automatically.</p>
+      <pre class="code">on:
+  push:
+    branches: [main]</pre>
+    </div>
+
+    <div class="c-flowchart-detail" data-step="done" hidden>
+      <h3 class="c-flowchart-detail-title">Live on prod</h3>
+      <p class="c-flowchart-detail-meta">terminal · ~11 min total</p>
+      <p>Health checks green, the commit status flips to <code>success</code>, and a
+         summary lands in <code>#releases</code>. The change is live for all users.</p>
+    </div>
+  </aside>
+</div>
+
+<script>
+(function(){
+  document.querySelectorAll('.c-flowchart').forEach(function(chart){
+    var steps   = chart.querySelectorAll('.c-flowchart-step');
+    var details = chart.querySelectorAll('.c-flowchart-detail');
+    function select(step){
+      steps.forEach(function(s){
+        s.classList.remove('is-active');
+        s.setAttribute('aria-pressed','false');
+      });
+      step.classList.add('is-active');
+      step.setAttribute('aria-pressed','true');
+      var key = step.getAttribute('data-step');
+      details.forEach(function(d){ d.hidden = d.getAttribute('data-step') !== key; });
+    }
+    steps.forEach(function(s){
+      s.addEventListener('click', function(){ select(s); });
+    });
+    if (steps.length) select(steps[0]);
+  });
+})();
+</script>

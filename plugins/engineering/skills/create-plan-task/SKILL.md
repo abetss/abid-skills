@@ -86,6 +86,7 @@ Read whichever of these exist (skip silently if absent):
 - `{work-folder}/code-review.md` — if the standalone task is a code-review follow-up
 - `{work-folder}/qa.md` — if the standalone task is a QA follow-up
 - Design artifacts referenced by `plan-prep.md` (`design-discovery-result.md`, `view-model-props.md`, etc.)
+- The project's knowledge-base index (`a-kb/table-of-content.md`, or the repo's equivalent docs/KB table of contents) — scan it for EVERY task. Based on what this specific task touches, decide which listed guides are relevant, and pass them to the subagent in Step 4 so it reads them in full, cites them in the task's `Conventions / SOPs / Skills / Rules` block, and makes the Implementation follow them. The relevant set is task-specific — re-decide it per task from the index; never assume a fixed list, and never skip the scan. These are how domain conventions that aren't auto-loaded `.claude/rules/` reach the task.
 
 You only need to skim — the detailed reading is done by the subagent in Step 4.
 
@@ -130,6 +131,7 @@ Open the file. Confirm:
 - `## Post verification tasks` exists as a placeholder with the Code Review follow-ups / QA follow-ups structure and the reset-rule note
 - Every actionable item is a `- [ ]` checkbox (not a numbered list, not a plain bullet)
 - QA cases (when present) are inline in full detail (preconditions, numbered steps, expected, single `- [ ] Pass` checkbox), not linked out to `qa.md`
+- Knowledge-base guides relevant to what this task touches (matched from the KB index in Step 2) are cited in the `Conventions / SOPs / Skills / Rules` block and reflected in the Implementation
 - Paths are project-relative (except skill paths under `/Users/abtinghods/.claude/skills/`)
 
 If any of the above is missing, send the subagent a targeted follow-up to fix only that gap. Do not rewrite the whole file.
@@ -196,6 +198,7 @@ End with a terse summary:
 - Asking the user a script of questions when the answer is already in `plan-prep.md`
 - Updating task-list.md in `from-plan-prep` mode (causes duplicate entries)
 - Numbered lists (`1.`, `2.`) or plain bullets for actionable items — every actionable item is `- [ ]`
+- Skipping the knowledge-base index scan — writing a task without checking the KB table of contents for guides relevant to what the task touches
 
 ## Files
 

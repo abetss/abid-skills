@@ -1,0 +1,50 @@
+<!--
+COMPONENT: details-fold
+WHEN: content that has a natural overview→detail split — an option with a one-line verdict up front and the full reasoning behind a click, FAQs, per-item deep dives in a list. Keeps the page scannable without losing depth.
+AVOID: don't hide critical warnings or the main conclusion behind a fold; don't nest folds inside folds.
+SCHEMA: per fold: title (h3), an always-visible summary line (the verdict/teaser), and the detail body (prose, lists, code — anything).
+VARIANTS: start open by adding the `open` attribute to the first fold.
+ASSEMBLY: copy the <style> block into the page's == COMPONENT STYLES == slot, the HTML fragment into a <section>. No script — native <details>/<summary> is keyboard-accessible out of the box.
+-->
+<style>
+  /* details-fold — scoped under .c-fold (native disclosure, no JS) */
+  .c-fold{background:var(--card); border:1px solid var(--border);
+          border-radius:var(--radius); padding:4px 26px; margin:20px 0}
+  .c-fold>summary{list-style:none; cursor:pointer; padding:20px 0;
+                  display:flex; align-items:flex-start; gap:16px}
+  .c-fold>summary::-webkit-details-marker{display:none}
+  .c-fold>summary::after{content:"▸"; margin-left:auto; color:var(--primary);
+                         font-size:18px; line-height:1.4; flex:none}
+  .c-fold[open]>summary::after{content:"▾"}
+  .c-fold-front{flex:1}
+  .c-fold-front h3{margin:0 0 4px; font-size:21px}
+  .c-fold-sub{margin:0; font-size:16px; color:var(--muted-foreground); max-width:72ch}
+  .c-fold-detail{padding:4px 0 24px; border-top:1px solid var(--border); margin-top:4px}
+  .c-fold-detail>:first-child{margin-top:16px}
+</style>
+
+<details class="c-fold" open>
+  <summary>
+    <div class="c-fold-front">
+      <h3>Option A — Postgres with a TTL sweeper</h3>
+      <p class="c-fold-sub">Recommended: zero new infrastructure, and our access patterns are already relational.</p>
+    </div>
+  </summary>
+  <div class="c-fold-detail">
+    <p>Sessions live in a <code>sessions</code> table with a <code>expires_at</code> index; a 1-minute sweeper job deletes expired rows. Reads are a single indexed lookup (~1&nbsp;ms p95 in staging), and writes ride the existing replication we already monitor.</p>
+    <p>The tradeoff is write volume: at peak we expect ~800 writes/s to one table, well inside our headroom but worth a load test before cutover.</p>
+  </div>
+</details>
+
+<details class="c-fold">
+  <summary>
+    <div class="c-fold-front">
+      <h3>Option B — Managed Redis</h3>
+      <p class="c-fold-sub">Viable fallback: fastest reads, but adds a new stateful system to operate.</p>
+    </div>
+  </summary>
+  <div class="c-fold-detail">
+    <p>Redis gives sub-millisecond reads and native TTLs, so no sweeper job. The cost is operational: failover semantics, a new monitoring surface, and a persistence model (AOF everysec) we would need to learn before trusting it with auth state.</p>
+    <p>If the Postgres load test misses the latency budget by more than 2×, this is the path we revisit first.</p>
+  </div>
+</details>

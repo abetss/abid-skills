@@ -1,0 +1,22 @@
+<!--
+COMPONENT: section
+WHEN: the standard top-level topic block of a composed page — gives every topic an anchor for the sidebar TOC/scrollspy, an optional eyebrow/kicker above the h2, and an optional lede. Most sections of most artifacts should use this wrapper.
+AVOID: don't nest sections inside sections for sub-parts — use an h3 + prose, a card, or details-fold instead.
+SCHEMA: id (anchor, must match the TOC link), eyebrow (optional short kicker, ≤ 6 words), title (h2), optional lede (1-2 sentences), then any body content — prose and/or other components.
+VARIANTS: with eyebrow / without; lede optional. Nested TOC: when a section has 3+ h3 subsections worth jumping to, give each h3 an id and add a matching `<a class="sub" href="#h3-id">` under the section's link in the sidebar TOC — the shell styles and scrollspies sub-entries.
+ASSEMBLY: copy the <style> block into the page's == COMPONENT STYLES == slot, and the HTML fragment into <main> — this fragment IS the <section>; other components go inside it. No script.
+-->
+<style>
+  /* section — scoped under .c-section */
+  .c-section .c-eyebrow{font-size:14px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
+                        color:var(--primary); margin:0 0 8px}
+  .c-section .c-lede{font-size:20px; line-height:1.6; color:var(--muted-foreground);
+                     max-width:72ch; margin:0 0 16px}
+</style>
+
+<section id="cache-strategy" class="c-section" aria-labelledby="cache-strategy-h">
+  <p class="c-eyebrow">Phase 2 · Backend</p>
+  <h2 id="cache-strategy-h">Cache invalidation strategy</h2>
+  <p class="c-lede">We keep the read path simple: one cache layer, explicit invalidation events, and no TTL guessing on the hot path.</p>
+  <p>Every write to the sessions store publishes an <code>invalidate:user</code> event on the internal bus. Edge nodes subscribe and drop the affected keys within ~50&nbsp;ms, so reads after writes never serve stale session data. Keys that are expensive to recompute — mostly aggregated dashboard stats — carry a 5-minute TTL as a safety net, but correctness never depends on it.</p>
+</section>

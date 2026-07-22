@@ -1,0 +1,157 @@
+<!--
+COMPONENT: diagram-excalidraw
+WHEN: the source markdown contains a hand-drawn ASCII/ANSI box diagram (box-drawing chars) that deserves a real rendered diagram; converts it into an embedded Excalidraw scene that renders as a crisp inline SVG, with an optional interactive live canvas and the original ASCII as offline fallback.
+AVOID: for ordinary code blocks, for ```mermaid diagrams (use diagram-mermaid), or when the artifact must work fully offline as its primary mode (the SVG/canvas need the CDN once).
+SCHEMA: per diagram — an Excalidraw shorthand-elements JSON array (type/id/x/y/width/height + label/arrow bindings, see references/excalidraw-diagrams.md), an aria-label describing the diagram, and the original ASCII block (HTML-escaped) as fallback. Element colors come from the fixed Excalidraw palette in references/excalidraw-diagrams.md — that palette is content art, not page chrome, so explicit hex there is fine.
+VARIANTS: none — every diagram gets the same figure; the reader can toggle it to an interactive canvas.
+ASSEMBLY (three different destinations — read carefully):
+  1. ONCE PER PAGE, into <head> (before any <script type="module">): copy the <link>,
+     the EXCALIDRAW_ASSET_PATH <script>, and the importmap <script> below.
+  2. ONCE PER PAGE, into the == COMPONENT STYLES == slot: copy the <style> block.
+  3. PER DIAGRAM, into the <section> where the ASCII block sat: copy one <figure>
+     (canvas div + toggle button + scene JSON + ASCII fallback pre). Repeat per diagram.
+  4. ONCE PER PAGE, just before the scrollspy script: copy the <script type="module"> loader.
+  This is the ONE sanctioned CDN exception (esm.sh + jsdelivr, pinned) — do not remove it
+  or "fix" it. Offline, the figure degrades to the ASCII fallback and the artifact never breaks.
+-->
+
+<!-- ===== (1) ONCE PER PAGE — paste into <head>, before any module script ===== -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@excalidraw/excalidraw@0.18.0/dist/prod/index.css">
+<script>window.EXCALIDRAW_ASSET_PATH = "https://cdn.jsdelivr.net/npm/@excalidraw/excalidraw@0.18.0/dist/prod/";</script>
+<script type="importmap">
+{"imports":{
+  "react":"https://esm.sh/react@19.0.0",
+  "react/jsx-runtime":"https://esm.sh/react@19.0.0/jsx-runtime",
+  "react-dom":"https://esm.sh/react-dom@19.0.0",
+  "react-dom/client":"https://esm.sh/react-dom@19.0.0/client"}}
+</script>
+
+<!-- ===== (2) ONCE PER PAGE — paste into the == COMPONENT STYLES == slot ===== -->
+<style>
+  .c-diagram-excalidraw{margin:32px 0}
+  .c-diagram-excalidraw-canvas{display:none; background:var(--card);
+    border:1px solid var(--border); border-radius:var(--radius); overflow:hidden}
+  .c-diagram-excalidraw-canvas svg{display:block; width:100%; height:auto}
+  .c-diagram-excalidraw.is-live .c-diagram-excalidraw-canvas{display:block}
+  .c-diagram-excalidraw.is-live .c-diagram-excalidraw-fallback{display:none}
+  .c-diagram-excalidraw-canvas.is-interactive{height:480px}
+  .c-diagram-excalidraw-canvas.is-interactive svg{height:100%}
+  /* UI chrome — strong --primary fill (per excalidraw-diagrams.md), not a pale tint */
+  .c-diagram-excalidraw-toggle{display:none; margin-top:16px; padding:10px 16px;
+    font-size:15px; font-weight:600; font-family:inherit; cursor:pointer;
+    color:var(--primary-foreground); background:var(--primary);
+    border:none; border-radius:8px}
+  .c-diagram-excalidraw.is-live .c-diagram-excalidraw-toggle{display:inline-block}
+  .c-diagram-excalidraw-fallback{margin:0; overflow-x:auto;
+    background:var(--code-bg); color:var(--code-fg);
+    border:1px solid var(--border); border-radius:10px; padding:16px 18px;
+    font:15px/1.6 ui-monospace,Menlo,Monaco,Consolas,monospace}
+  .c-diagram-excalidraw figcaption{margin-top:14px; font-size:16px; color:var(--muted-foreground)}
+</style>
+
+<!-- ===== (3) PER DIAGRAM — one <figure> per scene, inside a <section> ===== -->
+<figure class="c-diagram-excalidraw">
+  <div class="c-diagram-excalidraw-canvas" role="img"
+       aria-label="Diagram: source markdown flows through the artifact generator and comes out as an HTML artifact"></div>
+  <button type="button" class="c-diagram-excalidraw-toggle" hidden>Live canvas</button>
+  <script type="application/json" class="c-diagram-excalidraw-scene">
+  [
+    { "type": "text", "id": "t1", "x": 336, "y": 40, "text": "Generation pipeline", "fontSize": 24 },
+    { "type": "rectangle", "id": "r1", "x": 60, "y": 120, "width": 200, "height": 80,
+      "roundness": { "type": 3 }, "strokeColor": "#4a9eed", "backgroundColor": "#a5d8ff",
+      "label": { "text": "Source markdown", "fontSize": 18 } },
+    { "type": "arrow", "id": "a1", "x": 260, "y": 160, "width": 80, "height": 0,
+      "points": [[0,0],[80,0]], "endArrowhead": "arrow",
+      "startBinding": { "elementId": "r1", "fixedPoint": [1, 0.5] },
+      "endBinding": { "elementId": "r2", "fixedPoint": [0, 0.5] } },
+    { "type": "rectangle", "id": "r2", "x": 340, "y": 120, "width": 220, "height": 80,
+      "roundness": { "type": 3 }, "strokeColor": "#8b5cf6", "backgroundColor": "#d0bfff",
+      "label": { "text": "Artifact generator", "fontSize": 18 } },
+    { "type": "arrow", "id": "a2", "x": 560, "y": 160, "width": 80, "height": 0,
+      "points": [[0,0],[80,0]], "endArrowhead": "arrow",
+      "startBinding": { "elementId": "r2", "fixedPoint": [1, 0.5] },
+      "endBinding": { "elementId": "r3", "fixedPoint": [0, 0.5] } },
+    { "type": "rectangle", "id": "r3", "x": 640, "y": 120, "width": 200, "height": 80,
+      "roundness": { "type": 3 }, "strokeColor": "#22c55e", "backgroundColor": "#b2f2bb",
+      "label": { "text": "HTML artifact", "fontSize": 18 } }
+  ]
+  </script>
+  <pre class="c-diagram-excalidraw-fallback"><code>                Generation pipeline
+
+┌──────────────────┐     ┌──────────────────────┐     ┌─────────────────┐
+│ Source markdown  │ ──▶ │  Artifact generator  │ ──▶ │  HTML artifact  │
+└──────────────────┘     └──────────────────────┘     └─────────────────┘</code></pre>
+  <figcaption>The artifact pipeline: markdown in, composed HTML out.</figcaption>
+</figure>
+
+<!-- ===== (4) ONCE PER PAGE — paste just before the scrollspy script ===== -->
+<script type="module">
+try {
+  const React = await import("react");
+  const { createRoot } = await import("react-dom/client");
+  const E = await import("https://esm.sh/@excalidraw/excalidraw@0.18.0?external=react,react-dom");
+  const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+  // Excalidraw's font must be loaded BEFORE convertToExcalidrawElements, or label
+  // text is measured with fallback metrics and overflows its shape.
+  try { await document.fonts.load("20px Excalifont"); } catch {}
+  // convertToExcalidrawElements does NOT grow shapes to fit their labels — measure
+  // and widen them ourselves (keeps each shape's center fixed).
+  const mctx = document.createElement("canvas").getContext("2d");
+  const fitLabels = (raw) => {
+    for (const el of raw) {
+      if (!el.label || !el.width) continue;
+      const fs = el.label.fontSize || 20;
+      mctx.font = `${fs}px Excalifont`;
+      const needW = Math.max(...el.label.text.split("\n").map(l => mctx.measureText(l).width)) + 64;
+      if (needW > el.width) { el.x -= (needW - el.width) / 2; el.width = needW; }
+      const needH = el.label.text.split("\n").length * fs * 1.25 + 36;
+      if (needH > el.height) { el.y -= (needH - el.height) / 2; el.height = needH; }
+    }
+    return raw;
+  };
+  for (const sceneEl of document.querySelectorAll("script.c-diagram-excalidraw-scene")) {
+    const fig = sceneEl.closest(".c-diagram-excalidraw");
+    const host = fig.querySelector(".c-diagram-excalidraw-canvas");
+    const toggle = fig.querySelector(".c-diagram-excalidraw-toggle");
+    try {
+      const raw = fitLabels(JSON.parse(sceneEl.textContent));
+      const elements = E.convertToExcalidrawElements(
+        raw.filter(el => !["cameraUpdate", "delete", "restoreCheckpoint"].includes(el.type)),
+        { regenerateIds: false });
+      // Default display: inline SVG export (crisp, correct text — this is also how the
+      // excalidraw-mcp app renders inline). NOT the <Excalidraw> component, whose canvas
+      // text painter clips label glyphs in an embedded context.
+      const svg = await E.exportToSvg({ elements, appState: { exportWithDarkMode: dark }, files: null });
+      host.appendChild(svg);
+      fig.classList.add("is-live");
+      // Optional: swap in the interactive canvas (pan/zoom) on demand.
+      let root = null;
+      toggle.hidden = false;
+      toggle.addEventListener("click", () => {
+        if (!root) {
+          host.classList.add("is-interactive");
+          host.textContent = "";
+          root = createRoot(host);
+          root.render(React.createElement(E.Excalidraw, {
+            excalidrawAPI: (api) => {
+              const fit = () => api.scrollToContent(api.getSceneElements(), { fitToContent: true, viewportZoomFactor: 0.9 });
+              requestAnimationFrame(fit);
+              setTimeout(fit, 1500);
+            },
+            initialData: { elements, appState: { viewModeEnabled: true, zenModeEnabled: true, gridSize: null, theme: dark ? "dark" : "light" } },
+            viewModeEnabled: true
+          }));
+          toggle.textContent = "Static image";
+        } else {
+          root.unmount();
+          root = null;
+          host.classList.remove("is-interactive");
+          host.textContent = "";
+          host.appendChild(svg);
+          toggle.textContent = "Live canvas";
+        }
+      });
+    } catch { /* bad scene JSON — ASCII fallback stays visible */ }
+  }
+} catch { /* offline / CDN unreachable — ASCII fallbacks stay visible */ }
+</script>

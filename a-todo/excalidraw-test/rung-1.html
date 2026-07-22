@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>rung-1 — Foundations: what retrieval is made of</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@excalidraw/excalidraw@0.18.0/dist/prod/index.css">
+<script>window.EXCALIDRAW_ASSET_PATH = "https://cdn.jsdelivr.net/npm/@excalidraw/excalidraw@0.18.0/dist/prod/";</script>
+<script type="importmap">
+{"imports":{
+  "react":"https://esm.sh/react@19.0.0",
+  "react/jsx-runtime":"https://esm.sh/react@19.0.0/jsx-runtime",
+  "react-dom":"https://esm.sh/react-dom@19.0.0",
+  "react-dom/client":"https://esm.sh/react-dom@19.0.0/client"}}
+</script>
+<style>
+  /* ---- palette: light (default) ---- */
+  :root{
+      --card-foreground:var(--foreground);--primary-foreground:#ffffff;--secondary-foreground:#ffffff;--code-comment:#5b6168;--code-keyword:#9c3a2c;--code-string:#155e3b;--code-number:#7a4f00;--code-fn:#6f42c1;--success:#1c6b46;--warning:#8a5a00;--destructive:#b4453a;
+    /* code surface FOLLOWS the theme (light here, dark in @media); --inverse stays dark in both themes for dark buttons / inverted panels */
+    --code-bg:#f1f1ee; --code-fg:#1a1d21; --inverse:#16191d; --inverse-foreground:#f2f3f4;
+    --background:#f7f7f5; --card:#ffffff; --foreground:#1a1d21; --muted-foreground:#33383f;
+    --border:#d9d8d4; --primary:#1c6b46; --accent:#e6f1ec; --accent-foreground:#10472d;
+    --radius:14px; --maxw:880px;
+    color-scheme:light dark; font-synthesis:none;
+  }
+  /* ---- palette: dark (auto-follows the OS setting; no toggle) ---- */
+  @media (prefers-color-scheme: dark){
+    :root{
+        --primary-foreground:#06210f;--secondary-foreground:#06210f;--success:#5bbd8a;--warning:#e0b357;--destructive:#e0897a;
+      --code-bg:#16191d; --code-fg:#f2f3f4; --code-comment:#9aa0a8; --code-keyword:#7fd0a3; --code-string:#c9d99a; --code-number:#e0b083; --code-fn:#c9b98a;
+      --background:#14171a; --card:#1d2126; --foreground:#f2f3f4; --muted-foreground:#cdd2d8;
+      --border:#2c323a; --primary:#5bbd8a; --accent:#16352a; --accent-foreground:#9fe3c0;
+    }
+  }
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--background); color:var(--foreground);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.7; font-size:18px; letter-spacing:.1px;
+  }
+  .skip{position:absolute; left:-9999px; top:0; background:var(--primary); color:#fff;
+        padding:12px 18px; border-radius:0 0 10px 0; z-index:100; font-weight:700}
+  .skip:focus{left:0}
+  a{color:var(--primary); text-decoration:none; border-bottom:1px solid transparent; overflow-wrap:anywhere}
+  a:hover{border-bottom-color:var(--primary)}
+  :focus-visible{outline:3px solid var(--primary); outline-offset:2px; border-radius:4px}
+
+  .layout{display:grid; grid-template-columns:260px minmax(0,1fr); gap:0; max-width:1220px; margin:0 auto}
+  /* sidebar TOC */
+  nav.toc{position:sticky; top:0; align-self:start; max-height:100vh; overflow:auto;
+          padding:40px 18px 40px 28px; border-right:1px solid var(--border)}
+  nav.toc .toc-title{font-size:14px; letter-spacing:.12em; text-transform:uppercase;
+                     color:var(--muted-foreground); font-weight:700; margin:0 0 14px}
+  nav.toc a{display:block; padding:7px 12px; border-radius:8px; color:var(--muted-foreground);
+            font-size:16px; border-bottom:none; margin-bottom:2px; line-height:1.4}
+  nav.toc a.sub{padding-left:28px; font-size:15px}
+  nav.toc a:hover{background:var(--accent); color:var(--accent-foreground)}
+  nav.toc a[aria-current="true"]{background:var(--accent); color:var(--accent-foreground); font-weight:700}
+
+  main{padding:48px 40px 120px; max-width:var(--maxw)}
+  .page-footer{margin-top:64px; padding-top:24px; border-top:1px solid var(--border)}
+  .page-footer p{font-size:16px; color:var(--muted-foreground)}
+  header.page{margin-bottom:48px}
+  h1{font-size:40px; line-height:1.15; margin:0 0 20px; letter-spacing:-.5px}
+  .lead{font-size:21px; color:var(--foreground); max-width:68ch; margin:0}
+  h2{font-size:28px; margin:0 0 12px; letter-spacing:-.3px}
+  h3{font-size:21px; margin:0 0 8px}
+  p,li{font-size:18px}
+  section{margin-top:56px}
+  section section{margin-top:48px}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:24px 26px}
+  .meta-card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+             padding:20px 26px; margin:16px 0}
+  .meta-card p{margin:8px 0}
+
+  code{font-family:ui-monospace,Menlo,Monaco,Consolas,monospace; font-size:.88em;
+       background:var(--code-bg); color:var(--code-fg); border-radius:6px; padding:2px 6px}
+  pre code{background:none; padding:0; border-radius:0}
+  /* code block — surface + text FOLLOW the theme (light-on-light, dark-on-dark), high contrast in both. */
+  pre.code{background:var(--code-bg); color:var(--code-fg); border:1px solid var(--border);
+           border-radius:10px; padding:16px 18px; overflow-x:auto;
+           font:14px/1.6 ui-monospace,Menlo,Monaco,Consolas,monospace}
+
+  /* tables */
+  .table-wrap{overflow-x:auto; margin:24px 0}
+  table{border-collapse:collapse; width:100%; background:var(--card);
+        border:1px solid var(--border); border-radius:var(--radius); font-size:16px}
+  th,td{border:1px solid var(--border); padding:10px 14px; text-align:left; vertical-align:top}
+  th{background:var(--accent); color:var(--accent-foreground); font-size:16px}
+  td{font-size:16px; line-height:1.6}
+
+  ul,ol{padding-left:28px}
+  li{margin:10px 0}
+
+  /* Excalidraw diagram embed (progressive enhancement; ASCII fallback offline) */
+  .excalidraw-diagram{margin:32px 0}
+  .excalidraw-canvas{border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; display:none}
+  .excalidraw-canvas svg{display:block; width:100%; height:auto}
+  .excalidraw-diagram.excalidraw-live .excalidraw-canvas{display:block}
+  .excalidraw-diagram.excalidraw-live .excalidraw-fallback{display:none}
+  .excalidraw-diagram.excalidraw-live .excalidraw-toggle{display:inline-block}
+  .excalidraw-canvas.excalidraw-interactive{height:560px}
+  .excalidraw-canvas.excalidraw-interactive svg{height:100%}
+  .excalidraw-toggle{display:none; margin-top:10px; padding:8px 16px; font-size:14px; font-weight:600;
+           color:var(--primary); background:transparent; border:1.5px solid var(--primary);
+           border-radius:10px; cursor:pointer}
+  .excalidraw-toggle:hover{background:var(--primary); color:var(--card)}
+  .excalidraw-toggle:focus-visible{outline:2px solid var(--primary); outline-offset:2px}
+  .excalidraw-fallback{margin:0; overflow-x:auto; background:var(--code-bg); color:var(--code-fg);
+           border:1px solid var(--border); border-radius:10px; padding:16px 18px;
+           font:14px/1.5 ui-monospace,Menlo,Monaco,Consolas,monospace}
+  .excalidraw-diagram figcaption{margin-top:14px; font-size:16px; color:var(--muted-foreground)}
+
+  @media (max-width:860px){
+    .layout{grid-template-columns:1fr}
+    nav.toc{position:static; max-height:none; border-right:none; border-bottom:1px solid var(--border);
+            padding:24px 20px}
+    main{padding:32px 20px 80px}
+    h1{font-size:32px}
+  }
+  @media (prefers-reduced-motion: no-preference){
+    html{scroll-behavior:smooth}
+    nav.toc a{transition:background .15s,border-color .15s,color .15s}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<div class="layout">
+  <nav class="toc" aria-label="Contents">
+    <p class="toc-title">Contents</p>
+    <a href="#overview" aria-current="true">Status &amp; requirement</a>
+    <a href="#primer">Primer</a>
+    <a class="sub" href="#mental-model">The one mental model</a>
+    <a class="sub" href="#embeddings">What an embedding is</a>
+    <a class="sub" href="#cosine">Cosine: how “near” is measured</a>
+    <a class="sub" href="#normalization">The normalization subtlety</a>
+    <a class="sub" href="#task-types">Task types</a>
+    <a class="sub" href="#bm25">Lexical scoring: TF-IDF → BM25</a>
+    <a class="sub" href="#dense-vs-lexical">Dense vs lexical</a>
+    <a class="sub" href="#rrf">RRF fusion</a>
+    <a class="sub" href="#ann">ANN: the index you don’t have</a>
+    <a class="sub" href="#cross-encoders">Cross-encoders</a>
+    <a class="sub" href="#chunking">Chunking</a>
+    <a class="sub" href="#orientation">Orientation table</a>
+    <a class="sub" href="#coverage">Learning coverage</a>
+    <a href="#reading">Reading</a>
+    <a href="#build">Build</a>
+    <a class="sub" href="#exercise-a">Exercise A — disagreement</a>
+    <a class="sub" href="#exercise-b">Exercise B — RRF by hand</a>
+    <a class="sub" href="#exercise-c">Exercise C — cosine by hand</a>
+    <a class="sub" href="#exercise-d">Exercise D — truncation</a>
+    <a href="#verify">Verify</a>
+  </nav>
+
+  <main id="main">
+    <header class="page">
+      <h1>rung-1 — Foundations: what retrieval is made of</h1>
+      <p class="lead">Command the mechanics vocabulary the rest of the block assumes — what an embedding is, how lexical and dense scoring differ and combine, what an ANN index trades away, what a cross-encoder adds, what chunking decides — well enough to explain each concept and locate it in the lab’s own code and data.</p>
+    </header>
+
+    <section id="overview" aria-labelledby="overview-h">
+      <h2 id="overview-h">Status &amp; requirement</h2>
+      <div class="meta-card">
+        <p><strong>Status:</strong> material-ready · generated 2026-07-20 · lab grounded at <code>local-bookmarks</code> <code>master@e8e308d0</code> (clean; verified at generation)</p>
+        <p><strong>Requirement (from <code>../brief.md</code>):</strong> Command the mechanics vocabulary the rest of the block assumes — what an embedding is, how lexical and dense scoring differ and combine, what an ANN index trades away, what a cross-encoder adds, what chunking decides — well enough to explain each concept and locate it in the lab’s own code and data.</p>
+        <p><strong>Provenance note:</strong> every source dump in <code>../sources-raw/</code> is stamped with URL, fetch date, and a fidelity boundary. Most dumps are <strong>excerpt + faithful reconstruction</strong> (WebFetch condenses pages); text inside quotation marks is verbatim from the source, surrounding prose is reconstructed. Claims below inherit that caveat. App claims cite the lab’s actual files, read in full at generation.</p>
+      </div>
+    </section>
+
+    <section id="primer" aria-labelledby="primer-h">
+      <h2 id="primer-h">Primer</h2>
+
+      <section id="mental-model" aria-labelledby="mental-model-h">
+        <h3 id="mental-model-h">The one mental model: your search command is the whole field in miniature</h3>
+        <p>Run <code>bm search "query"</code> and this happens (<a href="file:///Users/abtinghods/Ork/tools/local-bookmarks/src/search_cmd.ts">src/search_cmd.ts:59-78</a>):</p>
+
+        <figure class="excalidraw-diagram">
+          <div class="excalidraw-canvas" role="img" aria-label="Diagram: the query text splits into embed/vectorSearch and toMatch/keywordSearch branches, each producing a pooled ranked list, fused by rrf (k=60) into the top limit hits"></div>
+          <button type="button" class="excalidraw-toggle" hidden>Live canvas</button>
+          <script type="application/json" class="excalidraw-scene">
+[
+  { "type": "rectangle", "id": "query", "x": 300, "y": 40, "width": 200, "height": 56, "roundness": { "type": 3 }, "strokeColor": "#4a9eed", "backgroundColor": "#a5d8ff", "label": { "text": "your query text", "fontSize": 20 } },
+  { "type": "rectangle", "id": "embed", "x": 60, "y": 160, "width": 300, "height": 80, "roundness": { "type": 3 }, "strokeColor": "#8b5cf6", "backgroundColor": "#d0bfff", "label": { "text": "embed(query, RETRIEVAL_QUERY)\n→ 768 floats", "fontSize": 18 } },
+  { "type": "rectangle", "id": "toMatch", "x": 440, "y": 160, "width": 300, "height": 80, "roundness": { "type": 3 }, "strokeColor": "#f59e0b", "backgroundColor": "#ffd8a8", "label": { "text": "toMatch(query)\n→ \"tok1\" OR \"tok2\"", "fontSize": 18 } },
+  { "type": "rectangle", "id": "vectorSearch", "x": 60, "y": 300, "width": 300, "height": 80, "roundness": { "type": 3 }, "strokeColor": "#8b5cf6", "backgroundColor": "#d0bfff", "label": { "text": "vectorSearch: cosine distance\nover ALL rows, ORDER BY ASC", "fontSize": 16 } },
+  { "type": "rectangle", "id": "keywordSearch", "x": 440, "y": 300, "width": 300, "height": 80, "roundness": { "type": 3 }, "strokeColor": "#f59e0b", "backgroundColor": "#ffd8a8", "label": { "text": "keywordSearch: FTS5 bm25()\nover full-body index, ORDER BY ASC", "fontSize": 16 } },
+  { "type": "rectangle", "id": "list1", "x": 60, "y": 440, "width": 300, "height": 56, "strokeColor": "#06b6d4", "backgroundColor": "#c3fae8", "label": { "text": "ranked list #1 (pool)", "fontSize": 18 } },
+  { "type": "rectangle", "id": "list2", "x": 440, "y": 440, "width": 300, "height": 56, "strokeColor": "#06b6d4", "backgroundColor": "#c3fae8", "label": { "text": "ranked list #2 (pool)", "fontSize": 18 } },
+  { "type": "rectangle", "id": "rrf", "x": 250, "y": 560, "width": 300, "height": 70, "roundness": { "type": 3 }, "strokeColor": "#8b5cf6", "backgroundColor": "#d0bfff", "label": { "text": "rrf([v, kw])  k=60\nfuse by RANK, not score", "fontSize": 18 } },
+  { "type": "rectangle", "id": "hits", "x": 250, "y": 690, "width": 300, "height": 56, "roundness": { "type": 3 }, "strokeColor": "#22c55e", "backgroundColor": "#b2f2bb", "label": { "text": "top `limit` hits printed", "fontSize": 18 } },
+  { "type": "arrow", "id": "aQueryEmbed", "x": 360, "y": 96, "width": -150, "height": 64, "points": [[0,0],[-150,64]], "endArrowhead": "arrow", "startBinding": { "elementId": "query", "fixedPoint": [0.3, 1] }, "endBinding": { "elementId": "embed", "fixedPoint": [0.5, 0] } },
+  { "type": "arrow", "id": "aQueryToMatch", "x": 440, "y": 96, "width": 150, "height": 64, "points": [[0,0],[150,64]], "endArrowhead": "arrow", "startBinding": { "elementId": "query", "fixedPoint": [0.7, 1] }, "endBinding": { "elementId": "toMatch", "fixedPoint": [0.5, 0] } },
+  { "type": "arrow", "id": "aEmbedVector", "x": 210, "y": 240, "width": 0, "height": 60, "points": [[0,0],[0,60]], "endArrowhead": "arrow", "startBinding": { "elementId": "embed", "fixedPoint": [0.5, 1] }, "endBinding": { "elementId": "vectorSearch", "fixedPoint": [0.5, 0] } },
+  { "type": "arrow", "id": "aToMatchKeyword", "x": 590, "y": 240, "width": 0, "height": 60, "points": [[0,0],[0,60]], "endArrowhead": "arrow", "startBinding": { "elementId": "toMatch", "fixedPoint": [0.5, 1] }, "endBinding": { "elementId": "keywordSearch", "fixedPoint": [0.5, 0] } },
+  { "type": "arrow", "id": "aVectorList1", "x": 210, "y": 380, "width": 0, "height": 60, "points": [[0,0],[0,60]], "endArrowhead": "arrow", "startBinding": { "elementId": "vectorSearch", "fixedPoint": [0.5, 1] }, "endBinding": { "elementId": "list1", "fixedPoint": [0.5, 0] } },
+  { "type": "arrow", "id": "aKeywordList2", "x": 590, "y": 380, "width": 0, "height": 60, "points": [[0,0],[0,60]], "endArrowhead": "arrow", "startBinding": { "elementId": "keywordSearch", "fixedPoint": [0.5, 1] }, "endBinding": { "elementId": "list2", "fixedPoint": [0.5, 0] } },
+  { "type": "arrow", "id": "aList1Rrf", "x": 210, "y": 496, "width": 130, "height": 64, "points": [[0,0],[130,64]], "endArrowhead": "arrow", "startBinding": { "elementId": "list1", "fixedPoint": [0.5, 1] }, "endBinding": { "elementId": "rrf", "fixedPoint": [0.3, 0] } },
+  { "type": "arrow", "id": "aList2Rrf", "x": 590, "y": 496, "width": -130, "height": 64, "points": [[0,0],[-130,64]], "endArrowhead": "arrow", "startBinding": { "elementId": "list2", "fixedPoint": [0.5, 1] }, "endBinding": { "elementId": "rrf", "fixedPoint": [0.7, 0] } },
+  { "type": "arrow", "id": "aRrfHits", "x": 400, "y": 630, "width": 0, "height": 60, "points": [[0,0],[0,60]], "endArrowhead": "arrow", "startBinding": { "elementId": "rrf", "fixedPoint": [0.5, 1] }, "endBinding": { "elementId": "hits", "fixedPoint": [0.5, 0] } }
+]
+          </script>
+          <pre class="excalidraw-fallback"><code>                       your query text
+                             │
+             ┌───────────────┴────────────────┐
+             │                                │
+   embed(query, RETRIEVAL_QUERY)      toMatch(query) → "tok1" OR "tok2"
+   → 768 floats                              │
+             │                                │
+   vectorSearch: cosine distance      keywordSearch: FTS5 bm25()
+   over ALL rows, ORDER BY ASC        over full-body index, ORDER BY ASC
+             │                                │
+     ranked list #1 (pool)            ranked list #2 (pool)
+             └───────────────┬────────────────┘
+                             │
+                  rrf([v, kw])  k=60 — fuse by RANK, not score
+                             │
+                   top `limit` hits printed</code></pre>
+          <figcaption>The lab’s hybrid search pipeline: the query text splits into an embed/vectorSearch branch and a toMatch/keywordSearch branch, each producing a pooled ranked list, fused by rrf (k=60) into the top <code>limit</code> hits.</figcaption>
+        </figure>
+
+        <p>Two independent retrieval engines — <strong>dense</strong> (meaning-based) and <strong>lexical</strong> (word-based) — each produce a ranked list; <strong>Reciprocal Rank Fusion</strong> merges them by position. Everything in this rung is understanding why each box exists, what it’s good and bad at, and what the two boxes you <em>don’t</em> have (ANN index, cross-encoder reranker) would add. Hybrid is your default mode; <code>keyword</code> and <code>semantic</code> run each engine alone (<a href="file:///Users/abtinghods/Ork/tools/local-bookmarks/src/search_cmd.ts">src/search_cmd.ts:64-68</a>).</p>
+      </section>
+
+      <section id="embeddings" aria-labelledby="embeddings-h">
+        <h3 id="embeddings-h">What an embedding actually is</h3>
+        <p>An embedding model takes a piece of text and returns “an array of floating point numbers” of <strong>fixed length regardless of input size</strong> — Willison: the array will “always be the same length, no matter how long the content is” (<a href="https://simonwillison.net/2023/Oct/23/embeddings/">Willison, <em>Embeddings</em></a> · <a href="../sources-raw/rung1-willison-embeddings.md">raw dump</a>). Think of those numbers as “co-ordinates in a very weird multi-dimensional space” where “location…represents the semantic meaning” of the text. One property drives every use: <strong>texts that are near each other in this space are semantically similar</strong> — even when they share no words.</p>
+        <p>That’s the entire trick behind what Willison calls “vibes-based search”: his example query “sqlite backup tools” surfaces relevant posts that never contain the word “backups” (<a href="../sources-raw/rung1-willison-embeddings.md">same source</a>). Contrast with keyword search, which can <em>only</em> match literal tokens — the complementary failure modes are the reason your lab runs both engines.</p>
+        <p>Your lab’s concrete instance: <code>gemini-embedding-001</code>, asked for <strong>768 dimensions</strong> via <code>outputDimensionality</code> (<a href="file:///Users/abtinghods/Ork/tools/local-bookmarks/src/embed.ts">src/embed.ts:15-20</a>, <a href="file:///Users/abtinghods/Ork/tools/local-bookmarks/src/config.ts">src/config.ts</a> — <code>EMBED_DIMS = 768</code>), stored per note in a <code>F32_BLOB(768)</code> column (<a href="file:///Users/abtinghods/Ork/tools/local-bookmarks/src/db.ts">src/db.ts:48</a>). One vector per note — that granularity decision is the chunking section’s subject.</p>
+      </section>
+
+      <section id="cosine" aria-labelledby="cosine-h">
+        <h3 id="cosine-h">Cosine: how “near” is measured</h3>
+        <p>Similarity between two vectors is almost always <strong>cosine similarity</strong>: the dot product of the two vectors divided by the product of their magnitudes — which measures the <strong>angle</strong> between them, not their lengths. Willison’s reference implementation is exactly that formula: <code>dot_product / (magnitude_a * magnitude_b)</code> (<a href="https://simonwillison.net/2023/Oct/23/embeddings/">Willison</a> · <a href="../sources-raw/rung1-willison-embeddings.md">dump</a>). Identical direction → 1.0; his worked example scores ~0.88 for a strongly related article. Because only <em>direction</em> carries meaning, cosine ignores vector magnitude entirely — hold that thought for the normalization subtlety below.</p>
+        <p>Your lab computes <strong>cosine distance</strong>, not similarity: libSQL’s <code>vector_distance_cos</code> is documented as “Cosine distance (1 - cosine similarity)” with range <strong>0 → 2</strong> — “close to 0 indicates vectors are nearly identical… close to 1… orthogonal… close to 2… opposite directions” (<a href="https://docs.turso.tech/features/ai-and-embeddings">Turso/libSQL docs</a> · <a href="../sources-raw/rung1-libsql-vector.md">dump</a>). Lower = more similar, which is why <code>vectorSearch</code> orders <code>ASC</code> (<a href="file:///Users/abtinghods/Ork/tools/local-bookmarks/src/db.ts">src/db.ts:146-156</a>) — the docs’ own example does the same. When you read a <code>score=0.4123</code> line from <code>bm search --mode semantic</code>, you’re reading a <em>distance</em>: similarity ≈ 1 − 0.4123.</p>
+      </section>
+
+      <section id="normalization" aria-labelledby="normalization-h">
+        <h3 id="normalization-h">The normalization subtlety (a real almost-bug worth understanding)</h3>
+        <p>Google trained <code>gemini-embedding-001</code> with <strong>Matryoshka Representation Learning (MRL)</strong> — the model “learn[s] high-dimensional embeddings that have initial segments (or prefixes) which are also useful, simpler versions,” so you can keep just the first 768 of 3072 dimensions (<a href="https://ai.google.dev/gemini-api/docs/embeddings">Gemini embeddings doc</a> · <a href="../sources-raw/rung1-gemini-embeddings-docs.md">dump</a>, near-verbatim excerpt). The documented quality cost at 768 is nearly nil: mean scores on MTEB (a standard benchmark suite that averages embedding quality across many tasks — higher is better) are 68.17 @ 1536 vs <strong>67.99 @ 768</strong>, degrading for real only by 256 (66.19) and 128 (63.31) (same dump). That’s why your <code>EMBED_DIMS = 768</code> with the comment “plenty at this scale” is a well-supported choice (<a href="file:///Users/abtinghods/Ork/tools/local-bookmarks/src/config.ts">src/config.ts</a>).</p>
+        <p>But the same doc says: the default 3072-dim output is unit-normalized, while <strong>truncated dimensions are not</strong> — “you must manually normalize non-3072 dimensions” (same dump). Your lab stores the 768-dim vectors raw — there is no normalization anywhere in <a href="file:///Users/abtinghods/Ork/tools/local-bookmarks/src/embed.ts">src/embed.ts</a> or <a href="file:///Users/abtinghods/Ork/tools/local-bookmarks/src/db.ts">src/db.ts</a>.</p>
+        <p>Is that a bug? <strong>No — and knowing <em>why</em> is the lesson</strong> <em>(local inference, ours — premises above)</em>: cosine divides by both magnitudes, so scaling a vector changes nothing about its cosine distance to anything else. Google’s “must normalize” matters for <strong>dot-product</strong> or Euclidean comparisons, where magnitude leaks into the score. Your pipeline is magnitude-immune because every comparison goes through <code>vector_distance_cos</code>. If anyone ever swaps that function for a dot product (a common “optimization” — dot of unit vectors <em>equals</em> cosine, but only for unit vectors), the missing normalization becomes a live bug. You’ll verify this empirically in the build.</p>
+      </section>
+
+      <section id="task-types" aria-labelledby="task-types-h">
+        <h3 id="task-types-h">Task types: queries and documents are different kinds of text</h3>
+        <p>Your <code>embed()</code> takes a <code>TaskType</code> — documents are embedded with <code>RETRIEVAL_DOCUMENT</code> at index time (<a href="file:///Users/abtinghods/Ork/tools/local-bookmarks/src/index_cmd.ts">src/index_cmd.ts:61</a>), queries with <code>RETRIEVAL_QUERY</code> at search time (<a href="file:///Users/abtinghods/Ork/tools/local-bookmarks/src/search_cmd.ts">src/search_cmd.ts:67,72</a>). Why: a query (“best sqlite backup approach?”) and a document (three paragraphs about a backup tool) are different <em>shapes</em> of text that should land near each other when they’re about the same thing. Gemini exposes this as task types and warns “it is important that the task is used consistently” (<a href="../sources-raw/rung1-gemini-embeddings-docs.md">Gemini doc dump</a>); the full table also pairs <code>QUESTION_ANSWERING</code> and <code>FACT_VERIFICATION</code> query-side types with <code>RETRIEVAL_DOCUMENT</code> corpus embeddings. This is the same idea as the <code>query:</code> / <code>passage:</code> prefixes Willison used with E5-large-v2 (<a href="../sources-raw/rung1-willison-embeddings.md">Willison dump</a>) — your <code>embed.ts</code> header comment even says so (“the Gemini equivalent of getting nomic’s prefixes right”, <a href="file:///Users/abtinghods/Ork/tools/local-bookmarks/src/embed.ts">src/embed.ts:1-3</a>). Asymmetric embedding is the norm in retrieval, and mixing the sides up silently degrades ranking.</p>
+      </section>
+
+      <section id="bm25" aria-labelledby="bm25-h">
+        <h3 id="bm25-h">Lexical scoring: TF-IDF → BM25, the 50-year-old engine that still matters</h3>
+        <p>First, the name in the header: <strong>TF-IDF</strong> scores a document by <strong>t</strong>erm <strong>f</strong>requency (how often a query word appears in it) weighted by <strong>i</strong>nverse <strong>d</strong>ocument <strong>f</strong>requency (how rare that word is across the corpus); BM25 is its refined successor — the same two ideas plus term-frequency saturation and length normalization. Keyword search ranks documents by combining three signals (<a href="https://www.elastic.co/blog/practical-bm25-part-2-the-bm25-algorithm-and-its-variables">Elastic, <em>Practical BM25 Part 2</em></a> · <a href="../sources-raw/rung1-elastic-bm25.md">dump</a>, excerpt+reconstruction — the formula on the page is an image, reconstructed to standard form in the dump):</p>
+        <ol>
+          <li><strong>IDF — rare words carry the signal.</strong> <code>IDF(qᵢ) = ln((docCount − f(qᵢ) + 0.5)/(f(qᵢ) + 0.5))</code>. Elastic’s worked example: a term appearing in <em>all</em> 4 docs scores IDF ≈ <strong>0.074</strong> — nearly nothing — while a term in only 2 of 4 docs scores higher. A word every bookmark contains (“the”, or in your corpus probably “AI”) contributes almost zero ranking signal.</li>
+          <li><strong>Term-frequency saturation — k1.</strong> More occurrences help, with diminishing returns approaching an asymptote. Elastic’s increments with k1=10: 1st occurrence +0.0741, 2nd +0.0618, 3rd +0.0523 (slow saturation); with k1=0.01 the 2nd occurrence adds only +0.00037 (instant saturation). k1 sets how fast “mentions it a lot” stops mattering.</li>
+          <li><strong>Length normalization — b (0→1).</strong> b=1 fully penalizes documents longer than the average; b=0 ignores length. With b high, <em>match density</em> (matched terms ÷ length) drives ranking, so a short note that’s all about your query beats a long note that mentions it once.</li>
+        </ol>
+        <p>Your lab gets all of this from SQLite FTS5’s built-in <code>bm25()</code> with <strong>k1 = 1.2 and b = 0.75 hard-coded</strong> (<a href="https://sqlite.org/fts5.html">SQLite FTS5 docs</a> · <a href="../sources-raw/rung1-sqlite-fts5-bm25.md">dump</a>, high-fidelity excerpt). One quirk you must know to read your own output: FTS5 “multiplies the result by -1 before returning it, ensuring that better matches are assigned numerically lower scores” — so <strong>BM25 scores in your lab are negative, best-first means <code>ORDER BY … ASC</code></strong> (<a href="file:///Users/abtinghods/Ork/tools/local-bookmarks/src/db.ts">src/db.ts:170-174</a> does exactly that), and a <code>score=-8.1</code> beats a <code>score=-2.3</code>.</p>
+        <p>Two lab-specific details (<a href="file:///Users/abtinghods/Ork/tools/local-bookmarks/src/db.ts">src/db.ts</a>): the FTS index covers <code>title, author, summary, tags, body</code> (path is unindexed), all columns at default weight 1.0; and <code>toMatch()</code> (lines 160-163) lowercases the query, strips punctuation, and joins tokens with <code>OR</code> inside quotes — because FTS5’s MATCH syntax treats bare punctuation as operators and would otherwise throw. Cost of that choice <em>(app fact + local inference)</em>: an OR-of-tokens query matches documents containing <em>any</em> query word, leaning on BM25’s IDF to keep common-word matches from ranking high — a phrase like “context rot” matches every note containing just “context”.</p>
+      </section>
+
+      <section id="dense-vs-lexical" aria-labelledby="dense-vs-lexical-h">
+        <h3 id="dense-vs-lexical-h">Dense vs lexical: complementary failure modes, hence hybrid</h3>
+        <p>Neither engine dominates. Dense retrieval finds <strong>vocabulary-mismatched</strong> content (the “backups” example) but is weak at exact identifiers, names, and rare tokens — and your corpus is full of those (tool names, personal names, <code>bm</code>, <code>FTS5</code>). Lexical BM25 nails exact tokens and fails at synonyms/paraphrase. Weaviate’s framing of why hybrid exists: combine “the accuracy of keyword-based search with the semantic understanding of vector search” (<a href="https://weaviate.io/blog/hybrid-search-explained">Weaviate, <em>Hybrid Search Explained</em></a> · <a href="../sources-raw/rung1-weaviate-hybrid-search.md">dump</a>, excerpt+reconstruction). This is capability Q4’s seed: <em>when</em> should you use which — and the honest foundations-level answer is “keyword for identifier-shaped queries, semantic for concept-shaped queries, hybrid when you don’t know” — which you will test on your own corpus in the build, and study properly in rung-3.</p>
+      </section>
+
+      <section id="rrf" aria-labelledby="rrf-h">
+        <h3 id="rrf-h">RRF: fusing two rankings without comparing their scores</h3>
+        <p>The two engines’ scores are incomparable — BM25 emits negative unbounded numbers, cosine distance lives in [0,2]. RRF sidesteps normalization entirely by using only each document’s <strong>rank position</strong> in each list:</p>
+        <pre class="code"><code>RRF score(d) = Σ over lists 1/(k + rank(d))</code></pre>
+        <p>(<a href="../sources-raw/rung1-weaviate-hybrid-search.md">Weaviate dump</a>, formula attributed to Benham &amp; Culpepper 2018.) Weaviate’s worked example, with k=0: doc A = BM25 rank 1 + dense rank 3 → 1/1 + 1/3 = <strong>1.33</strong>; doc B = rank 2 + rank 1 → <strong>1.5</strong>; doc C = rank 3 + rank 2 → <strong>0.83</strong>; final order <strong>B &gt; A &gt; C</strong>. The lesson in those three numbers: RRF rewards documents that rank <em>decently in both lists</em> over documents that top one list and miss the other.</p>
+        <p>Your <code>rrf()</code> is thirteen lines implementing exactly that with <strong>k = 60</strong> — the conventional smoothing constant <em>(the article’s k=0 is pedagogical; that k=60 is the default in common implementations such as Elasticsearch is general-practice knowledge, ours to flag — not from the cited page)</em> — as <code>1/(k + i + 1)</code> with zero-indexed <code>i</code>, i.e. rank 1 contributes 1/61 (<a href="file:///Users/abtinghods/Ork/tools/local-bookmarks/src/rrf.ts">src/rrf.ts:7-19</a>). Its file comment states the <em>why</em> precisely: “merge ranked lists by position, not by raw score (so BM25’s negative scores and cosine distance never need to be normalized together).” What k does <em>(local inference from the formula)</em>: with k=60, ranks 1 and 5 contribute 1/61 vs 1/65 — a small gap — so k dampens how much winning the top slot matters; with k=0 rank 1 is worth 3× rank 3. Note also <code>search_cmd.ts</code> widens the candidate pool before fusing — <code>pool = max(limit*3, 20)</code> per engine (<a href="file:///Users/abtinghods/Ork/tools/local-bookmarks/src/search_cmd.ts">src/search_cmd.ts:70-77</a>) — because a doc at rank 15 in both lists may still deserve a top-10 hybrid slot.</p>
+        <p>One fidelity flag: Weaviate’s page also offers <code>relativeScoreFusion</code> (score-normalizing fusion, and an <code>alpha</code> weight: 0 = pure keyword, 1 = pure vector, default 0.75); the dump could not capture its internals verbatim and marks them as to-verify — treat the <em>existence</em> of score-based fusion as sourced, its mechanics as unverified (<a href="../sources-raw/rung1-weaviate-hybrid-search.md">dump</a>).</p>
+      </section>
+
+      <section id="ann" aria-labelledby="ann-h">
+        <h3 id="ann-h">ANN: the index you deliberately don’t have</h3>
+        <p>Your <code>vectorSearch</code> is a brute-force scan: cosine distance against <strong>every</strong> row, <code>ORDER BY</code> — O(N) per query, with the in-code comment “trivially fast at this scale, no ANN index needed” (<a href="file:///Users/abtinghods/Ork/tools/local-bookmarks/src/db.ts">src/db.ts:145-156</a>). At ~450 notes that’s the right call, and Willison agrees at much larger scale: brute-force in SQLite is fine to ~20k items, “I’m not convinced you need an entirely new database” (<a href="../sources-raw/rung1-willison-embeddings.md">Willison dump</a>).</p>
+        <p>What an <strong>Approximate Nearest Neighbor</strong> index buys when N grows: sublinear query time, paid for with <em>recall</em> — it may miss true neighbors. Pinecone’s HNSW numbers make the trade concrete: recall ranging from ~80% at 1ms up to 100% at 50ms per 1,000 queries (Sift1M; the dump’s phrasing leaves ambiguous whether those times are per query or per 1,000-query batch), with memory scaling in the graph’s connectivity parameter M (<a href="https://www.pinecone.io/learn/series/faiss/hnsw/">Pinecone, <em>HNSW</em></a> · <a href="../sources-raw/rung1-ann-hnsw.md">dump</a>, excerpt+reconstruction). HNSW’s intuition: a layered graph with “longer edges in the highest layers (for fast search) and shorter edges in the lower layers (for accurate search)” — enter at the sparse top, greedily hop toward the query, drop a layer, repeat to the dense bottom. Global-first, then local-refine; built from skip-list + navigable-small-world ideas with (poly)logarithmic search complexity.</p>
+        <p>When your corpus outgrows brute force, the upgrade is one function away in the same database: libSQL ships <code>libsql_vector_idx</code> + <code>vector_top_k</code> (<a href="../sources-raw/rung1-libsql-vector.md">Turso docs dump</a>) — the day you reach for it, you accept the recall/speed trade above and it becomes a versioned component of your pipeline (rung-6’s territory).</p>
+      </section>
+
+      <section id="cross-encoders" aria-labelledby="cross-encoders-h">
+        <h3 id="cross-encoders-h">Cross-encoders: the judge your pipeline doesn’t have yet</h3>
+        <p>Everything above is <strong>bi-encoder</strong> retrieval: query and document are embedded <em>independently</em>, and similarity is computed between the two frozen vectors — SBERT: sentences pass through the model separately, producing “sentence embeddings u and v… compared using cosine similarity” (<a href="https://sbert.net/examples/applications/cross-encoder/README.html">SBERT cross-encoder docs</a> · <a href="../sources-raw/rung1-sbert-cross-encoders.md">dump</a>). A <strong>cross-encoder</strong> instead reads <em>both texts at once</em>: “we pass both sentences simultaneously to the Transformer network. It produces then an output value between 0 and 1” — and crucially “does not produce a sentence embedding.” Joint attention over the pair lets it judge relevance far more accurately than two independently-compressed vectors ever can.</p>
+        <p>The catch is cost: with nothing cacheable, every (query, candidate) pair is a fresh model forward pass. SBERT’s scale example: scoring all pairs among 10k sentences ≈ “50 Million sentence combinations… about 65 hours” for a cross-encoder versus ~5 seconds to embed the same set with a bi-encoder (same dump). Hence the universal pattern, verbatim from SBERT: “First, you use an efficient Bi-Encoder to retrieve e.g. the top-100 most similar sentences for a query. Then, you use a Cross-Encoder to re-rank these 100 hits.” Cheap-recall-then-expensive-precision. Your lab stops after stage one — RRF’s output goes straight to the screen. What a reranker would judge that your current scoring can’t (Q17’s seed): BM25 sees token overlap, cosine sees direction between two <em>independently</em> summarized vectors, but only a cross-encoder reads the query <em>against</em> the document’s actual text. Whether that’s worth the latency on your corpus is rung-3’s measured experiment — this rung only needs you to command the concept. <em>(Forward pointers, parked to rung-3: Clavié’s “MVP++” pattern, <code>rerankers</code> library, measured rerank lift.)</em></p>
+      </section>
+
+      <section id="chunking" aria-labelledby="chunking-h">
+        <h3 id="chunking-h">Chunking: what “one note = one vector” preserves and destroys</h3>
+        <p>Chunking is deciding <strong>what unit of text gets its own vector</strong>. Your lab’s answer today: the whole note — title, summary, metadata, and body joined into one string (<a href="file:///Users/abtinghods/Ork/tools/local-bookmarks/src/parse.ts">src/parse.ts:48-50</a>) — with a hard cap: anything past <strong>8,000 characters is silently cut from the embedding</strong> (with a warning at index time), because “gemini-embedding-001 takes up to ~2048 tokens” (<a href="file:///Users/abtinghods/Ork/tools/local-bookmarks/src/parse.ts">src/parse.ts:47-58</a>).</p>
+        <p>Why unit size matters (<a href="https://www.pinecone.io/learn/chunking-strategies/">Pinecone, <em>Chunking Strategies</em></a> · <a href="../sources-raw/rung1-chunking-strategies.md">dump</a>, excerpt+reconstruction): a single vector must represent <em>everything</em> in its text — a long, multi-topic document averages into a vector that matches <em>no</em> specific query sharply <em>(that dilution mechanism is the dump’s labelled teaching gloss, not Pinecone’s own wording)</em> — and over-limit text is simply “truncated, or thrown away.” Small chunks (~128–256 tokens) give sharp, granular matches but lose surrounding context; large chunks (~512–1024) keep context but risk dilution; overlap preserves ideas cut at boundaries at the cost of duplicate tokens. The page’s serviceable heuristic: “if the chunk of text makes sense without the surrounding context to a human, it will make sense to the language model as well,” and its honest bottom line — “there’s no one-size-fits-all solution.”</p>
+        <p>Two lab-specific consequences you’ll demonstrate in the build:</p>
+        <ol>
+          <li><strong>The truncation asymmetry</strong> <em>(app fact, verified in code)</em>: FTS5 indexes the <strong>full</strong> body (<code>upsertNote</code> writes <code>n.body</code> into <code>notes_fts</code> — <a href="file:///Users/abtinghods/Ork/tools/local-bookmarks/src/db.ts">src/db.ts:110-114</a>), but the embedding sees only the first 8,000 chars of the joined text. Content in a long note’s tail is findable by keyword search and <strong>invisible to semantic search</strong>. That’s a stage-attribution trap: a “semantic search missed it” symptom whose root cause is corpus processing, not retrieval — exactly the distinction Q10 will formalize.</li>
+          <li><strong>Your <code>embedText</code> is a proto-enrichment</strong> <em>(local observation)</em>: prepending title/summary/tags to the body before embedding is a home-grown version of the context-prepending idea that rung-3’s Contextual Retrieval source systematizes. You already do a naive form of it — worth knowing when you read the fancy version.</li>
+        </ol>
+      </section>
+
+      <section id="orientation" aria-labelledby="orientation-h">
+        <h3 id="orientation-h">Where each concept lives in your lab (orientation table)</h3>
+        <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Concept</th><th>Your code</th><th>The gap it exposes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Embedding call, task types, 768 dims</td><td><code>src/embed.ts</code> · <code>src/config.ts</code></td><td>truncated-dim normalization skipped (harmless under cosine)</td></tr>
+            <tr><td>Vector storage + brute-force cosine</td><td><code>src/db.ts</code> <code>F32_BLOB(768)</code>, <code>vectorSearch</code></td><td>no ANN (correct at this scale)</td></tr>
+            <tr><td>FTS5/BM25 keyword engine</td><td><code>src/db.ts</code> <code>notes_fts</code>, <code>keywordSearch</code>, <code>toMatch</code></td><td>OR-semantics; k1/b fixed</td></tr>
+            <tr><td>RRF hybrid fusion</td><td><code>src/rrf.ts</code> (k=60) + <code>search_cmd.ts</code> pool widening</td><td>rank-only; no reranker after fusion</td></tr>
+            <tr><td>Chunking decision + 8K cap</td><td><code>src/parse.ts</code> (<code>embedText</code>)</td><td>whole-note vectors; tail invisible to semantic; no provenance</td></tr>
+            <tr><td>Index lifecycle (preview of rung-6)</td><td><code>src/index_cmd.ts</code> content-hash sync, <code>DB_MARKER</code> rebuild</td><td>versioning is marker-only (“L0-ish” — Safjan’s L0–L4 levels are rung-6’s material)</td></tr>
+          </tbody>
+        </table>
+        </div>
+      </section>
+
+      <section id="coverage" aria-labelledby="coverage-h">
+        <h3 id="coverage-h">Learning coverage</h3>
+        <p><code>cov-retrieval-foundations</code> — evidence the learner must produce (all eight rows, no skips):</p>
+        <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Sub-skill</th><th>Evidence</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Embeddings &amp; cosine</td><td>Explain fixed-length semantic coordinates + why cosine ignores magnitude; state what a <code>score=0.41</code> semantic hit means in the lab</td></tr>
+            <tr><td>Normalization subtlety</td><td>Explain why the lab’s unnormalized 768-dim vectors are safe under cosine and when they wouldn’t be</td></tr>
+            <tr><td>Task-type asymmetry</td><td>Explain why docs and queries embed differently; point to both call sites</td></tr>
+            <tr><td>BM25</td><td>Explain IDF/k1/b in own words; read a negative FTS5 score correctly</td></tr>
+            <tr><td>Hybrid + RRF</td><td>Hand-compute an RRF fusion and predict the hybrid order before running it</td></tr>
+            <tr><td>ANN</td><td>State the recall/speed/memory trade and why the lab correctly skips it; name the libSQL upgrade path</td></tr>
+            <tr><td>Cross-encoders</td><td>Explain bi-vs-cross architecturally and the retrieve-then-rerank pattern; state what stage the lab lacks</td></tr>
+            <tr><td>Chunking</td><td>Explain dilution + size/overlap trades; demonstrate the lab’s 8K truncation asymmetry live</td></tr>
+          </tbody>
+        </table>
+        </div>
+      </section>
+    </section>
+
+    <section id="reading" aria-labelledby="reading-h">
+      <h2 id="reading-h">Reading</h2>
+
+      <h3>Core</h3>
+      <ul>
+        <li><strong>Simon Willison — <a href="https://simonwillison.net/2023/Oct/23/embeddings/">Embeddings: What They Are and Why They Matter</a></strong> (Oct 2023) · ⏱ <strong>24 min</strong> · <strong>Why:</strong> the best zero-baseline entry to embeddings, written engineer-to-engineer; the primer’s embedding sections are assembled from it. <strong>Extract:</strong> the fixed-length/semantic-space mental model; cosine as direction; vibes-based search; the related-content and RAG applications. <em>(Raw: <a href="../sources-raw/rung1-willison-embeddings.md">dump</a>, faithful reconstruction + quotes.)</em></li>
+        <li><strong>DLAI RAG (Zain Hasan) — foundations lesson subset</strong> (~<strong>85 min</strong> video, Modules 1–3 named lessons: Intro-to-IR → TF-IDF → BM25 → semantic search → embedding deep-dive → hybrid → evaluating retrieval → ANN → vector DBs → chunking ×2 → cross-encoders/ColBERT → reranking) · <strong>Why:</strong> the only professionally sequenced from-zero video treatment of the rung’s foundation topics; reinforces this primer through a second channel. <strong>Extract:</strong> visual intuition, esp. for ANN and cross-encoders. <strong>Access (verified 2026-07-20, <a href="../sources-raw/rung1-dlai-access-check.md">dump</a>):</strong> Module 1 free with signup (preview by “accessing the entire first module at no cost”); M2–M3 free-audit unconfirmed on public pages — check the Coursera enroll modal for the audit link; fallback = $25 Pro month or skip (this primer + optional reads carry the content). <em>Gated: listed from the public outline only.</em></li>
+        <li><strong>Weaviate — <a href="https://weaviate.io/blog/hybrid-search-explained">Hybrid Search Explained</a></strong> (Jan 2025) · ⏱ <strong>7 min</strong> · <strong>Why:</strong> the RRF walkthrough with actual arithmetic — the fastest route to owning the fusion step. <strong>Extract:</strong> the B&gt;A&gt;C worked example; rank-based vs score-based fusion; alpha. <em>(Raw: <a href="../sources-raw/rung1-weaviate-hybrid-search.md">dump</a>.)</em></li>
+      </ul>
+      <p><strong>Core subtotal: ~31 min reading + ~85 min video</strong> (video conditional on the access check).</p>
+
+      <h3>Optional / go deeper</h3>
+      <ul>
+        <li><strong>Elastic — <a href="https://www.elastic.co/blog/practical-bm25-part-2-the-bm25-algorithm-and-its-variables">Practical BM25 Part 2</a></strong> · ⏱ <strong>11 min</strong> · marginal benefit: the worked IDF/k1/b numbers the primer quotes, in full context — read if BM25’s ingredients don’t feel owned. <em>(Primer-basis source.)</em></li>
+        <li><strong>Pinecone — <a href="https://www.pinecone.io/learn/series/faiss/hnsw/">HNSW</a></strong> · ⏱ <strong>15 min</strong> · marginal benefit: the actual layered-graph mechanics + recall/latency/memory curves behind the primer’s ANN section. <em>(Primer-basis.)</em></li>
+        <li><strong>Pinecone — <a href="https://www.pinecone.io/learn/chunking-strategies/">Chunking Strategies</a></strong> · ⏱ <strong>12 min</strong> · marginal benefit: the named strategy families (fixed/recursive/semantic/contextual) before rung-3 evaluates them empirically. <em>(Primer-basis; bridge to rung-3.)</em></li>
+        <li><strong>SBERT — <a href="https://sbert.net/examples/applications/cross-encoder/README.html">Cross-Encoders</a></strong> · ⏱ <strong>2 min</strong> · marginal benefit: the canonical two-paragraph statement of bi-vs-cross from Reimers’ own docs. <em>(Primer-basis.)</em></li>
+        <li><strong>Google — <a href="https://ai.google.dev/gemini-api/docs/embeddings">Gemini Embeddings API</a></strong> · ⏱ ~7 min (est. — measurer blocked by JS rendering; based on captured excerpt) · marginal benefit: the primary source for MRL truncation, the MTEB-by-dimension table, task types, and the normalization warning — the primer’s claims about <em>your own embedding model</em>. <em>(Primer-basis; <a href="../sources-raw/rung1-gemini-embeddings-docs.md">dump</a>.)</em></li>
+        <li><strong>LLM Zoomcamp — <a href="https://github.com/DataTalksClub/llm-zoomcamp">Module 2: Vector Search</a></strong> · hands-on notebooks (NumPy-from-scratch → minsearch → SQLite → pgvector, <a href="../sources-raw/rung1-zoomcamp-m2.md">dump</a>) · marginal benefit: build-it-yourself reinforcement if concepts stay abstract after the build exercise; same FAQ corpus reimplemented across four backends.</li>
+        <li><strong>Vicki Boykis — <a href="https://vickiboykis.com/what_are_embeddings/">What Are Embeddings?</a></strong> · long-form PDF · marginal benefit: the rigorous depth reference behind Willison’s intro, for after the block.</li>
+      </ul>
+      <p><strong>Full-list subtotal: ~78 min reading + ~85 min video + notebooks/reference.</strong></p>
+    </section>
+
+    <section id="build" aria-labelledby="build-h">
+      <h2 id="build-h">Build</h2>
+      <p><em>(Pure-study rung with a hands-on trace: the application here is reading and predicting your own system, not writing product code. Code policy per case — the one script below is yours to write.)</em></p>
+
+      <h3>Current app context</h3>
+      <p>Lab at <code>~/Ork/tools/local-bookmarks</code>, <code>master@e8e308d0</code>, clean. Corpus ≈ 450 notes in <code>BOOKMARKS_DIR</code>. Commands: <code>bm search "&lt;query&gt;"</code> (hybrid default) with <code>--mode keyword|semantic|hybrid</code>, <code>--limit N</code>, <code>--json</code> (<a href="file:///Users/abtinghods/Ork/tools/local-bookmarks/src/search_cmd.ts">src/search_cmd.ts</a>); <code>bm sync-all</code> re-indexes incrementally. DB: <code>bookmarks.db</code> (libSQL) next to the tool. Requires <code>GOOGLE_API_KEY</code>/<code>GEMINI_API_KEY</code> for semantic/hybrid modes.</p>
+
+      <section id="exercise-a" aria-labelledby="exercise-a-h">
+        <h3 id="exercise-a-h">Exercise A — predict the engines’ disagreement</h3>
+        <p>Pick <strong>two real queries</strong> against your own corpus: one <em>identifier-shaped</em> (an exact tool/person name you know appears verbatim) and one <em>concept-shaped</em> (a paraphrase you’d never have typed into the note). <strong>Before running anything</strong>, write down: which mode wins each query and why, in the primer’s vocabulary. Then run all three modes per query (<code>--limit 5</code>) and annotate: where did keyword/semantic/hybrid agree, where did they diverge, and does your explanation survive contact with the output? Read the scores as what they are (negative BM25; cosine distance; RRF sums).</p>
+      </section>
+
+      <section id="exercise-b" aria-labelledby="exercise-b-h">
+        <h3 id="exercise-b-h">Exercise B — hand-compute one RRF fusion</h3>
+        <p>For the concept-shaped query: run <code>--mode keyword --json --limit 20</code> and <code>--mode semantic --json --limit 20</code>. On paper (or in a scratch file), take the top ~6 of each list, apply your lab’s actual formula — <code>1/(60 + rank)</code> with rank starting at 1 — sum per doc across lists, and <strong>predict the hybrid top-5 in order</strong>. Then run <code>--mode hybrid --limit 5</code> and compare. Watch-out you should hit: the hybrid command fuses <em>pool-sized</em> lists (<code>max(limit*3, 20)</code>), so a doc outside your top-6 slice can sneak in — explain any mismatch through that lens.</p>
+      </section>
+
+      <section id="exercise-c" aria-labelledby="exercise-c-h">
+        <h3 id="exercise-c-h">Exercise C — cosine with your own hands</h3>
+        <p>Write a <strong>small throwaway script</strong> (yours — any style) that: pulls two note embeddings straight from <code>bookmarks.db</code> (<code>SELECT path, embedding FROM notes</code> — the column is a float32 blob), computes cosine similarity from raw floats (dot product over magnitudes), and cross-checks that <code>1 − similarity</code> matches <code>vector_distance_cos</code> for the same pair (compare against a <code>--mode semantic --json</code> score for a query, or query the function directly in SQL). Then scale one vector by 10× in memory and recompute: the cosine must not move. That’s the normalization subtlety made empirical.</p>
+      </section>
+
+      <section id="exercise-d" aria-labelledby="exercise-d-h">
+        <h3 id="exercise-d-h">Exercise D — demonstrate the truncation asymmetry</h3>
+        <p><strong>Setup first — no existing note qualifies</strong> <em>(app fact, verified 2026-07-20: the longest joined <code>embedText</code> in the corpus is 7,554 chars — “Claude Code Auto Mode - permission-free operation.md” — so 0 of ~450 notes exceed the 8,000-char cap and the oversize warning (<a href="file:///Users/abtinghods/Ork/tools/local-bookmarks/src/parse.ts">src/parse.ts:53-57</a>) never fires today)</em>. Create one that does: write a new bookmark note whose joined text exceeds 8,000 chars (e.g. paste a long article as its body — the content is yours to write), making sure a distinctive phrase that appears nowhere else in the corpus sits in its <strong>tail</strong>, past the 8,000-char mark. Run <code>bm sync-all</code> and confirm the oversize warning fires for your note. Then, predicting before running: search that tail phrase in <code>--mode keyword</code> (should hit — FTS indexes the full body) and <code>--mode semantic</code> (should miss or rank low — the tail never reached the embedding). Record the pair of outputs as your evidence. State, in one sentence, which <em>pipeline stage</em> caused the semantic miss.</p>
+      </section>
+
+      <h3>Artifact to produce</h3>
+      <p>A short trace log (markdown, anywhere you like — it feeds the rung checkpoint): per exercise, your <strong>written prediction</strong>, the observed output (paste the relevant lines), and a one-paragraph explanation in primer vocabulary. Plus the throwaway cosine script.</p>
+
+      <h3>Success criterion</h3>
+      <p>Predictions made <em>before</em> runs; mismatches explained rather than ignored; the RRF hand-computation reproduces the hybrid order (or the pool-width explanation covers the gap); the cosine cross-check matches to float precision and survives the 10× scaling; the truncation asymmetry demonstrated with the oversized note you created (warning observed at sync; keyword finds the tail phrase; semantic misses it).</p>
+
+      <h3>Hints / rubric</h3>
+      <ul>
+        <li>Stuck picking queries? Your corpus is heavy on AI-tool bookmarks — an author name or CLI name is identifier-shaped; “that technique where you retrieve before generating” is concept-shaped.</li>
+        <li>RRF math sanity check: a doc at rank 1 in one list only = 1/61 ≈ 0.0164; a doc at rank 4 in <em>both</em> lists = 2/64 ≈ 0.0313 — the double-appearance doc wins. If your prediction disagrees with the tool, recount ranks (the code is zero-indexed, <code>i + 1</code> restores 1-based).</li>
+        <li>Blob decoding friction in Exercise C is mechanics, not learning — if stuck &gt;10 min, ask the companion to unblock the decode, then do the math yourself.</li>
+      </ul>
+    </section>
+
+    <section id="verify" aria-labelledby="verify-h">
+      <h2 id="verify-h">Verify</h2>
+      <p>From the brief (gate, not weakened):</p>
+      <ul>
+        <li><strong>Explain-back interview</strong> across all eight coverage rows — the companion probes with the Learning coverage table above until gaps close; fluency raises challenge, never skips.</li>
+        <li><strong>Applied trace exercise passes</strong> — the artifact exists, predictions precede runs, all four exercises done to the success criterion.</li>
+        <li><strong>No written-answer set for this rung</strong> (no owned Q-numbers; foundations vocabulary is checkpointed via explain-back).</li>
+      </ul>
+      <p>Additional evidence-grounded checks:</p>
+      <ul>
+        <li>He can point at <code>src/{embed,db,rrf,parse,search_cmd}.ts</code> and say what each contributes to a single <code>bm search</code> invocation without opening the primer.</li>
+        <li>He reads one real hybrid output line (<code>score=…</code>) and correctly identifies what the number is and is not.</li>
+        <li>Coverage ledger: <code>cov-retrieval-foundations</code> flips to <code>demonstrated</code> only on the companion’s checkpoint, recorded in <code>progress.md</code> §Learnt.</li>
+      </ul>
+    </section>
+
+    <footer class="page-footer">
+      <p>Generated artifact · rendered from <code>rung-1.md</code> · edit the markdown source and re-render.</p>
+    </footer>
+  </main>
+</div>
+
+<!-- Agent-readable source mirror — the canonical markdown source, verbatim -->
+<script type="text/markdown" id="artifact-source">
+# rung-1 — Foundations: what retrieval is made of
+
+**Status:** material-ready · generated 2026-07-20 · lab grounded at `local-bookmarks` `master@e8e308d0` (clean; verified at generation)
+
+**Requirement (from `../brief.md`):** Command the mechanics vocabulary the rest of the block assumes — what an embedding is, how lexical and dense scoring differ and combine, what an ANN index trades away, what a cross-encoder adds, what chunking decides — well enough to explain each concept and locate it in the lab's own code and data.
+
+**Provenance note:** every source dump in `../sources-raw/` is stamped with URL, fetch date, and a fidelity boundary. Most dumps are **excerpt + faithful reconstruction** (WebFetch condenses pages); text inside quotation marks is verbatim from the source, surrounding prose is reconstructed. Claims below inherit that caveat. App claims cite the lab's actual files, read in full at generation.
+
+---
+
+## Primer
+
+### The one mental model: your search command is the whole field in miniature
+
+Run `bm search "query"` and this happens ([src/search_cmd.ts:59-78](file:///Users/abtinghods/Ork/tools/local-bookmarks/src/search_cmd.ts)):
+
+```
+                       your query text
+                             │
+             ┌───────────────┴────────────────┐
+             │                                │
+   embed(query, RETRIEVAL_QUERY)      toMatch(query) → "tok1" OR "tok2"
+   → 768 floats                              │
+             │                                │
+   vectorSearch: cosine distance      keywordSearch: FTS5 bm25()
+   over ALL rows, ORDER BY ASC        over full-body index, ORDER BY ASC
+             │                                │
+     ranked list #1 (pool)            ranked list #2 (pool)
+             └───────────────┬────────────────┘
+                             │
+                  rrf([v, kw])  k=60 — fuse by RANK, not score
+                             │
+                   top `limit` hits printed
+```
+
+Two independent retrieval engines — **dense** (meaning-based) and **lexical** (word-based) — each produce a ranked list; **Reciprocal Rank Fusion** merges them by position. Everything in this rung is understanding why each box exists, what it's good and bad at, and what the two boxes you *don't* have (ANN index, cross-encoder reranker) would add. Hybrid is your default mode; `keyword` and `semantic` run each engine alone ([src/search_cmd.ts:64-68](file:///Users/abtinghods/Ork/tools/local-bookmarks/src/search_cmd.ts)).
+
+### What an embedding actually is
+
+An embedding model takes a piece of text and returns "an array of floating point numbers" of **fixed length regardless of input size** — Willison: the array will "always be the same length, no matter how long the content is" ([Willison, *Embeddings*](https://simonwillison.net/2023/Oct/23/embeddings/) · [raw dump](../sources-raw/rung1-willison-embeddings.md)). Think of those numbers as "co-ordinates in a very weird multi-dimensional space" where "location…represents the semantic meaning" of the text. One property drives every use: **texts that are near each other in this space are semantically similar** — even when they share no words.
+
+That's the entire trick behind what Willison calls "vibes-based search": his example query "sqlite backup tools" surfaces relevant posts that never contain the word "backups" ([same source](../sources-raw/rung1-willison-embeddings.md)). Contrast with keyword search, which can *only* match literal tokens — the complementary failure modes are the reason your lab runs both engines.
+
+Your lab's concrete instance: `gemini-embedding-001`, asked for **768 dimensions** via `outputDimensionality` ([src/embed.ts:15-20](file:///Users/abtinghods/Ork/tools/local-bookmarks/src/embed.ts), [src/config.ts](file:///Users/abtinghods/Ork/tools/local-bookmarks/src/config.ts) — `EMBED_DIMS = 768`), stored per note in a `F32_BLOB(768)` column ([src/db.ts:48](file:///Users/abtinghods/Ork/tools/local-bookmarks/src/db.ts)). One vector per note — that granularity decision is the chunking section's subject.
+
+### Cosine: how "near" is measured
+
+Similarity between two vectors is almost always **cosine similarity**: the dot product of the two vectors divided by the product of their magnitudes — which measures the **angle** between them, not their lengths. Willison's reference implementation is exactly that formula: `dot_product / (magnitude_a * magnitude_b)` ([Willison](https://simonwillison.net/2023/Oct/23/embeddings/) · [dump](../sources-raw/rung1-willison-embeddings.md)). Identical direction → 1.0; his worked example scores ~0.88 for a strongly related article. Because only *direction* carries meaning, cosine ignores vector magnitude entirely — hold that thought for the normalization subtlety below.
+
+Your lab computes **cosine distance**, not similarity: libSQL's `vector_distance_cos` is documented as "Cosine distance (1 - cosine similarity)" with range **0 → 2** — "close to 0 indicates vectors are nearly identical… close to 1… orthogonal… close to 2… opposite directions" ([Turso/libSQL docs](https://docs.turso.tech/features/ai-and-embeddings) · [dump](../sources-raw/rung1-libsql-vector.md)). Lower = more similar, which is why `vectorSearch` orders `ASC` ([src/db.ts:146-156](file:///Users/abtinghods/Ork/tools/local-bookmarks/src/db.ts)) — the docs' own example does the same. When you read a `score=0.4123` line from `bm search --mode semantic`, you're reading a *distance*: similarity ≈ 1 − 0.4123.
+
+### The normalization subtlety (a real almost-bug worth understanding)
+
+Google trained `gemini-embedding-001` with **Matryoshka Representation Learning (MRL)** — the model "learn[s] high-dimensional embeddings that have initial segments (or prefixes) which are also useful, simpler versions," so you can keep just the first 768 of 3072 dimensions ([Gemini embeddings doc](https://ai.google.dev/gemini-api/docs/embeddings) · [dump](../sources-raw/rung1-gemini-embeddings-docs.md), near-verbatim excerpt). The documented quality cost at 768 is nearly nil: mean scores on MTEB (a standard benchmark suite that averages embedding quality across many tasks — higher is better) are 68.17 @ 1536 vs **67.99 @ 768**, degrading for real only by 256 (66.19) and 128 (63.31) (same dump). That's why your `EMBED_DIMS = 768` with the comment "plenty at this scale" is a well-supported choice ([src/config.ts](file:///Users/abtinghods/Ork/tools/local-bookmarks/src/config.ts)).
+
+But the same doc says: the default 3072-dim output is unit-normalized, while **truncated dimensions are not** — "you must manually normalize non-3072 dimensions" (same dump). Your lab stores the 768-dim vectors raw — there is no normalization anywhere in [src/embed.ts](file:///Users/abtinghods/Ork/tools/local-bookmarks/src/embed.ts) or [src/db.ts](file:///Users/abtinghods/Ork/tools/local-bookmarks/src/db.ts).
+
+Is that a bug? **No — and knowing *why* is the lesson** *(local inference, ours — premises above)*: cosine divides by both magnitudes, so scaling a vector changes nothing about its cosine distance to anything else. Google's "must normalize" matters for **dot-product** or Euclidean comparisons, where magnitude leaks into the score. Your pipeline is magnitude-immune because every comparison goes through `vector_distance_cos`. If anyone ever swaps that function for a dot product (a common "optimization" — dot of unit vectors *equals* cosine, but only for unit vectors), the missing normalization becomes a live bug. You'll verify this empirically in the build.
+
+### Task types: queries and documents are different kinds of text
+
+Your `embed()` takes a `TaskType` — documents are embedded with `RETRIEVAL_DOCUMENT` at index time ([src/index_cmd.ts:61](file:///Users/abtinghods/Ork/tools/local-bookmarks/src/index_cmd.ts)), queries with `RETRIEVAL_QUERY` at search time ([src/search_cmd.ts:67,72](file:///Users/abtinghods/Ork/tools/local-bookmarks/src/search_cmd.ts)). Why: a query ("best sqlite backup approach?") and a document (three paragraphs about a backup tool) are different *shapes* of text that should land near each other when they're about the same thing. Gemini exposes this as task types and warns "it is important that the task is used consistently" ([Gemini doc dump](../sources-raw/rung1-gemini-embeddings-docs.md)); the full table also pairs `QUESTION_ANSWERING` and `FACT_VERIFICATION` query-side types with `RETRIEVAL_DOCUMENT` corpus embeddings. This is the same idea as the `query:` / `passage:` prefixes Willison used with E5-large-v2 ([Willison dump](../sources-raw/rung1-willison-embeddings.md)) — your `embed.ts` header comment even says so ("the Gemini equivalent of getting nomic's prefixes right", [src/embed.ts:1-3](file:///Users/abtinghods/Ork/tools/local-bookmarks/src/embed.ts)). Asymmetric embedding is the norm in retrieval, and mixing the sides up silently degrades ranking.
+
+### Lexical scoring: TF-IDF → BM25, the 50-year-old engine that still matters
+
+First, the name in the header: **TF-IDF** scores a document by **t**erm **f**requency (how often a query word appears in it) weighted by **i**nverse **d**ocument **f**requency (how rare that word is across the corpus); BM25 is its refined successor — the same two ideas plus term-frequency saturation and length normalization. Keyword search ranks documents by combining three signals ([Elastic, *Practical BM25 Part 2*](https://www.elastic.co/blog/practical-bm25-part-2-the-bm25-algorithm-and-its-variables) · [dump](../sources-raw/rung1-elastic-bm25.md), excerpt+reconstruction — the formula on the page is an image, reconstructed to standard form in the dump):
+
+1. **IDF — rare words carry the signal.** `IDF(qᵢ) = ln((docCount − f(qᵢ) + 0.5)/(f(qᵢ) + 0.5))`. Elastic's worked example: a term appearing in *all* 4 docs scores IDF ≈ **0.074** — nearly nothing — while a term in only 2 of 4 docs scores higher. A word every bookmark contains ("the", or in your corpus probably "AI") contributes almost zero ranking signal.
+2. **Term-frequency saturation — k1.** More occurrences help, with diminishing returns approaching an asymptote. Elastic's increments with k1=10: 1st occurrence +0.0741, 2nd +0.0618, 3rd +0.0523 (slow saturation); with k1=0.01 the 2nd occurrence adds only +0.00037 (instant saturation). k1 sets how fast "mentions it a lot" stops mattering.
+3. **Length normalization — b (0→1).** b=1 fully penalizes documents longer than the average; b=0 ignores length. With b high, *match density* (matched terms ÷ length) drives ranking, so a short note that's all about your query beats a long note that mentions it once.
+
+Your lab gets all of this from SQLite FTS5's built-in `bm25()` with **k1 = 1.2 and b = 0.75 hard-coded** ([SQLite FTS5 docs](https://sqlite.org/fts5.html) · [dump](../sources-raw/rung1-sqlite-fts5-bm25.md), high-fidelity excerpt). One quirk you must know to read your own output: FTS5 "multiplies the result by -1 before returning it, ensuring that better matches are assigned numerically lower scores" — so **BM25 scores in your lab are negative, best-first means `ORDER BY … ASC`** ([src/db.ts:170-174](file:///Users/abtinghods/Ork/tools/local-bookmarks/src/db.ts) does exactly that), and a `score=-8.1` beats a `score=-2.3`.
+
+Two lab-specific details ([src/db.ts](file:///Users/abtinghods/Ork/tools/local-bookmarks/src/db.ts)): the FTS index covers `title, author, summary, tags, body` (path is unindexed), all columns at default weight 1.0; and `toMatch()` (lines 160-163) lowercases the query, strips punctuation, and joins tokens with `OR` inside quotes — because FTS5's MATCH syntax treats bare punctuation as operators and would otherwise throw. Cost of that choice *(app fact + local inference)*: an OR-of-tokens query matches documents containing *any* query word, leaning on BM25's IDF to keep common-word matches from ranking high — a phrase like "context rot" matches every note containing just "context".
+
+### Dense vs lexical: complementary failure modes, hence hybrid
+
+Neither engine dominates. Dense retrieval finds **vocabulary-mismatched** content (the "backups" example) but is weak at exact identifiers, names, and rare tokens — and your corpus is full of those (tool names, personal names, `bm`, `FTS5`). Lexical BM25 nails exact tokens and fails at synonyms/paraphrase. Weaviate's framing of why hybrid exists: combine "the accuracy of keyword-based search with the semantic understanding of vector search" ([Weaviate, *Hybrid Search Explained*](https://weaviate.io/blog/hybrid-search-explained) · [dump](../sources-raw/rung1-weaviate-hybrid-search.md), excerpt+reconstruction). This is capability Q4's seed: *when* should you use which — and the honest foundations-level answer is "keyword for identifier-shaped queries, semantic for concept-shaped queries, hybrid when you don't know" — which you will test on your own corpus in the build, and study properly in rung-3.
+
+### RRF: fusing two rankings without comparing their scores
+
+The two engines' scores are incomparable — BM25 emits negative unbounded numbers, cosine distance lives in [0,2]. RRF sidesteps normalization entirely by using only each document's **rank position** in each list:
+
+```
+RRF score(d) = Σ over lists 1/(k + rank(d))
+```
+
+([Weaviate dump](../sources-raw/rung1-weaviate-hybrid-search.md), formula attributed to Benham & Culpepper 2018.) Weaviate's worked example, with k=0: doc A = BM25 rank 1 + dense rank 3 → 1/1 + 1/3 = **1.33**; doc B = rank 2 + rank 1 → **1.5**; doc C = rank 3 + rank 2 → **0.83**; final order **B > A > C**. The lesson in those three numbers: RRF rewards documents that rank *decently in both lists* over documents that top one list and miss the other.
+
+Your `rrf()` is thirteen lines implementing exactly that with **k = 60** — the conventional smoothing constant *(the article's k=0 is pedagogical; that k=60 is the default in common implementations such as Elasticsearch is general-practice knowledge, ours to flag — not from the cited page)* — as `1/(k + i + 1)` with zero-indexed `i`, i.e. rank 1 contributes 1/61 ([src/rrf.ts:7-19](file:///Users/abtinghods/Ork/tools/local-bookmarks/src/rrf.ts)). Its file comment states the *why* precisely: "merge ranked lists by position, not by raw score (so BM25's negative scores and cosine distance never need to be normalized together)." What k does *(local inference from the formula)*: with k=60, ranks 1 and 5 contribute 1/61 vs 1/65 — a small gap — so k dampens how much winning the top slot matters; with k=0 rank 1 is worth 3× rank 3. Note also `search_cmd.ts` widens the candidate pool before fusing — `pool = max(limit*3, 20)` per engine ([src/search_cmd.ts:70-77](file:///Users/abtinghods/Ork/tools/local-bookmarks/src/search_cmd.ts)) — because a doc at rank 15 in both lists may still deserve a top-10 hybrid slot.
+
+One fidelity flag: Weaviate's page also offers `relativeScoreFusion` (score-normalizing fusion, and an `alpha` weight: 0 = pure keyword, 1 = pure vector, default 0.75); the dump could not capture its internals verbatim and marks them as to-verify — treat the *existence* of score-based fusion as sourced, its mechanics as unverified ([dump](../sources-raw/rung1-weaviate-hybrid-search.md)).
+
+### ANN: the index you deliberately don't have
+
+Your `vectorSearch` is a brute-force scan: cosine distance against **every** row, `ORDER BY` — O(N) per query, with the in-code comment "trivially fast at this scale, no ANN index needed" ([src/db.ts:145-156](file:///Users/abtinghods/Ork/tools/local-bookmarks/src/db.ts)). At ~450 notes that's the right call, and Willison agrees at much larger scale: brute-force in SQLite is fine to ~20k items, "I'm not convinced you need an entirely new database" ([Willison dump](../sources-raw/rung1-willison-embeddings.md)).
+
+What an **Approximate Nearest Neighbor** index buys when N grows: sublinear query time, paid for with *recall* — it may miss true neighbors. Pinecone's HNSW numbers make the trade concrete: recall ranging from ~80% at 1ms up to 100% at 50ms per 1,000 queries (Sift1M; the dump's phrasing leaves ambiguous whether those times are per query or per 1,000-query batch), with memory scaling in the graph's connectivity parameter M ([Pinecone, *HNSW*](https://www.pinecone.io/learn/series/faiss/hnsw/) · [dump](../sources-raw/rung1-ann-hnsw.md), excerpt+reconstruction). HNSW's intuition: a layered graph with "longer edges in the highest layers (for fast search) and shorter edges in the lower layers (for accurate search)" — enter at the sparse top, greedily hop toward the query, drop a layer, repeat to the dense bottom. Global-first, then local-refine; built from skip-list + navigable-small-world ideas with (poly)logarithmic search complexity.
+
+When your corpus outgrows brute force, the upgrade is one function away in the same database: libSQL ships `libsql_vector_idx` + `vector_top_k` ([Turso docs dump](../sources-raw/rung1-libsql-vector.md)) — the day you reach for it, you accept the recall/speed trade above and it becomes a versioned component of your pipeline (rung-6's territory).
+
+### Cross-encoders: the judge your pipeline doesn't have yet
+
+Everything above is **bi-encoder** retrieval: query and document are embedded *independently*, and similarity is computed between the two frozen vectors — SBERT: sentences pass through the model separately, producing "sentence embeddings u and v… compared using cosine similarity" ([SBERT cross-encoder docs](https://sbert.net/examples/applications/cross-encoder/README.html) · [dump](../sources-raw/rung1-sbert-cross-encoders.md)). A **cross-encoder** instead reads *both texts at once*: "we pass both sentences simultaneously to the Transformer network. It produces then an output value between 0 and 1" — and crucially "does not produce a sentence embedding." Joint attention over the pair lets it judge relevance far more accurately than two independently-compressed vectors ever can.
+
+The catch is cost: with nothing cacheable, every (query, candidate) pair is a fresh model forward pass. SBERT's scale example: scoring all pairs among 10k sentences ≈ "50 Million sentence combinations… about 65 hours" for a cross-encoder versus ~5 seconds to embed the same set with a bi-encoder (same dump). Hence the universal pattern, verbatim from SBERT: "First, you use an efficient Bi-Encoder to retrieve e.g. the top-100 most similar sentences for a query. Then, you use a Cross-Encoder to re-rank these 100 hits." Cheap-recall-then-expensive-precision. Your lab stops after stage one — RRF's output goes straight to the screen. What a reranker would judge that your current scoring can't (Q17's seed): BM25 sees token overlap, cosine sees direction between two *independently* summarized vectors, but only a cross-encoder reads the query *against* the document's actual text. Whether that's worth the latency on your corpus is rung-3's measured experiment — this rung only needs you to command the concept. *(Forward pointers, parked to rung-3: Clavié's "MVP++" pattern, `rerankers` library, measured rerank lift.)*
+
+### Chunking: what "one note = one vector" preserves and destroys
+
+Chunking is deciding **what unit of text gets its own vector**. Your lab's answer today: the whole note — title, summary, metadata, and body joined into one string ([src/parse.ts:48-50](file:///Users/abtinghods/Ork/tools/local-bookmarks/src/parse.ts)) — with a hard cap: anything past **8,000 characters is silently cut from the embedding** (with a warning at index time), because "gemini-embedding-001 takes up to ~2048 tokens" ([src/parse.ts:47-58](file:///Users/abtinghods/Ork/tools/local-bookmarks/src/parse.ts)).
+
+Why unit size matters ([Pinecone, *Chunking Strategies*](https://www.pinecone.io/learn/chunking-strategies/) · [dump](../sources-raw/rung1-chunking-strategies.md), excerpt+reconstruction): a single vector must represent *everything* in its text — a long, multi-topic document averages into a vector that matches *no* specific query sharply *(that dilution mechanism is the dump's labelled teaching gloss, not Pinecone's own wording)* — and over-limit text is simply "truncated, or thrown away." Small chunks (~128–256 tokens) give sharp, granular matches but lose surrounding context; large chunks (~512–1024) keep context but risk dilution; overlap preserves ideas cut at boundaries at the cost of duplicate tokens. The page's serviceable heuristic: "if the chunk of text makes sense without the surrounding context to a human, it will make sense to the language model as well," and its honest bottom line — "there's no one-size-fits-all solution."
+
+Two lab-specific consequences you'll demonstrate in the build:
+
+1. **The truncation asymmetry** *(app fact, verified in code)*: FTS5 indexes the **full** body (`upsertNote` writes `n.body` into `notes_fts` — [src/db.ts:110-114](file:///Users/abtinghods/Ork/tools/local-bookmarks/src/db.ts)), but the embedding sees only the first 8,000 chars of the joined text. Content in a long note's tail is findable by keyword search and **invisible to semantic search**. That's a stage-attribution trap: a "semantic search missed it" symptom whose root cause is corpus processing, not retrieval — exactly the distinction Q10 will formalize.
+2. **Your `embedText` is a proto-enrichment** *(local observation)*: prepending title/summary/tags to the body before embedding is a home-grown version of the context-prepending idea that rung-3's Contextual Retrieval source systematizes. You already do a naive form of it — worth knowing when you read the fancy version.
+
+### Where each concept lives in your lab (orientation table)
+
+| Concept | Your code | The gap it exposes |
+|---|---|---|
+| Embedding call, task types, 768 dims | `src/embed.ts` · `src/config.ts` | truncated-dim normalization skipped (harmless under cosine) |
+| Vector storage + brute-force cosine | `src/db.ts` `F32_BLOB(768)`, `vectorSearch` | no ANN (correct at this scale) |
+| FTS5/BM25 keyword engine | `src/db.ts` `notes_fts`, `keywordSearch`, `toMatch` | OR-semantics; k1/b fixed |
+| RRF hybrid fusion | `src/rrf.ts` (k=60) + `search_cmd.ts` pool widening | rank-only; no reranker after fusion |
+| Chunking decision + 8K cap | `src/parse.ts` (`embedText`) | whole-note vectors; tail invisible to semantic; no provenance |
+| Index lifecycle (preview of rung-6) | `src/index_cmd.ts` content-hash sync, `DB_MARKER` rebuild | versioning is marker-only ("L0-ish" — Safjan's L0–L4 levels are rung-6's material) |
+
+### Learning coverage
+
+`cov-retrieval-foundations` — evidence the learner must produce (all eight rows, no skips):
+
+| Sub-skill | Evidence |
+|---|---|
+| Embeddings & cosine | Explain fixed-length semantic coordinates + why cosine ignores magnitude; state what a `score=0.41` semantic hit means in the lab |
+| Normalization subtlety | Explain why the lab's unnormalized 768-dim vectors are safe under cosine and when they wouldn't be |
+| Task-type asymmetry | Explain why docs and queries embed differently; point to both call sites |
+| BM25 | Explain IDF/k1/b in own words; read a negative FTS5 score correctly |
+| Hybrid + RRF | Hand-compute an RRF fusion and predict the hybrid order before running it |
+| ANN | State the recall/speed/memory trade and why the lab correctly skips it; name the libSQL upgrade path |
+| Cross-encoders | Explain bi-vs-cross architecturally and the retrieve-then-rerank pattern; state what stage the lab lacks |
+| Chunking | Explain dilution + size/overlap trades; demonstrate the lab's 8K truncation asymmetry live |
+
+---
+
+## Reading
+
+### Core
+
+- **Simon Willison — [Embeddings: What They Are and Why They Matter](https://simonwillison.net/2023/Oct/23/embeddings/)** (Oct 2023) · ⏱ **24 min** · **Why:** the best zero-baseline entry to embeddings, written engineer-to-engineer; the primer's embedding sections are assembled from it. **Extract:** the fixed-length/semantic-space mental model; cosine as direction; vibes-based search; the related-content and RAG applications. *(Raw: [dump](../sources-raw/rung1-willison-embeddings.md), faithful reconstruction + quotes.)*
+- **DLAI RAG (Zain Hasan) — foundations lesson subset** (~**85 min** video, Modules 1–3 named lessons: Intro-to-IR → TF-IDF → BM25 → semantic search → embedding deep-dive → hybrid → evaluating retrieval → ANN → vector DBs → chunking ×2 → cross-encoders/ColBERT → reranking) · **Why:** the only professionally sequenced from-zero video treatment of the rung's foundation topics; reinforces this primer through a second channel. **Extract:** visual intuition, esp. for ANN and cross-encoders. **Access (verified 2026-07-20, [dump](../sources-raw/rung1-dlai-access-check.md)):** Module 1 free with signup (preview by "accessing the entire first module at no cost"); M2–M3 free-audit unconfirmed on public pages — check the Coursera enroll modal for the audit link; fallback = $25 Pro month or skip (this primer + optional reads carry the content). *Gated: listed from the public outline only.*
+- **Weaviate — [Hybrid Search Explained](https://weaviate.io/blog/hybrid-search-explained)** (Jan 2025) · ⏱ **7 min** · **Why:** the RRF walkthrough with actual arithmetic — the fastest route to owning the fusion step. **Extract:** the B>A>C worked example; rank-based vs score-based fusion; alpha. *(Raw: [dump](../sources-raw/rung1-weaviate-hybrid-search.md).)*
+
+**Core subtotal: ~31 min reading + ~85 min video** (video conditional on the access check).
+
+### Optional / go deeper
+
+- **Elastic — [Practical BM25 Part 2](https://www.elastic.co/blog/practical-bm25-part-2-the-bm25-algorithm-and-its-variables)** · ⏱ **11 min** · marginal benefit: the worked IDF/k1/b numbers the primer quotes, in full context — read if BM25's ingredients don't feel owned. *(Primer-basis source.)*
+- **Pinecone — [HNSW](https://www.pinecone.io/learn/series/faiss/hnsw/)** · ⏱ **15 min** · marginal benefit: the actual layered-graph mechanics + recall/latency/memory curves behind the primer's ANN section. *(Primer-basis.)*
+- **Pinecone — [Chunking Strategies](https://www.pinecone.io/learn/chunking-strategies/)** · ⏱ **12 min** · marginal benefit: the named strategy families (fixed/recursive/semantic/contextual) before rung-3 evaluates them empirically. *(Primer-basis; bridge to rung-3.)*
+- **SBERT — [Cross-Encoders](https://sbert.net/examples/applications/cross-encoder/README.html)** · ⏱ **2 min** · marginal benefit: the canonical two-paragraph statement of bi-vs-cross from Reimers' own docs. *(Primer-basis.)*
+- **Google — [Gemini Embeddings API](https://ai.google.dev/gemini-api/docs/embeddings)** · ⏱ ~7 min (est. — measurer blocked by JS rendering; based on captured excerpt) · marginal benefit: the primary source for MRL truncation, the MTEB-by-dimension table, task types, and the normalization warning — the primer's claims about *your own embedding model*. *(Primer-basis; [dump](../sources-raw/rung1-gemini-embeddings-docs.md).)*
+- **LLM Zoomcamp — [Module 2: Vector Search](https://github.com/DataTalksClub/llm-zoomcamp)** · hands-on notebooks (NumPy-from-scratch → minsearch → SQLite → pgvector, [dump](../sources-raw/rung1-zoomcamp-m2.md)) · marginal benefit: build-it-yourself reinforcement if concepts stay abstract after the build exercise; same FAQ corpus reimplemented across four backends.
+- **Vicki Boykis — [What Are Embeddings?](https://vickiboykis.com/what_are_embeddings/)** · long-form PDF · marginal benefit: the rigorous depth reference behind Willison's intro, for after the block.
+
+**Full-list subtotal: ~78 min reading + ~85 min video + notebooks/reference.**
+
+---
+
+## Build
+
+*(Pure-study rung with a hands-on trace: the application here is reading and predicting your own system, not writing product code. Code policy per case — the one script below is yours to write.)*
+
+### Current app context
+
+Lab at `~/Ork/tools/local-bookmarks`, `master@e8e308d0`, clean. Corpus ≈ 450 notes in `BOOKMARKS_DIR`. Commands: `bm search "<query>"` (hybrid default) with `--mode keyword|semantic|hybrid`, `--limit N`, `--json` ([src/search_cmd.ts](file:///Users/abtinghods/Ork/tools/local-bookmarks/src/search_cmd.ts)); `bm sync-all` re-indexes incrementally. DB: `bookmarks.db` (libSQL) next to the tool. Requires `GOOGLE_API_KEY`/`GEMINI_API_KEY` for semantic/hybrid modes.
+
+### Exercise A — predict the engines' disagreement
+
+Pick **two real queries** against your own corpus: one *identifier-shaped* (an exact tool/person name you know appears verbatim) and one *concept-shaped* (a paraphrase you'd never have typed into the note). **Before running anything**, write down: which mode wins each query and why, in the primer's vocabulary. Then run all three modes per query (`--limit 5`) and annotate: where did keyword/semantic/hybrid agree, where did they diverge, and does your explanation survive contact with the output? Read the scores as what they are (negative BM25; cosine distance; RRF sums).
+
+### Exercise B — hand-compute one RRF fusion
+
+For the concept-shaped query: run `--mode keyword --json --limit 20` and `--mode semantic --json --limit 20`. On paper (or in a scratch file), take the top ~6 of each list, apply your lab's actual formula — `1/(60 + rank)` with rank starting at 1 — sum per doc across lists, and **predict the hybrid top-5 in order**. Then run `--mode hybrid --limit 5` and compare. Watch-out you should hit: the hybrid command fuses *pool-sized* lists (`max(limit*3, 20)`), so a doc outside your top-6 slice can sneak in — explain any mismatch through that lens.
+
+### Exercise C — cosine with your own hands
+
+Write a **small throwaway script** (yours — any style) that: pulls two note embeddings straight from `bookmarks.db` (`SELECT path, embedding FROM notes` — the column is a float32 blob), computes cosine similarity from raw floats (dot product over magnitudes), and cross-checks that `1 − similarity` matches `vector_distance_cos` for the same pair (compare against a `--mode semantic --json` score for a query, or query the function directly in SQL). Then scale one vector by 10× in memory and recompute: the cosine must not move. That's the normalization subtlety made empirical.
+
+### Exercise D — demonstrate the truncation asymmetry
+
+**Setup first — no existing note qualifies** *(app fact, verified 2026-07-20: the longest joined `embedText` in the corpus is 7,554 chars — "Claude Code Auto Mode - permission-free operation.md" — so 0 of ~450 notes exceed the 8,000-char cap and the oversize warning ([src/parse.ts:53-57](file:///Users/abtinghods/Ork/tools/local-bookmarks/src/parse.ts)) never fires today)*. Create one that does: write a new bookmark note whose joined text exceeds 8,000 chars (e.g. paste a long article as its body — the content is yours to write), making sure a distinctive phrase that appears nowhere else in the corpus sits in its **tail**, past the 8,000-char mark. Run `bm sync-all` and confirm the oversize warning fires for your note. Then, predicting before running: search that tail phrase in `--mode keyword` (should hit — FTS indexes the full body) and `--mode semantic` (should miss or rank low — the tail never reached the embedding). Record the pair of outputs as your evidence. State, in one sentence, which *pipeline stage* caused the semantic miss.
+
+### Artifact to produce
+
+A short trace log (markdown, anywhere you like — it feeds the rung checkpoint): per exercise, your **written prediction**, the observed output (paste the relevant lines), and a one-paragraph explanation in primer vocabulary. Plus the throwaway cosine script.
+
+### Success criterion
+
+Predictions made *before* runs; mismatches explained rather than ignored; the RRF hand-computation reproduces the hybrid order (or the pool-width explanation covers the gap); the cosine cross-check matches to float precision and survives the 10× scaling; the truncation asymmetry demonstrated with the oversized note you created (warning observed at sync; keyword finds the tail phrase; semantic misses it).
+
+### Hints / rubric
+
+- Stuck picking queries? Your corpus is heavy on AI-tool bookmarks — an author name or CLI name is identifier-shaped; "that technique where you retrieve before generating" is concept-shaped.
+- RRF math sanity check: a doc at rank 1 in one list only = 1/61 ≈ 0.0164; a doc at rank 4 in *both* lists = 2/64 ≈ 0.0313 — the double-appearance doc wins. If your prediction disagrees with the tool, recount ranks (the code is zero-indexed, `i + 1` restores 1-based).
+- Blob decoding friction in Exercise C is mechanics, not learning — if stuck >10 min, ask the companion to unblock the decode, then do the math yourself.
+
+---
+
+## Verify
+
+From the brief (gate, not weakened):
+
+- **Explain-back interview** across all eight coverage rows — the companion probes with the Learning coverage table above until gaps close; fluency raises challenge, never skips.
+- **Applied trace exercise passes** — the artifact exists, predictions precede runs, all four exercises done to the success criterion.
+- **No written-answer set for this rung** (no owned Q-numbers; foundations vocabulary is checkpointed via explain-back).
+
+Additional evidence-grounded checks:
+
+- He can point at `src/{embed,db,rrf,parse,search_cmd}.ts` and say what each contributes to a single `bm search` invocation without opening the primer.
+- He reads one real hybrid output line (`score=…`) and correctly identifies what the number is and is not.
+- Coverage ledger: `cov-retrieval-foundations` flips to `demonstrated` only on the companion's checkpoint, recorded in `progress.md` §Learnt.
+</script>
+
+<script>
+  (function(){
+    // scrollspy for the sidebar TOC
+    var links=[].slice.call(document.querySelectorAll('nav.toc a'));
+    var map={}; links.forEach(function(a){var id=a.getAttribute('href').slice(1); map[id]=a;});
+    if('IntersectionObserver' in window){
+      var obs=new IntersectionObserver(function(entries){
+        entries.forEach(function(en){
+          if(en.isIntersecting){
+            links.forEach(function(a){a.removeAttribute('aria-current');});
+            if(map[en.target.id]) map[en.target.id].setAttribute('aria-current','true');
+          }
+        });
+      },{rootMargin:'-20% 0px -70% 0px'});
+      document.querySelectorAll('main section[id]').forEach(function(s){obs.observe(s);});
+    }
+  })();
+</script>
+
+<script type="module">
+try {
+  const React = await import("react");
+  const { createRoot } = await import("react-dom/client");
+  const E = await import("https://esm.sh/@excalidraw/excalidraw@0.18.0?external=react,react-dom");
+  const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+  // Excalidraw's font must be loaded BEFORE convertToExcalidrawElements, or label
+  // text is measured with fallback metrics and overflows its shape.
+  try { await document.fonts.load("20px Excalifont"); } catch {}
+  // convertToExcalidrawElements does NOT grow shapes to fit their labels — measure
+  // and widen them ourselves (keeps each shape's center fixed).
+  const mctx = document.createElement("canvas").getContext("2d");
+  const fitLabels = (raw) => {
+    for (const el of raw) {
+      if (!el.label || !el.width) continue;
+      const fs = el.label.fontSize || 20;
+      mctx.font = `${fs}px Excalifont`;
+      const needW = Math.max(...el.label.text.split("\n").map(l => mctx.measureText(l).width)) + 64;
+      if (needW > el.width) { el.x -= (needW - el.width) / 2; el.width = needW; }
+      const needH = el.label.text.split("\n").length * fs * 1.25 + 36;
+      if (needH > el.height) { el.y -= (needH - el.height) / 2; el.height = needH; }
+    }
+    return raw;
+  };
+  for (const sceneEl of document.querySelectorAll("script.excalidraw-scene")) {
+    const fig = sceneEl.closest(".excalidraw-diagram");
+    const host = fig.querySelector(".excalidraw-canvas");
+    const toggle = fig.querySelector(".excalidraw-toggle");
+    try {
+      const raw = fitLabels(JSON.parse(sceneEl.textContent));
+      const elements = E.convertToExcalidrawElements(
+        raw.filter(el => !["cameraUpdate", "delete", "restoreCheckpoint"].includes(el.type)),
+        { regenerateIds: false });
+      // Default display: inline SVG export (crisp, correct text). The <Excalidraw>
+      // component's canvas text painter clips label glyphs in an embedded context.
+      const svg = await E.exportToSvg({ elements, appState: { exportWithDarkMode: dark }, files: null });
+      host.appendChild(svg);
+      fig.classList.add("excalidraw-live");
+      // Optional: swap in the interactive canvas (pan/zoom) on demand.
+      let root = null;
+      toggle.hidden = false;
+      toggle.addEventListener("click", () => {
+        if (!root) {
+          host.classList.add("excalidraw-interactive");
+          host.textContent = "";
+          root = createRoot(host);
+          root.render(React.createElement(E.Excalidraw, {
+            excalidrawAPI: (api) => {
+              const fit = () => api.scrollToContent(api.getSceneElements(), { fitToContent: true, viewportZoomFactor: 0.9 });
+              requestAnimationFrame(fit);
+              setTimeout(fit, 1500);
+            },
+            initialData: { elements, appState: { viewModeEnabled: true, zenModeEnabled: true, gridSize: null, theme: dark ? "dark" : "light" } },
+            viewModeEnabled: true
+          }));
+          toggle.textContent = "Static image";
+        } else {
+          root.unmount();
+          root = null;
+          host.classList.remove("excalidraw-interactive");
+          host.textContent = "";
+          host.appendChild(svg);
+          toggle.textContent = "Live canvas";
+        }
+      });
+    } catch { /* bad scene JSON — ASCII fallback stays visible */ }
+  }
+} catch { /* offline / CDN unreachable — ASCII fallbacks stay visible */ }
+</script>
+</body>
+</html>

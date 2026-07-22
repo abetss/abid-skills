@@ -1,0 +1,58 @@
+<!--
+COMPONENT: pros-cons
+WHEN: 2-3 alternatives each presented as a headed column of advantages and drawbacks — lighter-weight than comparison-matrix when the tradeoffs don't share a common set of axes.
+AVOID: don't use it when the same criteria apply to all options (that's comparison-matrix) or for a single option's tradeoffs (one callout or prose does it).
+SCHEMA: per column: option title (h3), optional one-line framing, an "Advantages" list and a "Drawbacks" list (3-5 short items each). Items carry ✓/✕ markers — meaning is never color alone.
+VARIANTS: 2 or 3 columns (grid auto-fits).
+ASSEMBLY: copy the <style> block into the page's == COMPONENT STYLES == slot, the HTML fragment into a <section>. No script.
+-->
+<style>
+  /* pros-cons — scoped under .c-pc */
+  .c-pc{display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:24px; margin:24px 0}
+  .c-pc-col{background:var(--card); border:1px solid var(--border);
+            border-radius:var(--radius); padding:24px 26px}
+  .c-pc-col h3{margin:0 0 4px; font-size:21px}
+  .c-pc-frame{margin:0 0 16px; font-size:16px; color:var(--muted-foreground)}
+  .c-pc-head{font-size:14px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+             margin:16px 0 8px}
+  .c-pc-head--pro{color:var(--success)}
+  .c-pc-head--con{color:var(--destructive)}
+  .c-pc-list{list-style:none; margin:0; padding:0; max-width:none}
+  .c-pc-list li{position:relative; padding-left:28px; margin-bottom:8px; font-size:16px; max-width:none}
+  .c-pc-list li::before{position:absolute; left:0; top:0; font-weight:700}
+  .c-pc-list--pro li::before{content:"✓"; color:var(--success)}
+  .c-pc-list--con li::before{content:"✕"; color:var(--destructive)}
+</style>
+
+<div class="c-pc">
+  <div class="c-pc-col">
+    <h3>Build in-house on Postgres</h3>
+    <p class="c-pc-frame">We own the semantics, on infrastructure we already run.</p>
+    <p class="c-pc-head c-pc-head--pro">Advantages</p>
+    <ul class="c-pc-list c-pc-list--pro">
+      <li>Zero new infrastructure or on-call surface</li>
+      <li>Full SQL for debugging and audit queries</li>
+      <li>Marginal cost is effectively zero at our scale</li>
+    </ul>
+    <p class="c-pc-head c-pc-head--con">Drawbacks</p>
+    <ul class="c-pc-list c-pc-list--con">
+      <li>We build and maintain the expiry sweeper ourselves</li>
+      <li>Peak write volume needs a load test before cutover</li>
+    </ul>
+  </div>
+  <div class="c-pc-col">
+    <h3>Buy a managed session service</h3>
+    <p class="c-pc-frame">Vendor owns storage, expiry, and replication.</p>
+    <p class="c-pc-head c-pc-head--pro">Advantages</p>
+    <ul class="c-pc-list c-pc-list--pro">
+      <li>Nothing to operate — expiry and failover included</li>
+      <li>Fastest time to ship: SDK integration only</li>
+    </ul>
+    <p class="c-pc-head c-pc-head--con">Drawbacks</p>
+    <ul class="c-pc-list c-pc-list--con">
+      <li>Auth state leaves our infrastructure — security review required</li>
+      <li>Per-session pricing grows linearly with our heaviest cost driver</li>
+      <li>Migration path out is a rewrite, not an export</li>
+    </ul>
+  </div>
+</div>

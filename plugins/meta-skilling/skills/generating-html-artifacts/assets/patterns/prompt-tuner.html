@@ -1,0 +1,772 @@
+<!doctype html>
+<!--
+PATTERN: prompt-tuner
+WHEN: the whole artifact is a live template editor — editing a prompt / message template with {{slot}} placeholders while sample records re-render the filled output in real time, then copying the template out. Use INSTEAD of composing shell.html sections.
+AVOID: static prompt documentation or a single example rendering — compose those from components instead.
+HOW TO USE: copy this whole file, replace DEFAULT_TEMPLATE, SAMPLES, and KNOWN_SLOTS with the real template and sample data (and the demo header text). The highlighting, caret-preserving re-render, fill preview, and copy logic is generic. Keep the artifact-source mirror in sync.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Acme — Support reply prompt tuner</title>
+<style>
+  /* ---- palette: light (default) — identical tokens to shell.html ---- */
+  :root{
+    --card-foreground:var(--foreground);--primary-foreground:#ffffff;--code-comment:#5b6168;--code-keyword:#9c3a2c;--code-string:#155e3b;--code-number:#7a4f00;--code-fn:#6f42c1;--success:#1c6b46;--warning:#8a5a00;--destructive:#b4453a;
+    --code-bg:#f1f1ee; --code-fg:#1a1d21; --inverse:#16191d; --inverse-foreground:#f2f3f4;
+    --background:#f7f7f5; --card:#ffffff; --foreground:#1a1d21; --muted-foreground:#33383f;
+    --border:#d9d8d4; --primary:#1c6b46; --accent:#e6f1ec; --accent-foreground:#10472d;
+    --radius:14px; --maxw:1600px;
+    color-scheme:light dark; font-synthesis:none;
+    /* fixed values for use ON --inverse surfaces (both themes) */
+    --inverse-muted-foreground:#b9bec5;
+    /* type stacks (system fonts only — no web fonts) */
+    --serif: ui-serif, Georgia, "Times New Roman", serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, Menlo, Consolas, monospace;
+  }
+  /* ---- palette: dark (auto-follows the OS setting; no toggle) ---- */
+  @media (prefers-color-scheme: dark){
+    :root{
+      --primary-foreground:#06210f;--success:#5bbd8a;--warning:#e0b357;--destructive:#e0897a;
+      --code-bg:#16191d; --code-fg:#f2f3f4; --code-comment:#9aa0a8; --code-keyword:#7fd0a3; --code-string:#c9d99a; --code-number:#e0b083; --code-fn:#c9b98a;
+      --background:#14171a; --card:#1d2126; --foreground:#f2f3f4; --muted-foreground:#cdd2d8;
+      --border:#2c323a; --primary:#5bbd8a; --accent:#16352a; --accent-foreground:#9fe3c0;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--sans);
+    font-size: 18px;
+    line-height: 1.6;
+  }
+  :focus-visible{outline:3px solid var(--primary); outline-offset:2px; border-radius:4px}
+  .wrap {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 48px 48px 96px;
+  }
+
+  /* ---------- header ---------- */
+  header { margin-bottom: 24px; }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 14px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+  }
+  h1 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 36px;
+    letter-spacing: -0.01em;
+    margin: 8px 0 8px;
+  }
+  .sub {
+    font-size: 18px;
+    color: var(--muted-foreground);
+    max-width: 72ch;
+    margin: 0;
+  }
+
+  /* ---------- toolbar ---------- */
+  .toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--background);
+    padding: 12px 0 16px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .toolbar .spacer { flex: 1; }
+  .toolbar .hint {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--muted-foreground);
+    letter-spacing: 0.02em;
+  }
+  button {
+    font-family: var(--mono);
+    font-size: 14px;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .btn-primary {
+    background: var(--inverse);
+    color: var(--inverse-foreground);
+    border: 1.5px solid var(--inverse);
+    border-radius: 999px;
+    padding: 10px 18px;
+  }
+  .btn-primary:hover { background: color-mix(in srgb, var(--inverse-foreground) 14%, var(--inverse)); }
+  .btn-primary:active { transform: translateY(1px); }
+  .btn-primary.copied { background: var(--success); border-color: var(--success); color: var(--primary-foreground); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--foreground);
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
+    padding: 10px 18px;
+  }
+  .btn-ghost:hover { border-color: var(--muted-foreground); }
+
+  /* ---------- two-column layout ---------- */
+  .cols {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 32px;
+    align-items: start;
+    margin-top: 24px;
+  }
+  @media (max-width: 880px) {
+    .cols { grid-template-columns: 1fr; }
+    .wrap { padding: 32px 20px 64px; }
+  }
+
+  .panel {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  /* ---------- left: editor ---------- */
+  .ed-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    border-bottom: 1.5px solid var(--border);
+    background: var(--background);
+  }
+  .ed-label {
+    font-family: var(--mono);
+    font-size: 14px;
+    letter-spacing: 0.1em;
+    color: var(--muted-foreground);
+    text-transform: uppercase;
+  }
+  .ed-toolbar .spacer { flex: 1; }
+  .counter {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--foreground);
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
+    padding: 4px 12px;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .editor {
+    font-family: var(--mono);
+    font-size: 16px;
+    line-height: 1.7;
+    padding: 20px;
+    min-height: 400px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: var(--card);
+    color: var(--foreground);
+    outline: none;
+    caret-color: var(--primary);
+    tab-size: 2;
+  }
+  .editor:focus-visible { outline: none; box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--primary) 45%, var(--card)); }
+  .slot {
+    background: var(--accent);
+    color: var(--accent-foreground);
+    border-radius: 4px;
+    padding: 0 4px;
+    font-weight: 600;
+  }
+  .slot.warn {
+    background: color-mix(in srgb, var(--warning) 14%, var(--card));
+    color: var(--warning);
+    text-decoration: underline dashed var(--warning) 1.5px;
+    text-underline-offset: 3px;
+  }
+
+  .legend {
+    border-top: 1.5px solid var(--border);
+    padding: 14px 18px 16px;
+    background: var(--background);
+  }
+  .legend-label {
+    font-family: var(--mono);
+    font-size: 14px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+    margin-bottom: 10px;
+  }
+  .legend-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    font-family: var(--mono);
+    font-size: 14px;
+    background: var(--accent);
+    color: var(--accent-foreground);
+    border-radius: 4px;
+    padding: 3px 9px;
+    font-weight: 600;
+  }
+
+  /* ---------- right: preview ---------- */
+  .preview-panel { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+  .preview-head {
+    font-family: var(--mono);
+    font-size: 14px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+    padding: 0 2px 2px;
+  }
+  .sample {
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .sample-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1.5px solid var(--border);
+    background: var(--background);
+  }
+  .badge {
+    font-family: var(--mono);
+    font-size: 14px;
+    letter-spacing: 0.06em;
+    color: var(--muted-foreground);
+  }
+  .cust {
+    font-family: var(--serif);
+    font-size: 17px;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+  }
+  .sample-head .spacer { flex: 1; }
+  .plan {
+    font-family: var(--mono);
+    font-size: 14px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-radius: 999px;
+    padding: 3px 10px;
+    border: 1.5px solid var(--border);
+    color: var(--foreground);
+    background: var(--card);
+  }
+  .plan.team   { background: var(--accent);  border-color: color-mix(in srgb, var(--accent-foreground) 30%, var(--accent)); color: var(--accent-foreground); }
+  .plan.studio { background: var(--primary); border-color: var(--primary); color: var(--primary-foreground); }
+  .rendered {
+    font-family: var(--mono);
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--foreground);
+    white-space: pre-wrap;
+    word-break: break-word;
+    padding: 14px 16px 16px;
+  }
+  .filled {
+    background: var(--accent);
+    border-radius: 3px;
+    padding: 0 3px;
+  }
+  .missing {
+    background: color-mix(in srgb, var(--warning) 12%, var(--card));
+    color: var(--warning);
+    border-radius: 3px;
+    padding: 0 3px;
+    font-weight: 600;
+  }
+
+  footer {
+    margin-top: 40px;
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--muted-foreground);
+    letter-spacing: 0.02em;
+  }
+
+  @media (prefers-reduced-motion: no-preference){
+    .btn-primary { transition: background 140ms ease, transform 80ms ease; }
+    .btn-ghost { transition: border-color 140ms ease, color 140ms ease; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Acme / editor / prompt-tuner</div>
+    <h1>Support reply draft prompt</h1>
+    <p class="sub">Edit the system prompt on the left and watch three sample tickets re-render the filled template on the right, live as you type. When it reads well across all three moods, copy the template out.</p>
+  </header>
+
+  <div class="toolbar">
+    <button id="copyBtn" class="btn-primary">Copy prompt</button>
+    <button id="resetBtn" class="btn-ghost">Reset</button>
+    <div class="spacer"></div>
+    <div class="hint">slots use <strong>{{double_brace}}</strong> syntax</div>
+  </div>
+
+  <div class="cols">
+
+    <!-- left -->
+    <section class="panel" aria-label="Template editor">
+      <div class="ed-toolbar">
+        <span class="ed-label">Template</span>
+        <div class="spacer"></div>
+        <span id="counter" class="counter">0 chars · ~0 tokens</span>
+      </div>
+      <div id="editor" class="editor" contenteditable="true" spellcheck="false" autocapitalize="off" autocorrect="off" role="textbox" aria-multiline="true" aria-label="Prompt template"></div>
+      <div class="legend">
+        <div class="legend-label">Available slots</div>
+        <div id="legendChips" class="legend-chips"></div>
+      </div>
+    </section>
+
+    <!-- right -->
+    <section class="panel preview-panel" aria-label="Live preview">
+      <div class="preview-head">Live preview · 3 sample tickets</div>
+      <div id="samples"></div>
+    </section>
+
+  </div>
+
+  <footer>Highlighted slots fill from each sample's ticket fields. Anything underlined in dashed warning color isn't a known field and will pass through unfilled.</footer>
+
+</div>
+
+<!-- Agent-readable source mirror — keep in sync with DEFAULT_TEMPLATE and SAMPLES -->
+<script type="text/markdown" id="artifact-source">
+# Acme — Support reply draft prompt
+
+Edit the system prompt on the left and watch three sample tickets re-render the filled template on the right, live as you type. When it reads well across all three moods, copy the template out.
+
+## Template (default)
+
+```
+You are a support agent for Acme, a project workspace for small teams.
+
+A customer named {{customer_name}} on the {{plan_tier}} plan wrote in about:
+"{{ticket_subject}}"
+
+Their message:
+{{ticket_body}}
+
+Write a reply that is {{tone}}, no more than 120 words, and ends with a single concrete next step.
+Never promise a refund without escalating. Sign off as "The Acme team."
+```
+
+Available slots: `customer_name`, `plan_tier`, `ticket_subject`, `ticket_body`, `tone`
+
+## Sample tickets
+
+- **SAMPLE 1 (Free)** — Priya N., "Where did my board go?": Hi — I made a board yesterday called "Spring launch" with my coworker and today I can't find it anywhere. I'm new to Acme and I'm not sure if I deleted it by accident or if I'm just looking in the wrong place. Can you help? Tone: warm and patient.
+- **SAMPLE 2 (Team)** — Marcus D., "Sync keeps dropping comments": This is the third time this week. I leave comments on cards from my laptop, switch to my phone on the train, and they're gone. My team thinks I'm ignoring them. We pay for 14 seats and this is genuinely making us look bad to a client. Tone: direct and apologetic.
+- **SAMPLE 3 (Studio)** — Lena K., "Update billing entity on next invoice": Hey folks! We just spun up a new holding company (ACME Corp Oy) and finance would love the May invoice to use that name + our new VAT ID, FI00000000. No rush at all, just want it sorted before the cycle runs. Thanks a million. Tone: brisk and friendly.
+</script>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------------------------------------------------------------------------
+  // Data
+  // ---------------------------------------------------------------------------
+
+  var DEFAULT_TEMPLATE =
+'You are a support agent for Acme, a project workspace for small teams.\n' +
+'\n' +
+'A customer named {{customer_name}} on the {{plan_tier}} plan wrote in about:\n' +
+'"{{ticket_subject}}"\n' +
+'\n' +
+'Their message:\n' +
+'{{ticket_body}}\n' +
+'\n' +
+'Write a reply that is {{tone}}, no more than 120 words, and ends with a single concrete next step.\n' +
+'Never promise a refund without escalating. Sign off as "The Acme team."';
+
+  var SAMPLES = [
+    {
+      label: 'SAMPLE 1',
+      planClass: 'free',
+      data: {
+        customer_name: 'Priya N.',
+        plan_tier: 'Free',
+        ticket_subject: 'Where did my board go?',
+        ticket_body: 'Hi — I made a board yesterday called "Spring launch" with my coworker and today I can’t find it anywhere. I’m new to Acme and I’m not sure if I deleted it by accident or if I’m just looking in the wrong place. Can you help?',
+        tone: 'warm and patient'
+      }
+    },
+    {
+      label: 'SAMPLE 2',
+      planClass: 'team',
+      data: {
+        customer_name: 'Marcus D.',
+        plan_tier: 'Team',
+        ticket_subject: 'Sync keeps dropping comments',
+        ticket_body: 'This is the third time this week. I leave comments on cards from my laptop, switch to my phone on the train, and they’re gone. My team thinks I’m ignoring them. We pay for 14 seats and this is genuinely making us look bad to a client.',
+        tone: 'direct and apologetic'
+      }
+    },
+    {
+      label: 'SAMPLE 3',
+      planClass: 'studio',
+      data: {
+        customer_name: 'Lena K.',
+        plan_tier: 'Studio',
+        ticket_subject: 'Update billing entity on next invoice',
+        ticket_body: 'Hey folks! We just spun up a new holding company (ACME Corp Oy) and finance would love the May invoice to use that name + our new VAT ID, FI00000000. No rush at all, just want it sorted before the cycle runs. Thanks a million.',
+        tone: 'brisk and friendly'
+      }
+    }
+  ];
+
+  var KNOWN_SLOTS = ['customer_name', 'plan_tier', 'ticket_subject', 'ticket_body', 'tone'];
+  var SLOT_RE = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
+
+  // ---------------------------------------------------------------------------
+  // DOM refs
+  // ---------------------------------------------------------------------------
+
+  var editor      = document.getElementById('editor');
+  var counterEl   = document.getElementById('counter');
+  var samplesEl   = document.getElementById('samples');
+  var legendEl    = document.getElementById('legendChips');
+  var copyBtn     = document.getElementById('copyBtn');
+  var resetBtn    = document.getElementById('resetBtn');
+
+  // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
+
+  function escapeHtml(s) {
+    return s
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // Read plain text out of the contenteditable. We rely on white-space:pre-wrap
+  // and only ever insert text + inline <span>s, so textContent is faithful as
+  // long as the browser hasn't injected block elements or <br>s. Normalize both.
+  function getPlainText() {
+    var out = '';
+    var walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, null);
+    var node;
+    while ((node = walker.nextNode())) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        out += node.nodeValue;
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        var tag = node.tagName;
+        if (tag === 'BR') out += '\n';
+        // Some browsers wrap new lines in <div>; emit a newline before a div
+        // that isn't the first child and doesn't already start after one.
+        if (tag === 'DIV' && node !== editor.firstChild && out.length && out[out.length - 1] !== '\n') {
+          out += '\n';
+        }
+      }
+    }
+    return out;
+  }
+
+  // ---- Caret save/restore by character offset ----
+
+  function getCaretOffset() {
+    var sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return null;
+    var range = sel.getRangeAt(0);
+    if (!editor.contains(range.startContainer)) return null;
+
+    var pre = range.cloneRange();
+    pre.selectNodeContents(editor);
+    pre.setEnd(range.startContainer, range.startOffset);
+
+    // Count characters by walking text nodes within the pre-range. We mirror
+    // getPlainText's newline handling so offsets line up.
+    var frag = pre.cloneContents();
+    var off = 0;
+    var walker = document.createTreeWalker(frag, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, null);
+    var node, lastChar = '';
+    var first = true;
+    while ((node = walker.nextNode())) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        off += node.nodeValue.length;
+        if (node.nodeValue.length) lastChar = node.nodeValue[node.nodeValue.length - 1];
+      } else {
+        if (node.tagName === 'BR') { off += 1; lastChar = '\n'; }
+        if (node.tagName === 'DIV' && !first && lastChar !== '\n') { off += 1; lastChar = '\n'; }
+      }
+      first = false;
+    }
+    return off;
+  }
+
+  function setCaretOffset(offset) {
+    if (offset == null) return;
+    var sel = window.getSelection();
+    if (!sel) return;
+
+    var walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, null);
+    var node;
+    var remaining = offset;
+    var lastNode = null;
+
+    while ((node = walker.nextNode())) {
+      lastNode = node;
+      var len = node.nodeValue.length;
+      if (remaining <= len) {
+        var range = document.createRange();
+        range.setStart(node, remaining);
+        range.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        return;
+      }
+      remaining -= len;
+    }
+
+    // Past the end — place at end of last text node, or at end of editor.
+    var range2 = document.createRange();
+    if (lastNode) {
+      range2.setStart(lastNode, lastNode.nodeValue.length);
+    } else {
+      range2.selectNodeContents(editor);
+      range2.collapse(false);
+    }
+    range2.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range2);
+  }
+
+  // ---- Highlighting ----
+
+  function highlightHtml(text) {
+    var html = '';
+    var last = 0;
+    SLOT_RE.lastIndex = 0;
+    var m;
+    while ((m = SLOT_RE.exec(text)) !== null) {
+      html += escapeHtml(text.slice(last, m.index));
+      var name = m[1];
+      var cls = KNOWN_SLOTS.indexOf(name) !== -1 ? 'slot' : 'slot warn';
+      html += '<span class="' + cls + '">' + escapeHtml(m[0]) + '</span>';
+      last = m.index + m[0].length;
+    }
+    html += escapeHtml(text.slice(last));
+    return html;
+  }
+
+  function renderEditor(text, caret) {
+    editor.innerHTML = highlightHtml(text);
+    if (caret != null && document.activeElement === editor) {
+      setCaretOffset(caret);
+    }
+  }
+
+  // ---- Preview ----
+
+  function fillHtml(text, data) {
+    var html = '';
+    var last = 0;
+    SLOT_RE.lastIndex = 0;
+    var m;
+    while ((m = SLOT_RE.exec(text)) !== null) {
+      html += escapeHtml(text.slice(last, m.index));
+      var name = m[1];
+      if (Object.prototype.hasOwnProperty.call(data, name)) {
+        html += '<span class="filled">' + escapeHtml(String(data[name])) + '</span>';
+      } else {
+        html += '<span class="missing">' + escapeHtml(m[0]) + '</span>';
+      }
+      last = m.index + m[0].length;
+    }
+    html += escapeHtml(text.slice(last));
+    return html;
+  }
+
+  var sampleNodes = [];
+
+  function buildSamples() {
+    samplesEl.innerHTML = '';
+    sampleNodes = [];
+    SAMPLES.forEach(function (s) {
+      var card = document.createElement('div');
+      card.className = 'sample';
+
+      var head = document.createElement('div');
+      head.className = 'sample-head';
+
+      var badge = document.createElement('span');
+      badge.className = 'badge';
+      badge.textContent = s.label;
+
+      var cust = document.createElement('span');
+      cust.className = 'cust';
+      cust.textContent = s.data.customer_name;
+
+      var spacer = document.createElement('span');
+      spacer.className = 'spacer';
+
+      var plan = document.createElement('span');
+      plan.className = 'plan ' + s.planClass;
+      plan.textContent = s.data.plan_tier;
+
+      head.appendChild(badge);
+      head.appendChild(cust);
+      head.appendChild(spacer);
+      head.appendChild(plan);
+
+      var body = document.createElement('div');
+      body.className = 'rendered';
+
+      card.appendChild(head);
+      card.appendChild(body);
+      samplesEl.appendChild(card);
+      sampleNodes.push({ body: body, data: s.data });
+    });
+    samplesEl.style.display = 'flex';
+    samplesEl.style.flexDirection = 'column';
+    samplesEl.style.gap = '16px';
+  }
+
+  function buildLegend() {
+    legendEl.innerHTML = '';
+    KNOWN_SLOTS.forEach(function (name) {
+      var c = document.createElement('span');
+      c.className = 'chip';
+      c.textContent = '{{' + name + '}}';
+      legendEl.appendChild(c);
+    });
+  }
+
+  // ---- Counter ----
+
+  function updateCounter(text) {
+    var chars = text.length;
+    var tokens = Math.round(chars / 4.2);
+    counterEl.textContent = chars + ' chars · ~' + tokens + ' tokens';
+  }
+
+  // ---- Master refresh ----
+
+  function refresh(opts) {
+    opts = opts || {};
+    var text = opts.text != null ? opts.text : getPlainText();
+    var caret = opts.preserveCaret ? getCaretOffset() : null;
+
+    renderEditor(text, caret);
+    updateCounter(text);
+    sampleNodes.forEach(function (sn) {
+      sn.body.innerHTML = fillHtml(text, sn.data);
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Events
+  // ---------------------------------------------------------------------------
+
+  var raf = null;
+  editor.addEventListener('input', function () {
+    if (raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(function () {
+      raf = null;
+      refresh({ preserveCaret: true });
+    });
+  });
+
+  // Force plain-text paste so we never inherit foreign HTML.
+  editor.addEventListener('paste', function (e) {
+    e.preventDefault();
+    var txt = (e.clipboardData || window.clipboardData).getData('text/plain');
+    var sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return;
+    var range = sel.getRangeAt(0);
+    range.deleteContents();
+    range.insertNode(document.createTextNode(txt));
+    range.collapse(false);
+    sel.removeAllRanges();
+    sel.addRange(range);
+    refresh({ preserveCaret: true });
+  });
+
+  // Insert literal newline on Enter so we don't get nested <div>s.
+  editor.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      var sel = window.getSelection();
+      if (!sel || !sel.rangeCount) return;
+      var range = sel.getRangeAt(0);
+      range.deleteContents();
+      var nl = document.createTextNode('\n');
+      range.insertNode(nl);
+      range.setStartAfter(nl);
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
+      refresh({ preserveCaret: true });
+    }
+  });
+
+  var copyTimer = null;
+  copyBtn.addEventListener('click', function () {
+    var text = getPlainText();
+    var done = function () {
+      copyBtn.textContent = 'Copied ✓';
+      copyBtn.classList.add('copied');
+      if (copyTimer) clearTimeout(copyTimer);
+      copyTimer = setTimeout(function () {
+        copyBtn.textContent = 'Copy prompt';
+        copyBtn.classList.remove('copied');
+      }, 1200);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () {
+        fallbackCopy(text); done();
+      });
+    } else {
+      fallbackCopy(text); done();
+    }
+  });
+
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) { /* ignore */ }
+    document.body.removeChild(ta);
+  }
+
+  resetBtn.addEventListener('click', function () {
+    refresh({ text: DEFAULT_TEMPLATE });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Boot
+  // ---------------------------------------------------------------------------
+
+  buildLegend();
+  buildSamples();
+  refresh({ text: DEFAULT_TEMPLATE });
+})();
+</script>
+</body>
+</html>

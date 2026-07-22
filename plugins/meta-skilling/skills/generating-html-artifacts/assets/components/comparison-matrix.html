@@ -1,0 +1,76 @@
+<!--
+COMPONENT: comparison-matrix
+WHEN: THE tradeoff component — 2-4 options scored against the same decision axes, with one recommended option visually highlighted. Use for architecture/tooling/library choices, build-vs-buy, migration targets.
+AVOID: don't use it for raw data rows (data-table) or when there's no recommendation to make — a matrix without a verdict is homework for the reader.
+SCHEMA: axes (first column, one row per decision criterion), options (one column each), a cell value per option×axis (short phrase, or ✓ / ✗ / ~), exactly one recommended option flagged with .c-matrix-rec on its th + tds and a badge in the header. Optional caption/footnote.
+VARIANTS: none beyond the recommended-column highlight, which is expected whenever a recommendation exists.
+ASSEMBLY: copy the <style> block into the page's == COMPONENT STYLES == slot, the HTML fragment into a <section>. No script. Cells use words AND glyphs — never color alone.
+-->
+<style>
+  /* comparison-matrix — scoped under .c-matrix */
+  .c-matrix-scroll{overflow-x:auto; margin:24px 0; border:1px solid var(--border);
+                   border-radius:var(--radius); background:var(--card)}
+  .c-matrix{width:100%; border-collapse:collapse; font-size:16px}
+  .c-matrix caption{caption-side:bottom; text-align:left; font-size:16px;
+                    color:var(--muted-foreground); padding:12px 20px; border-top:1px solid var(--border)}
+  .c-matrix th, .c-matrix td{padding:14px 20px; border-bottom:1px solid var(--border);
+                             border-left:1px solid var(--border); text-align:left; vertical-align:top}
+  .c-matrix tr>*:first-child{border-left:none}
+  .c-matrix thead th{font-size:16px; font-weight:700; color:var(--foreground);
+                     border-bottom:2px solid var(--border); white-space:nowrap}
+  .c-matrix tbody th[scope="row"]{font-weight:600; color:var(--foreground); white-space:nowrap}
+  .c-matrix tbody tr:last-child>*{border-bottom:none}
+  /* recommended option: accent-tinted column + badge */
+  .c-matrix .c-matrix-rec{background:var(--accent); color:var(--accent-foreground)}
+  .c-matrix-badge{display:inline-block; margin-left:8px; padding:3px 10px; border-radius:999px;
+                  background:var(--primary); color:var(--primary-foreground);
+                  font-size:14px; font-weight:700; letter-spacing:.04em; vertical-align:2px; white-space:nowrap}
+  .c-matrix .yes{color:var(--success); font-weight:700}
+  .c-matrix .no{color:var(--destructive); font-weight:700}
+</style>
+
+<div class="c-matrix-scroll" role="region" aria-label="Session store options compared" tabindex="0">
+  <table class="c-matrix">
+    <caption>✓ = strong fit · ~ = workable with caveats · ✗ = poor fit. Latency figures from the March staging benchmark.</caption>
+    <thead>
+      <tr>
+        <th scope="col">Decision axis</th>
+        <th scope="col" class="c-matrix-rec">Postgres + sweeper <span class="c-matrix-badge">Recommended</span></th>
+        <th scope="col">Managed Redis</th>
+        <th scope="col">DynamoDB</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th scope="row">Read latency (p95)</th>
+        <td class="c-matrix-rec">~ 1 ms, indexed lookup <span class="yes">✓</span></td>
+        <td>&lt; 1 ms <span class="yes">✓</span></td>
+        <td>8–15 ms cross-AZ <span class="no">~</span></td>
+      </tr>
+      <tr>
+        <th scope="row">New infra to operate</th>
+        <td class="c-matrix-rec">None — existing cluster <span class="yes">✓</span></td>
+        <td>New stateful system + failover runbook <span class="no">✗</span></td>
+        <td>Fully managed <span class="yes">✓</span></td>
+      </tr>
+      <tr>
+        <th scope="row">Expiry handling</th>
+        <td class="c-matrix-rec">1-min sweeper job <span class="no">~</span></td>
+        <td>Native TTL <span class="yes">✓</span></td>
+        <td>Native TTL (deletes lag up to 48 h) <span class="no">~</span></td>
+      </tr>
+      <tr>
+        <th scope="row">Ad-hoc debugging queries</th>
+        <td class="c-matrix-rec">Full SQL <span class="yes">✓</span></td>
+        <td>Key scan only <span class="no">✗</span></td>
+        <td>Limited query model <span class="no">✗</span></td>
+      </tr>
+      <tr>
+        <th scope="row">Monthly cost at 10× scale</th>
+        <td class="c-matrix-rec">~ $0 marginal <span class="yes">✓</span></td>
+        <td>~ $900 <span class="no">~</span></td>
+        <td>~ $1,400 on-demand <span class="no">✗</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>

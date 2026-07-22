@@ -1,0 +1,72 @@
+<!--
+COMPONENT: file-tree
+WHEN: showing a directory or project structure — repo layouts, scaffold output, "where things live" overviews.
+AVOID: interactive explorers (this tree is static), deep trees over ~5 levels (show the relevant subtree instead).
+SCHEMA: nested <ul>; each <li role="treeitem"> holds one <span class="c-ftree-dir">name/</span> (folder) or <span class="c-ftree-file">name.ext</span> (file); a folder's children go in a nested <ul role="group"> inside its <li>. Trailing "/" on folder names is written in the text, not added by CSS.
+VARIANTS: none.
+ASSEMBLY: copy the <style> block into the page's == COMPONENT STYLES == slot and the HTML fragment into a <section>. No script needed.
+-->
+<style>
+  .c-ftree{list-style:none; margin:24px 0; padding:20px 24px; max-width:none;
+    background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+    font:16px/2 ui-monospace,Menlo,Monaco,Consolas,monospace; color:var(--foreground);
+    overflow-x:auto}
+  .c-ftree ul{list-style:none; margin:0; padding-left:28px}
+  .c-ftree ul > li{position:relative}
+  /* guide lines: vertical rail + horizontal stub per nested item */
+  .c-ftree ul > li::before{content:""; position:absolute; left:-19px; top:-2px; bottom:-2px;
+    border-left:1px solid var(--border)}
+  .c-ftree ul > li::after{content:""; position:absolute; left:-19px; top:16px; width:15px;
+    border-top:1px solid var(--border)}
+  .c-ftree ul > li:last-child::before{bottom:auto; height:18px}
+  .c-ftree-dir, .c-ftree-file{position:relative; display:inline-flex; align-items:center;
+    gap:9px; white-space:nowrap}
+  .c-ftree-dir{font-weight:700}
+  /* folder icon: box + tab */
+  .c-ftree-dir::before{content:""; flex-shrink:0; width:16px; height:12px;
+    background:var(--primary); border-radius:2px}
+  .c-ftree-dir::after{content:""; position:absolute; left:0; top:-1px; width:8px; height:4px;
+    background:var(--primary); border-radius:2px 2px 0 0}
+  /* file icon: bordered sheet with a folded corner */
+  .c-ftree-file::before{content:""; flex-shrink:0; width:12px; height:15px;
+    border:1.5px solid var(--muted-foreground); border-radius:2px;
+    clip-path:polygon(0 0, 65% 0, 100% 28%, 100% 100%, 0 100%)}
+</style>
+<ul class="c-ftree" role="tree" aria-label="Project directory structure">
+  <li role="treeitem"><span class="c-ftree-dir">taskboard/</span>
+    <ul role="group">
+      <li role="treeitem"><span class="c-ftree-dir">src/</span>
+        <ul role="group">
+          <li role="treeitem"><span class="c-ftree-dir">components/</span>
+            <ul role="group">
+              <li role="treeitem"><span class="c-ftree-file">TaskList.tsx</span></li>
+              <li role="treeitem"><span class="c-ftree-file">TaskRow.tsx</span></li>
+              <li role="treeitem"><span class="c-ftree-file">Toast.tsx</span></li>
+            </ul>
+          </li>
+          <li role="treeitem"><span class="c-ftree-dir">hooks/</span>
+            <ul role="group">
+              <li role="treeitem"><span class="c-ftree-file">useOptimisticTasks.ts</span></li>
+              <li role="treeitem"><span class="c-ftree-file">useTasks.ts</span></li>
+            </ul>
+          </li>
+          <li role="treeitem"><span class="c-ftree-dir">api/</span>
+            <ul role="group">
+              <li role="treeitem"><span class="c-ftree-file">tasks.ts</span></li>
+              <li role="treeitem"><span class="c-ftree-file">http.ts</span></li>
+            </ul>
+          </li>
+          <li role="treeitem"><span class="c-ftree-file">main.tsx</span></li>
+        </ul>
+      </li>
+      <li role="treeitem"><span class="c-ftree-dir">tests/</span>
+        <ul role="group">
+          <li role="treeitem"><span class="c-ftree-file">TaskList.test.tsx</span></li>
+        </ul>
+      </li>
+      <li role="treeitem"><span class="c-ftree-file">package.json</span></li>
+      <li role="treeitem"><span class="c-ftree-file">tsconfig.json</span></li>
+      <li role="treeitem"><span class="c-ftree-file">README.md</span></li>
+    </ul>
+  </li>
+</ul>

@@ -4,6 +4,8 @@ The hard rules for every HTML artifact. The validator (`scripts/validate_artifac
 
 ## Contents
 - Type scale (font sizes)
+- Page frame (the shell)
+- Composition (components, not page templates)
 - Spacing scale
 - Contrast and the no-gray rule
 - Color and surfaces
@@ -26,7 +28,21 @@ Base body text is **18px** minimum. Use a modest scale; do not go below the list
 | UI chrome (badges, tab labels, uppercase eyebrows) | 14–16px | the only place below 16px is allowed |
 
 - Line-height: 1.5–1.75 for body, ~1.15–1.25 for large headings.
-- Measure: cap body text at ~65–75ch for readability (`max-width` on the text column).
+- Measure: cap *prose* (paragraphs, list items, blockquotes) at ~70–75ch for readability. This cap applies to text only — **components** (tables, comparison matrices, diagrams, diffs, stat-card rows) span the full content width of the shell.
+
+## Page frame (the shell)
+
+`assets/shell.html` is the page scaffold every composed artifact starts from: a centered container capped at **1600px**, a 260px sticky sidebar TOC, and a fluid content column. Wide pages are the point — use the width for components, not for longer text lines (see the measure rule above).
+
+## Composition (components, not page templates)
+
+Pages are **composed** from `assets/components/*.html` fragments, chosen per content block via `references/components-catalog.md`:
+
+- Each component file holds one pattern: a contract comment (when/when-not/schema/variants), its HTML, its scoped CSS, and its JS if any.
+- Paste component CSS into the shell's `/* == COMPONENT STYLES == */` slot, component HTML into sections, and component JS before the scrollspy script. Component CSS is class-prefix-scoped, so fragments never collide.
+- One page mixes as many components as the content needs — a primer can be sections + a comparison matrix + an excalidraw diagram + a data table. Don't force the whole page into one shape.
+- If the WHOLE artifact is a single interactive tool (deck, triage board, flag editor, prompt tuner), use a page pattern from `assets/patterns/` instead of composing.
+- Invented a genuinely reusable block? Add it as a candidate component (see "Growing the library" in SKILL.md).
 
 ## Spacing scale
 

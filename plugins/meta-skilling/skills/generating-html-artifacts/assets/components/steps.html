@@ -1,0 +1,67 @@
+<!--
+COMPONENT: steps
+WHEN: an ordered process the reader follows or reviews — implementation phases, runbook procedures, rollout plans, migration sequences. Numbered markers on a connector rail make order unmistakable.
+AVOID: don't use it for timestamped events (that's timeline) or unordered feature lists (a plain list or cards).
+SCHEMA: an <ol> of steps; per step: title (h3), 1-3 sentences of detail, optional tags (files/systems touched), optional status class on the <li>.
+VARIANTS: step status — default (upcoming), .is-done (filled marker with ✓), .is-current (primary ring, the active step).
+ASSEMBLY: copy the <style> block into the page's == COMPONENT STYLES == slot, the HTML fragment into a <section>. No script.
+-->
+<style>
+  /* steps — scoped under .c-steps */
+  .c-steps{list-style:none; margin:24px 0; padding:0; max-width:none; counter-reset:c-step}
+  .c-step{position:relative; display:grid; grid-template-columns:48px minmax(0,1fr);
+          gap:16px; counter-increment:c-step}
+  .c-step::before{content:""; position:absolute; left:23px; top:52px; bottom:4px;
+                  width:2px; background:var(--border)}
+  .c-step:last-child::before{display:none}
+  .c-step-marker{position:relative; z-index:1; width:48px; height:48px; border-radius:50%;
+                 display:flex; align-items:center; justify-content:center;
+                 background:var(--card); border:2px solid var(--border);
+                 color:var(--foreground); font-size:18px; font-weight:700}
+  .c-step-marker::before{content:counter(c-step, decimal-leading-zero)}
+  .c-step.is-done .c-step-marker{background:var(--success); border-color:var(--success); color:var(--primary-foreground)}
+  .c-step.is-done .c-step-marker::before{content:"✓"}
+  .c-step.is-current .c-step-marker{border-color:var(--primary); color:var(--primary)}
+  .c-step-body{padding-bottom:32px}
+  .c-step:last-child .c-step-body{padding-bottom:0}
+  .c-step-body h3{margin:8px 0 4px; font-size:21px}
+  .c-step-body p{margin:0 0 8px; font-size:16px; color:var(--muted-foreground); max-width:72ch}
+  .c-step-tags{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px}
+  .c-step-tag{font-size:14px; font-family:ui-monospace,Menlo,Monaco,Consolas,monospace;
+              background:var(--accent); color:var(--accent-foreground);
+              border-radius:8px; padding:3px 10px; white-space:nowrap}
+</style>
+
+<ol class="c-steps">
+  <li class="c-step is-done">
+    <span class="c-step-marker" aria-hidden="true"></span>
+    <div class="c-step-body">
+      <h3>Schema and migration</h3>
+      <p>Add the <code>sessions</code> table with the <code>expires_at</code> index and backfill from the legacy store. Already merged and deployed behind the flag.</p>
+      <span class="c-step-tags"><span class="c-step-tag">packages/db</span><span class="c-step-tag">migration 0042</span></span>
+    </div>
+  </li>
+  <li class="c-step is-current">
+    <span class="c-step-marker" aria-hidden="true"></span>
+    <div class="c-step-body">
+      <h3>Dual-read shadow traffic</h3>
+      <p>Route 5% of reads to both stores and compare. This is the active slice — mismatch rate is at 0.02% and falling as backfill completes.</p>
+      <span class="c-step-tags"><span class="c-step-tag">packages/api</span><span class="c-step-tag">flag: session_store_v2</span></span>
+    </div>
+  </li>
+  <li class="c-step">
+    <span class="c-step-marker" aria-hidden="true"></span>
+    <div class="c-step-body">
+      <h3>Write cutover</h3>
+      <p>Flip writes to the new store; the legacy store becomes read-only. Rollback is a single flag toggle back to dual-write.</p>
+      <span class="c-step-tags"><span class="c-step-tag">packages/api</span><span class="c-step-tag">runbook updated</span></span>
+    </div>
+  </li>
+  <li class="c-step">
+    <span class="c-step-marker" aria-hidden="true"></span>
+    <div class="c-step-body">
+      <h3>Decommission legacy store</h3>
+      <p>After 14 quiet days, drop the dual-read path and schedule the legacy cluster for teardown. Announce in #eng-infra one week ahead.</p>
+    </div>
+  </li>
+</ol>

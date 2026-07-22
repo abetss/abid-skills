@@ -1,0 +1,59 @@
+<!--
+COMPONENT: annotated-code
+WHEN: a code sample that needs guided explanation — teaching material, walkthroughs, "what matters here" highlights. Numbered markers ①②③ sit at the end of the relevant lines, each linked to a matching note below the block.
+AVOID: self-explanatory snippets (use code-block), change-focused views (use diff-viewer), more than ~6 notes (split into multiple blocks instead).
+SCHEMA: { filename?: path shown in the header, code: pre-escaped lines using the shell's syntax classes .kw/.fn/.str/.cm/.num, with an <a class="c-annot-mark" href="#ID-N">N</a> appended to each annotated line, notes: ordered list of explanations, note N lives in <li id="ID-N"> } — ID must be unique per instance on the page (e.g. cache-1, cache-2).
+VARIANTS: header bar may be omitted; notes may contain inline code and links.
+ASSEMBLY: copy the <style> block into the page's == COMPONENT STYLES == slot and the HTML fragment into a <section>. No script needed. Keep marker numbers in sync with note order — note N explains marker N.
+-->
+<style>
+  .c-annot{background:var(--card); border:1px solid var(--border);
+    border-radius:var(--radius); padding:24px 26px; margin:24px 0; max-width:none}
+  .c-annot-head{display:flex; align-items:center; gap:12px; margin:-8px -10px 16px;
+    padding:0 0 12px; border-bottom:1px solid var(--border)}
+  .c-annot-file{font:600 14px/1.4 ui-monospace,Menlo,Monaco,Consolas,monospace;
+    color:var(--muted-foreground)}
+  .c-annot pre.code{margin:0 0 20px}
+  .c-annot-mark{display:inline-flex; align-items:center; justify-content:center;
+    width:22px; height:22px; margin-left:10px; vertical-align:2px;
+    border-radius:50%; background:var(--primary); color:var(--primary-foreground);
+    font:700 14px/1 ui-monospace,Menlo,Monaco,Consolas,monospace;
+    border-bottom:none; text-decoration:none}
+  .c-annot-mark:hover{background:var(--accent); color:var(--accent-foreground)}
+  .c-annot-notes{list-style:none; counter-reset:annot; margin:0; padding:0;
+    display:flex; flex-direction:column; gap:12px}
+  .c-annot-notes li{counter-increment:annot; position:relative;
+    padding:4px 8px 4px 44px; font-size:16px; line-height:1.6;
+    color:var(--foreground); border-radius:8px}
+  .c-annot-notes li::before{content:counter(annot); position:absolute; left:8px; top:4px;
+    width:24px; height:24px; display:flex; align-items:center; justify-content:center;
+    border-radius:50%; background:var(--primary); color:var(--primary-foreground);
+    font:700 14px/1 ui-monospace,Menlo,Monaco,Consolas,monospace}
+  .c-annot-notes li:target{background:var(--accent)}
+  .c-annot-notes li:target::before{background:var(--accent-foreground); color:var(--accent)}
+  @media (prefers-reduced-motion: no-preference){
+    .c-annot-notes li{transition:background .2s}
+    .c-annot-mark{transition:background .15s,color .15s}
+  }
+</style>
+<figure class="c-annot">
+  <figcaption class="c-annot-head">
+    <span class="c-annot-file">src/lib/cache.ts</span>
+  </figcaption>
+  <pre class="code"><code><span class="kw">const</span> cache = <span class="kw">new</span> <span class="fn">Map</span>&lt;string, Entry&gt;();
+
+<span class="kw">export async function</span> <span class="fn">cachedFetch</span>(key: string) {
+  <span class="kw">const</span> hit = cache.<span class="fn">get</span>(key);
+  <span class="kw">if</span> (hit &amp;&amp; hit.expires &gt; Date.<span class="fn">now</span>()) <a class="c-annot-mark" href="#cache-1">1</a>
+    <span class="kw">return</span> hit.value;
+
+  <span class="kw">const</span> value = <span class="kw">await</span> <span class="fn">fetchFresh</span>(key); <a class="c-annot-mark" href="#cache-2">2</a>
+  cache.<span class="fn">set</span>(key, { value, expires: Date.<span class="fn">now</span>() + TTL }); <a class="c-annot-mark" href="#cache-3">3</a>
+  <span class="kw">return</span> value;
+}</code></pre>
+  <ol class="c-annot-notes">
+    <li id="cache-1">Fresh entries short-circuit here — no network round-trip. The expiry check happens on read, so stale entries are never returned even if no cleanup job runs.</li>
+    <li id="cache-2"><code>fetchFresh</code> is awaited before anything is written to the map, so a failed request never poisons the cache with a rejected promise or partial value.</li>
+    <li id="cache-3">The TTL is stamped at write time, not at first read. Sliding expirations would need this moved into the hit branch above.</li>
+  </ol>
+</figure>

@@ -72,8 +72,18 @@ def main():
         warnings.append(f"{low.count('<h1')} <h1> elements — usually there should be one.")
 
     # --- self-contained ---
-    if re.search(r'<link[^>]+href=["\']https?://', low) or re.search(r'<script[^>]+src=["\']https?://', low):
-        errors.append("External CDN resource referenced — artifact must be self-contained.")
+    ext_urls = re.findall(r'<link[^>]+href=["\'](https?://[^"\']+)', low) + \
+               re.findall(r'<script[^>]+src=["\'](https?://[^"\']+)', low)
+    if ext_urls:
+        # Excalidraw canvas embeds (references/excalidraw-diagrams.md) may load their
+        # renderer from pinned CDNs as progressive enhancement, with an ASCII fallback.
+        excalidraw_ok = "excalidraw-scene" in low and all(
+            re.match(r'https://(esm\.sh|cdn\.jsdelivr\.net/npm/@excalidraw)/', u)
+            for u in ext_urls)
+        if excalidraw_ok:
+            warnings.append("Excalidraw embed uses CDN resources — confirm the ASCII fallback renders offline.")
+        else:
+            errors.append("External CDN resource referenced — artifact must be self-contained.")
     if "@import url(http" in low.replace(" ", ""):
         errors.append("CSS @import of a remote URL — artifact must be self-contained.")
 

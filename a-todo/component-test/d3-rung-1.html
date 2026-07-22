@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rung rung-1 — Error-analyze the current run</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@excalidraw/excalidraw@0.18.0/dist/prod/index.css">
+<script>window.EXCALIDRAW_ASSET_PATH = "https://cdn.jsdelivr.net/npm/@excalidraw/excalidraw@0.18.0/dist/prod/";</script>
+<script type="importmap">
+{"imports":{
+  "react":"https://esm.sh/react@19.0.0",
+  "react/jsx-runtime":"https://esm.sh/react@19.0.0/jsx-runtime",
+  "react-dom":"https://esm.sh/react-dom@19.0.0",
+  "react-dom/client":"https://esm.sh/react-dom@19.0.0/client"}}
+</script>
+<style>
+  /* ---- palette: light (default) ---- */
+  :root{
+      --card-foreground:var(--foreground);--primary-foreground:#ffffff;--secondary-foreground:#ffffff;--code-comment:#5b6168;--code-keyword:#9c3a2c;--code-string:#155e3b;--code-number:#7a4f00;--code-fn:#6f42c1;--success:#1c6b46;--warning:#8a5a00;--destructive:#b4453a;
+    /* code surface FOLLOWS the theme (light here, dark in @media); --inverse stays dark in both themes for dark buttons / inverted panels */
+    --code-bg:#f1f1ee; --code-fg:#1a1d21; --inverse:#16191d; --inverse-foreground:#f2f3f4;
+    --background:#f7f7f5; --card:#ffffff; --foreground:#1a1d21; --muted-foreground:#33383f;
+    --border:#d9d8d4; --primary:#1c6b46; --accent:#e6f1ec; --accent-foreground:#10472d;
+    --radius:14px; --maxw:1600px;
+    color-scheme:light dark; font-synthesis:none;
+  }
+  /* ---- palette: dark (auto-follows the OS setting; no toggle) ---- */
+  @media (prefers-color-scheme: dark){
+    :root{
+        --primary-foreground:#06210f;--secondary-foreground:#06210f;--success:#5bbd8a;--warning:#e0b357;--destructive:#e0897a;
+      --code-bg:#16191d; --code-fg:#f2f3f4; --code-comment:#9aa0a8; --code-keyword:#7fd0a3; --code-string:#c9d99a; --code-number:#e0b083; --code-fn:#c9b98a;
+      --background:#14171a; --card:#1d2126; --foreground:#f2f3f4; --muted-foreground:#cdd2d8;
+      --border:#2c323a; --primary:#5bbd8a; --accent:#16352a; --accent-foreground:#9fe3c0;
+    }
+  }
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--background); color:var(--foreground);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.7; font-size:18px; letter-spacing:.1px;
+  }
+  .skip{position:absolute; left:-9999px; top:0; background:var(--primary); color:#fff;
+        padding:12px 18px; border-radius:0 0 10px 0; z-index:100; font-weight:700}
+  .skip:focus{left:0}
+  a{color:var(--primary); text-decoration:none; border-bottom:1px solid transparent}
+  a:hover{border-bottom-color:var(--primary)}
+  :focus-visible{outline:3px solid var(--primary); outline-offset:2px; border-radius:4px}
+
+  /* ---- page frame: centered 1600px shell, sidebar TOC + fluid content ---- */
+  .layout{display:grid; grid-template-columns:260px minmax(0,1fr); gap:0; max-width:var(--maxw); margin:0 auto}
+  nav.toc{position:sticky; top:0; align-self:start; max-height:100vh; overflow:auto;
+          padding:40px 18px 40px 28px; border-right:1px solid var(--border)}
+  nav.toc .toc-title{font-size:14px; letter-spacing:.12em; text-transform:uppercase;
+                     color:var(--muted-foreground); font-weight:700; margin:0 0 14px}
+  nav.toc a{display:block; padding:8px 12px; border-radius:8px; color:var(--muted-foreground);
+            font-size:16px; border-bottom:none; margin-bottom:2px}
+  nav.toc a:hover{background:var(--accent); color:var(--accent-foreground)}
+  nav.toc a[aria-current="true"]{background:var(--accent); color:var(--accent-foreground); font-weight:700}
+
+  main{padding:48px 48px 120px; min-width:0}
+  .page-footer{margin-top:64px; padding-top:24px; border-top:1px solid var(--border)}
+  .page-footer p{font-size:16px; color:var(--muted-foreground)}
+  header.page{margin-bottom:48px}
+  h1{font-size:40px; line-height:1.15; margin:0 0 20px; letter-spacing:-.5px}
+  .lead{font-size:21px; color:var(--foreground); max-width:72ch; margin:0}
+  h2{font-size:28px; margin:0 0 12px; letter-spacing:-.3px}
+  h3{font-size:21px; margin:24px 0 8px}
+  p,li{font-size:18px}
+  section{margin-top:56px}
+  /* Prose stays at a readable measure; components (tables, matrices, diagrams,
+     diffs, stat rows) span the full content width. */
+  p,li,blockquote{max-width:72ch}
+
+  /* generic card surface — components build on this */
+  .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:24px 26px}
+
+  /* code block — surface + text FOLLOW the theme (light-on-light, dark-on-dark), high contrast in both.
+     Syntax classes (.kw/.fn/.str/.cm/.num) pull from the themed --code-* tokens, so they flip too. */
+  pre.code{background:var(--code-bg); color:var(--code-fg); border:1px solid var(--border);
+           border-radius:10px; padding:16px 18px; overflow-x:auto; max-width:none;
+           font:14px/1.6 ui-monospace,Menlo,Monaco,Consolas,monospace}
+  pre.code .kw{color:var(--code-keyword)} pre.code .fn{color:var(--code-fn)}
+  pre.code .str{color:var(--code-string)} pre.code .cm{color:var(--code-comment)} pre.code .num{color:var(--code-number)}
+  code{font-family:ui-monospace,Menlo,Monaco,Consolas,monospace; font-size:.88em;
+       background:var(--code-bg); color:var(--code-fg); padding:2px 6px; border-radius:6px}
+  pre.code code{background:none; padding:0}
+  /* dark button / inverted panel — stays dark in BOTH themes (use --inverse, never --card or theme inks) */
+  .btn-inverse{background:var(--inverse); color:var(--inverse-foreground); border:none;
+               border-radius:8px; padding:10px 16px; font-weight:600; cursor:pointer}
+
+  /* pre-rendered diagrams (see scripts/render_diagrams.py): one figure, two SVGs,
+     the right one shown per theme. */
+  figure.diagram{margin:28px 0; padding:24px; background:var(--background);
+                 border:1px solid var(--border); border-radius:var(--radius);
+                 overflow-x:auto; text-align:center}
+  figure.diagram svg{max-width:100%; height:auto}
+  figure.diagram foreignObject{overflow:visible}
+  figure.diagram .nodeLabel,figure.diagram .edgeLabel,figure.diagram .er.entityLabel{white-space:nowrap}
+  figure.diagram figcaption{margin-top:14px; font-size:16px; color:var(--muted-foreground)}
+  .diagram-dark{display:none}
+  .diagram-light{display:block}
+  @media (prefers-color-scheme:dark){
+    .diagram-light{display:none}
+    .diagram-dark{display:block}
+  }
+
+  /* == COMPONENT STYLES == */
+
+  /* section — scoped under .c-section */
+  .c-section .c-eyebrow{font-size:14px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
+                        color:var(--primary); margin:0 0 8px}
+  .c-section .c-lede{font-size:20px; line-height:1.6; color:var(--muted-foreground);
+                     max-width:72ch; margin:0 0 16px}
+
+  /* tldr-card — scoped under .c-tldr */
+  .c-tldr{background:var(--accent); color:var(--accent-foreground);
+          border:1px solid var(--border); border-radius:var(--radius); padding:24px 28px}
+  .c-tldr-label{display:block; font-size:14px; font-weight:700; letter-spacing:.12em;
+                text-transform:uppercase; margin:0 0 8px}
+  .c-tldr p{margin:0 0 8px; font-size:18px; max-width:72ch}
+  .c-tldr p:last-child{margin-bottom:0}
+  .c-tldr ul{margin:8px 0 0; padding-left:24px}
+  .c-tldr li{font-size:18px; margin-bottom:4px}
+  .c-tldr a{color:inherit; text-decoration:underline; border-bottom:none}
+
+  /* callout — scoped under .c-callout */
+  .c-callout{display:flex; gap:16px; align-items:flex-start;
+             background:var(--card); border:1px solid var(--border); border-left:4px solid var(--primary);
+             border-radius:var(--radius); padding:20px 24px; margin:24px 0}
+  .c-callout-icon{flex:none; margin-top:3px; color:var(--primary)}
+  .c-callout-body{min-width:0}
+  .c-callout-title{margin:0 0 4px; font-size:18px; font-weight:700}
+  .c-callout-body>p{margin:0 0 8px; font-size:18px; max-width:72ch}
+  .c-callout-body>p:last-child{margin-bottom:0}
+  .c-callout--note{border-left-color:var(--muted-foreground)}
+  .c-callout--note .c-callout-icon{color:var(--muted-foreground)}
+  .c-callout--warning{border-left-color:var(--warning)}
+  .c-callout--warning .c-callout-icon{color:var(--warning)}
+  .c-callout--danger{border-left-color:var(--destructive)}
+  .c-callout--danger .c-callout-icon{color:var(--destructive)}
+
+  /* details-fold — scoped under .c-fold (native disclosure, no JS) */
+  .c-fold{background:var(--card); border:1px solid var(--border);
+          border-radius:var(--radius); padding:4px 26px; margin:20px 0}
+  .c-fold>summary{list-style:none; cursor:pointer; padding:20px 0;
+                  display:flex; align-items:flex-start; gap:16px}
+  .c-fold>summary::-webkit-details-marker{display:none}
+  .c-fold>summary::after{content:"▸"; margin-left:auto; color:var(--primary);
+                         font-size:18px; line-height:1.4; flex:none}
+  .c-fold[open]>summary::after{content:"▾"}
+  .c-fold-front{flex:1}
+  .c-fold-front h3{margin:0 0 4px; font-size:21px}
+  .c-fold-sub{margin:0; font-size:16px; color:var(--muted-foreground); max-width:72ch}
+  .c-fold-detail{padding:4px 0 24px; border-top:1px solid var(--border); margin-top:4px}
+  .c-fold-detail>:first-child{margin-top:16px}
+
+  /* data-table — scoped under .c-table */
+  .c-table-scroll{overflow-x:auto; margin:24px 0; border:1px solid var(--border);
+                  border-radius:var(--radius); background:var(--card)}
+  .c-table{width:100%; border-collapse:collapse; font-size:16px}
+  .c-table caption{caption-side:bottom; text-align:left; font-size:16px;
+                   color:var(--muted-foreground); padding:12px 20px; border-top:1px solid var(--border)}
+  .c-table th{font-size:14px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+              color:var(--muted-foreground); text-align:left; padding:14px 20px;
+              border-bottom:2px solid var(--border); white-space:nowrap}
+  .c-table td{padding:14px 20px; border-bottom:1px solid var(--border); vertical-align:top}
+  .c-table tbody tr:last-child td{border-bottom:none}
+  .c-table .num{text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap}
+  .c-table tbody th[scope="row"]{font-size:16px; letter-spacing:0; text-transform:none;
+                                 color:var(--foreground); font-weight:600; white-space:normal}
+  @media (prefers-reduced-motion: no-preference){
+    .c-table tbody tr{transition:background .12s}
+  }
+  .c-table tbody tr:hover{background:var(--accent)}
+
+  /* steps — scoped under .c-steps */
+  .c-steps{list-style:none; margin:24px 0; padding:0; max-width:none; counter-reset:c-step}
+  .c-step{position:relative; display:grid; grid-template-columns:48px minmax(0,1fr);
+          gap:16px; counter-increment:c-step}
+  .c-step::before{content:""; position:absolute; left:23px; top:52px; bottom:4px;
+                  width:2px; background:var(--border)}
+  .c-step:last-child::before{display:none}
+  .c-step-marker{position:relative; z-index:1; width:48px; height:48px; border-radius:50%;
+                 display:flex; align-items:center; justify-content:center;
+                 background:var(--card); border:2px solid var(--border);
+                 color:var(--foreground); font-size:18px; font-weight:700}
+  .c-step-marker::before{content:counter(c-step, decimal-leading-zero)}
+  .c-step.is-done .c-step-marker{background:var(--success); border-color:var(--success); color:var(--primary-foreground)}
+  .c-step.is-done .c-step-marker::before{content:"✓"}
+  .c-step.is-current .c-step-marker{border-color:var(--primary); color:var(--primary)}
+  .c-step-body{padding-bottom:32px}
+  .c-step:last-child .c-step-body{padding-bottom:0}
+  .c-step-body h3{margin:8px 0 4px; font-size:21px}
+  .c-step-body p{margin:0 0 8px; font-size:16px; color:var(--muted-foreground); max-width:72ch}
+  .c-step-tags{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px}
+  .c-step-tag{font-size:14px; font-family:ui-monospace,Menlo,Monaco,Consolas,monospace;
+              background:var(--accent); color:var(--accent-foreground);
+              border-radius:8px; padding:3px 10px; white-space:nowrap}
+
+  /* code-block */
+  .c-codeblock{margin:24px 0; max-width:none}
+  .c-codeblock-head{display:flex; align-items:center; gap:12px;
+    background:var(--card); border:1px solid var(--border); border-bottom:none;
+    border-radius:var(--radius) var(--radius) 0 0; padding:8px 16px}
+  .c-codeblock-lang{font:600 14px/1.4 ui-monospace,Menlo,Monaco,Consolas,monospace;
+    background:var(--accent); color:var(--accent-foreground);
+    padding:2px 10px; border-radius:6px; white-space:nowrap}
+  .c-codeblock-file{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    font:14px/1.4 ui-monospace,Menlo,Monaco,Consolas,monospace; color:var(--muted-foreground)}
+  .c-codeblock-copy{flex-shrink:0; font:600 14px/1.4 inherit; font-family:inherit;
+    color:var(--foreground); background:var(--card);
+    border:1px solid var(--border); border-radius:8px; padding:6px 14px; cursor:pointer}
+  .c-codeblock-copy:hover{background:var(--accent); color:var(--accent-foreground);
+    border-color:var(--accent-foreground)}
+  .c-codeblock-copy.is-copied{color:var(--success); border-color:var(--success)}
+  .c-codeblock pre.code{margin:0; border-radius:0 0 var(--radius) var(--radius)}
+  @media (prefers-reduced-motion: no-preference){
+    .c-codeblock-copy{transition:background .15s,color .15s,border-color .15s}
+  }
+
+  /* diagram-excalidraw */
+  .c-diagram-excalidraw{margin:32px 0}
+  .c-diagram-excalidraw-canvas{display:none; background:var(--card);
+    border:1px solid var(--border); border-radius:var(--radius); overflow:hidden}
+  .c-diagram-excalidraw-canvas svg{display:block; width:100%; height:auto}
+  .c-diagram-excalidraw.is-live .c-diagram-excalidraw-canvas{display:block}
+  .c-diagram-excalidraw.is-live .c-diagram-excalidraw-fallback{display:none}
+  .c-diagram-excalidraw-canvas.is-interactive{height:480px}
+  .c-diagram-excalidraw-canvas.is-interactive svg{height:100%}
+  .c-diagram-excalidraw-toggle{display:none; margin-top:16px; padding:10px 16px;
+    font-size:15px; font-weight:600; font-family:inherit; cursor:pointer;
+    color:var(--primary-foreground); background:var(--primary);
+    border:none; border-radius:8px}
+  .c-diagram-excalidraw.is-live .c-diagram-excalidraw-toggle{display:inline-block}
+  .c-diagram-excalidraw-fallback{margin:0; overflow-x:auto;
+    background:var(--code-bg); color:var(--code-fg);
+    border:1px solid var(--border); border-radius:10px; padding:16px 18px;
+    font:15px/1.6 ui-monospace,Menlo,Monaco,Consolas,monospace}
+  .c-diagram-excalidraw figcaption{margin-top:14px; font-size:16px; color:var(--muted-foreground)}
+
+  @media (max-width:900px){
+    .layout{grid-template-columns:1fr}
+    nav.toc{position:static; max-height:none; border-right:none; border-bottom:1px solid var(--border);
+            padding:24px 20px}
+    main{padding:32px 20px 80px}
+    h1{font-size:32px}
+  }
+  @media (prefers-reduced-motion: no-preference){
+    html{scroll-behavior:smooth}
+    nav.toc a{transition:background .15s,border-color .15s,color .15s}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<div class="layout">
+  <nav class="toc" aria-label="Contents">
+    <p class="toc-title">Contents</p>
+    <a href="#primer" aria-current="true">Primer</a>
+    <a href="#mental-model">1 · The mental model</a>
+    <a href="#procedure">2 · The four-step procedure</a>
+    <a href="#set-metrics">3 · Set-metric literacy</a>
+    <a href="#pitfalls">4 · Failure modes &amp; pitfalls</a>
+    <a href="#coverage">Learning coverage</a>
+    <a href="#reading">Reading</a>
+    <a href="#build">Build</a>
+    <a href="#verify">Verify</a>
+  </nav>
+
+  <main id="main">
+    <header class="page">
+      <h1>Rung rung-1 — Error-analyze the current run</h1>
+      <p class="lead">Turn a bare number — Method-A pooled F1 0.371 on run <code>7d58b8c2</code> — into a named, counted list of failure modes and exactly one justified next target. Everything after today (the prompt change in rung-2, the judge in rung-3) is only as good as this reading.</p>
+    </header>
+
+    <aside class="c-tldr" aria-labelledby="tldr-label">
+      <span class="c-tldr-label" id="tldr-label">Requirement</span>
+      <p>From the current comparable workflow baseline, read the failing observations trace by trace, turn them into a small <strong>counted</strong> failure taxonomy, and choose exactly one next target justified by frequency and impact.</p>
+      <ul>
+        <li>Baseline: run <code>7d58b8c2-988b-44b3-8dc0-b06a8b4874cc</code> — F1 0.371, P 0.419 / R 0.333, COR 10 / PAR 6 / MIS 23 / SPU 15.</li>
+        <li>Output: open notes → a <strong>named</strong> axial taxonomy → <strong>per-mode counts</strong> → <strong>exactly one</strong> target (frequency <em>and</em> impact).</li>
+        <li>11 essays is a prioritization seed, not theoretical saturation — say so explicitly.</li>
+      </ul>
+    </aside>
+
+    <section id="primer" class="c-section" aria-labelledby="primer-h">
+      <p class="c-eyebrow">Why this rung</p>
+      <h2 id="primer-h">Primer</h2>
+      <aside class="c-callout c-callout--info">
+        <span class="c-callout-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16.5"/><circle cx="12" cy="7.75" r="1.1" fill="currentColor" stroke="none"/></svg>
+        </span>
+        <div class="c-callout-body">
+          <p>You are about to do the single highest-leverage thing in applied AI: <strong>look at your data</strong>. Not a dashboard, not a summary — the actual gold-vs-candidate rows of a real eval run, one essay at a time. This rung is not about making F1 go up. It is about turning a number (F1 0.371) into a <em>named, counted list of failure modes</em> and one justified next target. Everything after today (the prompt change in rung-2, the judge in rung-3) is only as good as this reading.</p>
+        </div>
+      </aside>
+
+      <h3>Sources you're assembling from (bibliography)</h3>
+      <p>Everything below is assembled from six sources read in full, cached under <a href="../sources-raw/"><code>../sources-raw/</code></a>. Body citations point to these:</p>
+      <div class="c-table-scroll" role="region" aria-label="Source bibliography" tabindex="0">
+        <table class="c-table">
+          <caption>Six sources read in full, plus the app code/data cited to the exact file/run in the repo.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Key</th>
+              <th scope="col">Source</th>
+              <th scope="col">Cached capture</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">[FG]</th>
+              <td>Field Guide — Hamel &amp; Shreya, Mar 2025</td>
+              <td><a href="../sources-raw/rung1-field-guide.md"><code>rung1-field-guide.md</code></a></td>
+            </tr>
+            <tr>
+              <th scope="row">[FAQ]</th>
+              <td>Evals-FAQ error-analysis</td>
+              <td><a href="../sources-raw/rung1-evals-faq-error-analysis.md"><code>rung1-evals-faq-error-analysis.md</code></a> (near-verbatim on-page capture)</td>
+            </tr>
+            <tr>
+              <th scope="row">[YAN]</th>
+              <td>Yan, "…Fixing Your Process Will" (Apr 2025)</td>
+              <td><a href="../sources-raw/rung1-yan-eval-process.md"><code>rung1-yan-eval-process.md</code></a></td>
+            </tr>
+            <tr>
+              <th scope="row">[L123]</th>
+              <td>Hamel, "Your AI Product Needs Evals" (optional; L1/L2/L3 ladder)</td>
+              <td><a href="../sources-raw/rung1-hamel-your-ai-product-needs-evals.md"><code>rung1-hamel-your-ai-product-needs-evals.md</code></a></td>
+            </tr>
+            <tr>
+              <th scope="row">[ALL]</th>
+              <td>applied-llms.org Part I (optional)</td>
+              <td><a href="../sources-raw/rung1-applied-llms-part1.md"><code>rung1-applied-llms-part1.md</code></a></td>
+            </tr>
+            <tr>
+              <th scope="row">App code/data</th>
+              <td colspan="2">Cited to the exact file/run in this repo.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <aside class="c-callout c-callout--note">
+        <span class="c-callout-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 3.5l4 4L8 20l-5 1 1-5L16.5 3.5z"/><line x1="14" y1="6" x2="18" y2="10"/></svg>
+        </span>
+        <div class="c-callout-body">
+          <p class="c-callout-title">Fidelity note (source-level)</p>
+          <p>[FAQ] is a near-verbatim Readability capture (reliable to quote). [FG], [YAN], [L123], [ALL] are faithful <em>reconstructions</em> via WebFetch (a small model rendered them) — quoted phrases are high-confidence but not guaranteed character-exact; the figures were cross-checked. See each raw dump's caveat before quoting.</p>
+        </div>
+      </aside>
+    </section>
+
+    <section id="mental-model" class="c-section" aria-labelledby="mental-model-h">
+      <p class="c-eyebrow">Primer · §1</p>
+      <h2 id="mental-model-h">The mental model: error analysis is a bottom-up, counted process — not a metric and not a tool</h2>
+      <p>The instinct a strong SWE brings — "the F1 is 0.371, let me tweak the prompt" — is exactly the trap. Three of your sources open by naming it:</p>
+      <ul>
+        <li>Hamel calls skipping error analysis <strong>"the most common mistake,"</strong> and error analysis itself <strong>"the single most valuable activity in AI development"</strong> and <strong>"consistently the highest-ROI activity"</strong> ([FG] §1). The failure it prevents is the <strong>"tools trap"</strong>: adopting a framework/dashboard and getting a "false sense of measurement and progress" while the real, domain-specific failure never appears on a generic metric ([FG] §1).</li>
+        <li>Yan's title is the whole argument: <strong>"An LLM-as-Judge Won't Save The Product—Fixing Your Process Will."</strong> Adding "another tool, metric, or LLM-as-judge… sidesteps the core problem and avoids the real work" ([YAN]). Evals are a <em>process</em>, not a purchase.</li>
+        <li>The Evals-FAQ states it flatly: <strong>"Error analysis is the most important activity in evals. Error analysis helps you decide what evals to write in the first place. It allows you to identify failure modes unique to your application and data"</strong> ([FAQ]).</li>
+      </ul>
+      <p>The method is <strong>bottom-up</strong>, and the contrast with top-down is the load-bearing distinction. Top-down analysis starts from generic, off-the-shelf labels (hallucination, toxicity, a generic F1 dashboard) and "often misses domain-specific issues"; bottom-up "forces you to look at actual data and lets metrics naturally emerge" ([FG] §1). The FAQ's version: error analysis "ensures that the evaluation metrics you develop are supported by real application behaviors instead of counter-productive generic metrics (which most platforms nudge you to use)" ([FAQ]).</p>
+      <aside class="c-callout c-callout--info">
+        <span class="c-callout-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16.5"/><circle cx="12" cy="7.75" r="1.1" fill="currentColor" stroke="none"/></svg>
+        </span>
+        <div class="c-callout-body">
+          <p class="c-callout-title">Why this is exactly your situation (app fact)</p>
+          <p>You already <em>have</em> a top-down metric: Method-A pooled <strong>F1 0.371</strong> on run <code>7d58b8c2-988b-44b3-8dc0-b06a8b4874cc</code> (<a href="../progress.md#starting-state-grounded-2026-07-12">progress.md → Starting state</a>). That number tells you the agent is missing a lot (recall 0.33 &lt; precision 0.42) but tells you <em>nothing</em> about <strong>what kind</strong> of miss. Rung-1 is the bottom-up read that turns 0.371 into a list you can act on. The Field Guide's own success story is this exact arc: NurtureBoss read real conversation logs, found a domain-specific failure (date handling, "failing 66% of the time"), built tests for it, and drove it "from 33% to 95%" ([FG] §1) — none of which a generic dashboard would have surfaced.</p>
+        </div>
+      </aside>
+
+      <figure class="c-diagram-excalidraw">
+        <div class="c-diagram-excalidraw-canvas" role="img"
+             aria-label="Diagram: a top-down box holding the bare F1 0.371 metric versus a bottom-up box listing the error-analysis read — open notes, axial taxonomy, counts, and one chosen target"></div>
+        <button type="button" class="c-diagram-excalidraw-toggle" hidden>Live canvas</button>
+        <script type="application/json" class="c-diagram-excalidraw-scene">
+        [
+          { "type": "text", "id": "t-title", "x": 40, "y": 16, "text": "Top-down metric vs bottom-up error analysis", "fontSize": 22 },
+          { "type": "text", "id": "t-left", "x": 60, "y": 66, "text": "TOP-DOWN (where you are now)", "fontSize": 18, "strokeColor": "#f59e0b" },
+          { "type": "text", "id": "t-right", "x": 600, "y": 66, "text": "BOTTOM-UP (where rung-1 takes you)", "fontSize": 18, "strokeColor": "#22c55e" },
+          { "type": "rectangle", "id": "r-topdown", "x": 60, "y": 110, "width": 320, "height": 130,
+            "roundness": { "type": 3 }, "strokeColor": "#f59e0b", "backgroundColor": "#ffd8a8",
+            "label": { "text": "F1 = 0.371\nP 0.42 · R 0.33\nCOR 10 · PAR 6 · MIS 23 · SPU 15", "fontSize": 16 } },
+          { "type": "text", "id": "t-sub-left", "x": 60, "y": 262, "text": "“something is wrong”", "fontSize": 16, "strokeColor": "#ef4444" },
+          { "type": "arrow", "id": "a-vs", "x": 380, "y": 175, "width": 220, "height": 0,
+            "points": [[0,0],[220,0]], "endArrowhead": "arrow",
+            "label": { "text": "vs", "fontSize": 16 },
+            "startBinding": { "elementId": "r-topdown", "fixedPoint": [1, 0.5] },
+            "endBinding": { "elementId": "r-bottomup", "fixedPoint": [0, 0.5] } },
+          { "type": "rectangle", "id": "r-bottomup", "x": 600, "y": 100, "width": 380, "height": 180,
+            "roundness": { "type": 3 }, "strokeColor": "#22c55e", "backgroundColor": "#b2f2bb",
+            "label": { "text": "read 11 essays' gold-vs-candidate\n→ open notes (first failure)\n→ axial taxonomy (named modes)\n→ COUNT each mode\n→ pick ONE target (freq + impact)", "fontSize": 16 } },
+          { "type": "text", "id": "t-sub-right", "x": 600, "y": 302, "text": "“THIS is wrong, N times, fix it”", "fontSize": 16, "strokeColor": "#22c55e" }
+        ]
+        </script>
+        <pre class="c-diagram-excalidraw-fallback"><code>  TOP-DOWN (where you are now)          BOTTOM-UP (where rung-1 takes you)
+  ┌───────────────────────┐            ┌───────────────────────────────┐
+  │  F1 = 0.371           │            │  read 11 essays' gold-vs-cand │
+  │  P 0.42  R 0.33       │   ──vs──►  │  → open notes (first failure) │
+  │  COR10 PAR6 MIS23 SPU15│           │  → axial taxonomy (named modes)│
+  └───────────────────────┘            │  → COUNT each mode            │
+   "something is wrong"                │  → pick ONE target (freq+impact)│
+                                       └───────────────────────────────┘
+                                        "THIS is wrong, N times, fix it"</code></pre>
+        <figcaption>Top-down gives you "something is wrong"; the bottom-up read turns F1 0.371 into a named, counted taxonomy and one justified target.</figcaption>
+      </figure>
+    </section>
+
+    <section id="procedure" class="c-section" aria-labelledby="procedure-h">
+      <p class="c-eyebrow">Primer · §2</p>
+      <h2 id="procedure-h">The four-step procedure (open → axial → count → prioritize)</h2>
+      <p>The Evals-FAQ gives the tightest procedural spec, and — importantly — it is the source that <strong>names the steps</strong> ([FAQ]; the Field Guide describes the <em>activity</em> but does not use the terms "open coding"/"axial coding" — verified absent, [FG] attribution note):</p>
+
+      <ol class="c-steps">
+        <li class="c-step">
+          <span class="c-step-marker" aria-hidden="true"></span>
+          <div class="c-step-body">
+            <h3>Creating a dataset</h3>
+            <p>"Gathering representative traces of user interactions with the LLM" ([FAQ]).</p>
+            <p><em>App fact:</em> your dataset already exists — the 11 essays × their gold in <a href="/Users/abtinghods/Ork/code/english-workshop/apps/main-api/src/mastra/collections/essays-v1.4.json"><code>essays-v1.4.json</code></a> (36 gold total), scored against the agent's candidates in run <code>7d58b8c2</code>. You don't gather traces; you read the ones the run produced.</p>
+            <span class="c-step-tags"><span class="c-step-tag">FAQ</span><span class="c-step-tag">11 essays · 36 gold</span></span>
+          </div>
+        </li>
+        <li class="c-step">
+          <span class="c-step-marker" aria-hidden="true"></span>
+          <div class="c-step-body">
+            <h3>Open coding</h3>
+            <p>"Human annotator(s) (ideally a benevolent dictator) review and write open-ended notes about traces… akin to 'journaling'… adapted from qualitative research methodologies. When beginning, it is recommended to focus on <strong>noting the first failure observed in a trace, as upstream errors can cause downstream issues</strong>, though you can also tag all independent failures if feasible. A domain expert should be performing this step" ([FAQ]). The Field Guide's mechanical version: for each row, write "open-ended notes describing the undesired behavior" ([FG] §1).</p>
+            <p><strong>The first-failure rule</strong> exists because errors cascade: if step 1 of a trace is wrong, everything downstream is contaminated, so you'd over-count. For a <em>single-shot</em> essay eval (no multi-turn cascade), "you can also tag all independent failures if feasible" ([FAQ]) applies — see the local-protocol note in §4 for how this interacts with set-matching.</p>
+            <span class="c-step-tags"><span class="c-step-tag">FAQ</span><span class="c-step-tag">first-failure rule</span></span>
+          </div>
+        </li>
+        <li class="c-step">
+          <span class="c-step-marker" aria-hidden="true"></span>
+          <div class="c-step-body">
+            <h3>Axial coding</h3>
+            <p>"Categorize the open-ended notes into a 'failure taxonomy.' In other words, group similar failures into distinct categories. <strong>This is the most important step.</strong> At the end, count the number of failures in each category. You can use a LLM to help with this step" ([FAQ]).</p>
+            <span class="c-step-tags"><span class="c-step-tag">FAQ</span><span class="c-step-tag">group + count</span></span>
+          </div>
+        </li>
+        <li class="c-step">
+          <span class="c-step-marker" aria-hidden="true"></span>
+          <div class="c-step-body">
+            <h3>Iterative refinement / saturation</h3>
+            <p>"Keep iterating on more traces until you reach <strong>theoretical saturation</strong>, meaning new traces do not seem to reveal new failure modes… aim to review at least 100 traces. My rough heuristic is if ~20 traces don't turn up a new category, you can stop (but review at least 100 to start)" ([FAQ]). "The goal is to prioritize the failures that actually happen the most, not catch every possible failure (evals are not free, so we need to be pragmatic)" ([FAQ]).</p>
+            <span class="c-step-tags"><span class="c-step-tag">FAQ</span><span class="c-step-tag">≥100 traces to start</span></span>
+          </div>
+        </li>
+      </ol>
+
+      <aside class="c-callout c-callout--note">
+        <span class="c-callout-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 3.5l4 4L8 20l-5 1 1-5L16.5 3.5z"/><line x1="14" y1="6" x2="18" y2="10"/></svg>
+        </span>
+        <div class="c-callout-body">
+          <p class="c-callout-title">Two different superlatives — keep them straight (source-attribution)</p>
+          <p>[FAQ] says <em>axial coding</em> "is the most important step" (grouping + counting). [FG] says <em>error analysis as a whole</em> is "the single most valuable activity." Both are real; neither says "taxonomy-building is the most important step" in the Field Guide (verified — [FG] note). Cite each superlative to its own page.</p>
+        </div>
+      </aside>
+
+      <p>Yan frames the same loop as <strong>the scientific method</strong>: Observation (Look at The Data) → Annotate → Hypothesize → Design &amp; Run Experiments → Measure ([YAN]; <em>labels reconstructed</em> — see [YAN] caveat). Rung-1 is the first two boxes: <strong>Observation + Annotate.</strong> rung-2 is Hypothesize → Experiment → Measure. And Yan supplies the discipline that carries into rung-2: <strong>"define success criteria… to ensure alignment and measurability from day one"</strong> — name the pass/fail bar <em>before</em> you tune ([YAN]).</p>
+
+      <figure class="c-diagram-excalidraw">
+        <div class="c-diagram-excalidraw-canvas" role="img"
+             aria-label="Diagram: Yan's eval loop — Observation and Annotate (marked rung-1) flow into Hypothesize, Run Experiment, and Measure (marked rung-2), with an iteration arrow from Measure back to Observation"></div>
+        <button type="button" class="c-diagram-excalidraw-toggle" hidden>Live canvas</button>
+        <script type="application/json" class="c-diagram-excalidraw-scene">
+        [
+          { "type": "text", "id": "t-title", "x": 40, "y": 16, "text": "Yan's loop — evals as the scientific method (labels reconstructed)", "fontSize": 22 },
+          { "type": "text", "id": "t-rung1", "x": 60, "y": 76, "text": "rung-1 = these two", "fontSize": 16, "strokeColor": "#22c55e" },
+          { "type": "text", "id": "t-rung2", "x": 700, "y": 76, "text": "rung-2 = these three", "fontSize": 16, "strokeColor": "#8b5cf6" },
+          { "type": "rectangle", "id": "b1", "x": 40, "y": 120, "width": 200, "height": 90,
+            "roundness": { "type": 3 }, "strokeColor": "#22c55e", "backgroundColor": "#b2f2bb",
+            "label": { "text": "Observation\n(look at the data)", "fontSize": 16 } },
+          { "type": "arrow", "id": "a1", "x": 240, "y": 165, "width": 50, "height": 0,
+            "points": [[0,0],[50,0]], "endArrowhead": "arrow",
+            "startBinding": { "elementId": "b1", "fixedPoint": [1, 0.5] },
+            "endBinding": { "elementId": "b2", "fixedPoint": [0, 0.5] } },
+          { "type": "rectangle", "id": "b2", "x": 290, "y": 120, "width": 200, "height": 90,
+            "roundness": { "type": 3 }, "strokeColor": "#22c55e", "backgroundColor": "#b2f2bb",
+            "label": { "text": "Annotate\n(label 1st failure)", "fontSize": 16 } },
+          { "type": "arrow", "id": "a2", "x": 490, "y": 165, "width": 50, "height": 0,
+            "points": [[0,0],[50,0]], "endArrowhead": "arrow",
+            "startBinding": { "elementId": "b2", "fixedPoint": [1, 0.5] },
+            "endBinding": { "elementId": "b3", "fixedPoint": [0, 0.5] } },
+          { "type": "rectangle", "id": "b3", "x": 540, "y": 120, "width": 200, "height": 90,
+            "roundness": { "type": 3 }, "strokeColor": "#8b5cf6", "backgroundColor": "#d0bfff",
+            "label": { "text": "Hypothesize\n(why fail? prioritize)", "fontSize": 16 } },
+          { "type": "arrow", "id": "a3", "x": 740, "y": 165, "width": 50, "height": 0,
+            "points": [[0,0],[50,0]], "endArrowhead": "arrow",
+            "startBinding": { "elementId": "b3", "fixedPoint": [1, 0.5] },
+            "endBinding": { "elementId": "b4", "fixedPoint": [0, 0.5] } },
+          { "type": "rectangle", "id": "b4", "x": 790, "y": 120, "width": 200, "height": 90,
+            "roundness": { "type": 3 }, "strokeColor": "#8b5cf6", "backgroundColor": "#d0bfff",
+            "label": { "text": "Run Experiment\n(1 change)", "fontSize": 16 } },
+          { "type": "arrow", "id": "a4", "x": 990, "y": 165, "width": 50, "height": 0,
+            "points": [[0,0],[50,0]], "endArrowhead": "arrow",
+            "startBinding": { "elementId": "b4", "fixedPoint": [1, 0.5] },
+            "endBinding": { "elementId": "b5", "fixedPoint": [0, 0.5] } },
+          { "type": "rectangle", "id": "b5", "x": 1040, "y": 120, "width": 200, "height": 90,
+            "roundness": { "type": 3 }, "strokeColor": "#8b5cf6", "backgroundColor": "#d0bfff",
+            "label": { "text": "Measure\n(vs baseline)", "fontSize": 16 } },
+          { "type": "arrow", "id": "a5", "x": 1140, "y": 210, "width": 1000, "height": 80,
+            "points": [[0,0],[0,80],[-1000,80],[-1000,0]], "endArrowhead": "arrow",
+            "label": { "text": "iterate", "fontSize": 14 },
+            "startBinding": { "elementId": "b5", "fixedPoint": [0.5, 1] },
+            "endBinding": { "elementId": "b1", "fixedPoint": [0.5, 1] } }
+        ]
+        </script>
+        <pre class="c-diagram-excalidraw-fallback"><code>  Yan's loop (labels reconstructed):
+  ┌────────────┐   ┌──────────┐   ┌────────────┐   ┌──────────────┐   ┌─────────┐
+  │Observation │──►│ Annotate │──►│ Hypothesize│──►│ Run Experiment│──►│ Measure │──┐
+  │(look@data) │   │(label 1st│   │(why fail?  │   │(1 change)    │   │(vs base)│  │
+  └────────────┘   │ failure) │   │ prioritize)│   └──────────────┘   └─────────┘  │
+        ▲          └──────────┘   └────────────┘                                    │
+        └──────────────────────  rung-1 = these two  ─┘   rung-2 = these three ─────┘</code></pre>
+        <figcaption>Rung-1 owns Observation + Annotate; rung-2 owns Hypothesize → Experiment → Measure. Measure feeds back into Observation.</figcaption>
+      </figure>
+    </section>
+
+    <section id="set-metrics" class="c-section" aria-labelledby="set-metrics-h">
+      <p class="c-eyebrow">Primer · §3 · cov-set-metric-literacy</p>
+      <h2 id="set-metrics-h">Set-metric literacy: reading COR / PAR / MIS / SPU, and why they are not the failure count</h2>
+      <p>This is the second owned concept (<code>cov-set-metric-literacy</code>) and it is an <strong>app fact</strong>, grounded entirely in the Method-A scorer code, not in the reading. Method A is a <strong>set-matching</strong> eval (SemEval-style), so its counts are about <em>matching</em>, not about <em>distinct semantic failures</em> — and the gap between those two is the whole point of the rung.</p>
+      <p><strong>How Method A matches</strong> (from <a href="/Users/abtinghods/Ork/code/english-workshop/apps/main-api/src/mastra/scorers/observation-scorer-a/utils.ts"><code>observation-scorer-a/utils.ts</code></a>, <code>match_observations</code>): a candidate observation matches a gold observation only when <strong>all three gates pass</strong>:</p>
+
+      <figure class="c-codeblock">
+        <figcaption class="c-codeblock-head">
+          <span class="c-codeblock-lang">text</span>
+          <span class="c-codeblock-file">match gates — observation-scorer-a/utils.ts</span>
+          <button type="button" class="c-codeblock-copy" aria-label="Copy code to clipboard">Copy</button>
+        </figcaption>
+        <pre class="code"><code>gate 1:  candidate.category    === gold.category          (exact)
+gate 2:  candidate.subcategory === gold.subcategory       (exact string)
+gate 3:  location token-multiset Jaccard ≥ 0.5            (DEFAULT_MATCH_THRESHOLD)</code></pre>
+      </figure>
+
+      <p>Matching is <strong>greedy 1:1</strong> — each gold claims its highest-overlap unclaimed candidate (<code>claimed</code> set in the code). The roll-up buckets (SemEval labels, from the <code>MatchCounts</code> type):</p>
+
+      <div class="c-table-scroll" role="region" aria-label="COR PAR MIS SPU roll-up buckets" tabindex="0">
+        <table class="c-table">
+          <caption>The four SemEval roll-up buckets from the MatchCounts type.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Bucket</th>
+              <th scope="col">Meaning</th>
+              <th scope="col">In code</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">COR (correct)</th>
+              <td>matched, location Jaccard <strong>== 1</strong></td>
+              <td>pair with perfect span</td>
+            </tr>
+            <tr>
+              <th scope="row">PAR (partial)</th>
+              <td>matched, location Jaccard <strong>&lt; 1</strong></td>
+              <td>pair with span drift</td>
+            </tr>
+            <tr>
+              <th scope="row">MIS (missed)</th>
+              <td>a <strong>gold</strong> with no matching candidate</td>
+              <td>false negative</td>
+            </tr>
+            <tr>
+              <th scope="row">SPU (spurious)</th>
+              <td>a <strong>candidate</strong> with no matching gold</td>
+              <td>false positive</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>And the metrics (<code>compute_metrics</code>), with <strong>partial credit</strong> (a PAR counts as half):</p>
+
+      <figure class="c-codeblock">
+        <figcaption class="c-codeblock-head">
+          <span class="c-codeblock-lang">text</span>
+          <span class="c-codeblock-file">compute_metrics — partial credit: a PAR counts as half</span>
+          <button type="button" class="c-codeblock-copy" aria-label="Copy code to clipboard">Copy</button>
+        </figcaption>
+        <pre class="code"><code>found      = COR + 0.5·PAR
+precision  = found / (COR + PAR + SPU)      <span class="cm">// of what the agent said, how much was right</span>
+recall     = found / (COR + PAR + MIS)      <span class="cm">// of the gold, how much the agent found</span>
+F1         = harmonic mean(precision, recall)</code></pre>
+      </figure>
+
+      <aside class="c-callout c-callout--info">
+        <span class="c-callout-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16.5"/><circle cx="12" cy="7.75" r="1.1" fill="currentColor" stroke="none"/></svg>
+        </span>
+        <div class="c-callout-body">
+          <p class="c-callout-title">App fact — the baseline</p>
+          <p>Run <code>7d58b8c2</code> pooled <strong>COR 10 / PAR 6 / MIS 23 / SPU 15</strong>, P 0.419, R 0.333, F1 0.371 (<a href="../progress.md#starting-state-grounded-2026-07-12">Starting state</a>). Note the pooled F1 is recomputed from <em>summed</em> counts across essays, <strong>not</strong> the mean of per-essay F1s (repo <a href="/Users/abtinghods/Ork/code/english-workshop/CLAUDE.md"><code>CLAUDE.md</code></a>).</p>
+        </div>
+      </aside>
+
+      <h3>The reconciliation that is the crux of the rung</h3>
+      <p>Here is the trap set-metric literacy must defuse. <strong>A single mislabelled prediction can surface as BOTH a MIS and a SPU.</strong> If the agent finds the right span and right category but emits the <em>wrong subcategory leaf</em>, gate 2 (<code>subcategory !== gold.subcategory</code>) blocks the match. The consequence, in code:</p>
+      <ul>
+        <li>the <strong>gold</strong> it was trying to name becomes a <strong>MIS</strong> (no candidate matched it), and</li>
+        <li>the <strong>candidate</strong> becomes a <strong>SPU</strong> (it matched no gold).</li>
+      </ul>
+      <p>So <strong>one semantic failure ("agent saw the error but named the wrong leaf") = 1 MIS + 1 SPU</strong> in the counts. Therefore <strong>23 MIS + 15 SPU is NOT 38 independent failures.</strong> Some unknown number of them are the same prediction failing gate 2 twice.</p>
+
+      <div class="c-table-scroll" role="region" aria-label="Paired MIS and SPU rows from the baseline run" tabindex="0">
+        <table class="c-table">
+          <caption>App fact — real in the baseline, not hypothetical. From run 7d58b8c2, essay corrections-and-improvements-long (F1 0.182, COR 1 / PAR 0 / MIS 5 / SPU 4): paired MIS+SPU rows in by_observation — same span, same category grammar, different subcategory leaf.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Gold (→ MIS)</th>
+              <th scope="col">Candidate (→ SPU)</th>
+              <th scope="col">Same span?</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>grammar/voice_active_passive</code> "She born in a small village"</td>
+              <td><code>grammar/passive_voice</code> "She born in a small village"</td>
+              <td>✅ identical</td>
+            </tr>
+            <tr>
+              <td><code>grammar/tense</code> "she work very hard since she was a child"</td>
+              <td><code>grammar/tense_consistency</code> "she work very hard…"</td>
+              <td>✅ identical</td>
+            </tr>
+            <tr>
+              <td><code>grammar/possessive</code> "a person life"</td>
+              <td><code>grammar/possessive_nouns</code> "a person life"</td>
+              <td>✅ identical</td>
+            </tr>
+            <tr>
+              <td><code>grammar/dependent_preposition</code> "listen her for hours"</td>
+              <td><code>grammar/prepositional_verbs</code> "I can listen her for hours"</td>
+              <td>≈ overlap (candidate span longer)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>That's <strong>4 MIS + 4 SPU = 8 rows</strong> on this one essay that are really <strong>~4 distinct failures</strong> ("right error, wrong subcategory leaf"). Contrast the genuine miss on the same essay: gold <code>tone/warmth</code> (a long sentence) has <strong>no candidate at all</strong> → a pure MIS, a <em>distinct</em> recall failure. And essay <code>corrections-only-short</code>: gold <code>grammar/indefinite_article</code> "My sister is nurse" MIS ↔ candidate <code>grammar/articles</code> "My sister is nurse" SPU — again <strong>one</strong> failure, not two.</p>
+
+      <aside class="c-callout c-callout--note">
+        <span class="c-callout-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 3.5l4 4L8 20l-5 1 1-5L16.5 3.5z"/><line x1="14" y1="6" x2="18" y2="10"/></svg>
+        </span>
+        <div class="c-callout-body">
+          <p class="c-callout-title">Why the subcategory leaf drifts (root-cause app fact)</p>
+          <p>The agent's <code>subcategory</code> field is an <strong>open <code>z.string()</code>, not a closed enum</strong> — the ~280-leaf taxonomy blows Gemini's structured-output schema limit, so the <em>only</em> thing steering the model to the exact gold leaf is the prompt's SUBCATEGORY guidance (<a href="../progress.md#starting-state-grounded-2026-07-12">Starting state</a>; agent <a href="/Users/abtinghods/Ork/code/english-workshop/apps/main-api/src/mastra/agents/english-evaluator.agent.ts"><code>english-evaluator.agent.ts</code></a>). This is <em>why</em> you get near-synonym leaves (<code>passive_voice</code> vs the gold <code>voice_active_passive</code>). It is a live candidate for the rung-2 hypothesis — but rung-1 only <em>names and counts</em>; it does not fix.</p>
+        </div>
+      </aside>
+
+      <aside class="c-callout c-callout--warning">
+        <span class="c-callout-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5L22 20H2L12 3.5z"/><line x1="12" y1="9.5" x2="12" y2="14"/><circle cx="12" cy="17" r="1.1" fill="currentColor" stroke="none"/></svg>
+        </span>
+        <div class="c-callout-body">
+          <p class="c-callout-title">Do not read past this without internalizing the distinction</p>
+          <p>The <strong>unit of analysis</strong> for error analysis is a <strong>distinct semantic failure</strong>, not a scorer row. The scorer counts rows (MIS/SPU); <em>you</em> count failures. Reconciling paired rows <em>before</em> counting is the difference between "prioritize the subcategory-leaf problem (huge)" and "chase 38 phantom bugs."</p>
+        </div>
+      </aside>
+    </section>
+
+    <section id="pitfalls" class="c-section" aria-labelledby="pitfalls-h">
+      <p class="c-eyebrow">Primer · §4</p>
+      <h2 id="pitfalls-h">Failure modes &amp; pitfalls to guard against</h2>
+      <p>Four distinct evidence classes are in play in this rung; keep them separate:</p>
+
+      <div class="c-table-scroll" role="region" aria-label="The four evidence classes in play in this rung" tabindex="0">
+        <table class="c-table">
+          <caption>Evidence classes — label every claim with the class it belongs to.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Evidence class</th>
+              <th scope="col">What it covers</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Source claim</th>
+              <td>open/axial/count/saturation/first-failure/prioritize-by-frequency ([FAQ], [FG], [YAN]).</td>
+            </tr>
+            <tr>
+              <th scope="row">App fact</th>
+              <td>Method-A gates, COR/PAR/MIS/SPU, the paired-row mechanism, the real <code>by_observation</code> examples above, the open-<code>z.string()</code> subcategory (cited to code/run/Starting state).</td>
+            </tr>
+            <tr>
+              <th scope="row">Local inference</th>
+              <td>e.g. "the 11-essay seed cannot be <em>saturated</em>." Entailed by [FAQ]'s "review at least 100 to start," since 11 ≪ 100 — but <strong>the source never mentions our corpus.</strong> Label it ours.</td>
+            </tr>
+            <tr>
+              <th scope="row">Local protocol</th>
+              <td>e.g. "reconcile paired MIS+SPU as one failure before counting." This is a <em>sprint decision</em> about how to apply open/axial coding to a set-matching metric; it is not stated by Hamel/Yan (their first-failure rule is about <em>cascading multi-turn traces</em>, [FAQ]). It's the honest bottom-up reading of <em>this</em> scorer.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Specific traps:</p>
+      <ul>
+        <li><strong>Counting rows, not failures.</strong> Treating 23 MIS + 15 SPU as 38 independent modes. The paired-row reconciliation above is the antidote. (App-grounded.)</li>
+        <li><strong>Fixing before counting.</strong> The urge to jump to "let me constrain the subcategory" is rung-2. Open→axial→<strong>count</strong> first; the count is what justifies the target ([FAQ] "count the number of failures in each category"; [FG] "counted the frequency of each issue").</li>
+        <li><strong>Calling 11 essays "saturated."</strong> You have not reached saturation; you have a <em>prioritization seed</em>. [FAQ]'s heuristic is "≥100 to start." With 11 essays you can <em>rank</em> failure modes but not <em>close</em> the taxonomy. Say so explicitly. (Local inference on [FAQ].)</li>
+        <li><strong>Prioritizing by raw frequency alone, ignoring impact.</strong> The three <code>no_feedback_needed</code> essays score COR=1 (a correct "stay silent" — <a href="/Users/abtinghods/Ork/code/english-workshop/apps/main-api/src/mastra/scorers/observation-scorer-a/utils.ts"><code>utils.ts</code> <code>evaluate</code></a>, the empty-gold branch). A COR is not a failure to chase. And recall (0.33) &lt; precision (0.42) → you are <strong>recall-bound</strong>: the biggest lever is the failures that <em>cost recall</em> (MIS and the MIS-half of paired rows), not the SPU-only noise. Frequency <strong>and</strong> impact ([FG] prioritizes by frequency; the recall-bound impact read is a local inference on the baseline metrics).</li>
+        <li><strong>Goodhart is NOT your rung-1 concept.</strong> [ALL] §1.4.4 invokes Goodhart's Law for <em>over-optimizing a single eval</em> (NIAH). That is scoped to over-optimization; do not import it into rung-1's set-metric reading. (Attribution discipline — [ALL] note.)</li>
+      </ul>
+    </section>
+
+    <section id="coverage" class="c-section" aria-labelledby="coverage-h">
+      <p class="c-eyebrow">Primer · owned concepts</p>
+      <h2 id="coverage-h">Learning coverage</h2>
+      <p>Each owned concept maps to evidence you must <em>produce</em> in the Build (not just read here):</p>
+
+      <div class="c-table-scroll" role="region" aria-label="Learning coverage map" tabindex="0">
+        <table class="c-table">
+          <caption>Owned concepts and the evidence the Build must produce for each.</caption>
+          <thead>
+            <tr>
+              <th scope="col">coverage_id</th>
+              <th scope="col">Concept</th>
+              <th scope="col">Evidence you must produce in the Build</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row"><code>cov-error-analysis</code></th>
+              <td>open → axial → count → prioritize; first-failure rule; small-seed ≠ saturation</td>
+              <td>a persisted report with: per-failing-observation open notes → a <strong>named</strong> axial taxonomy → <strong>per-mode counts</strong> → <strong>exactly one</strong> target justified on frequency <strong>and</strong> impact; an explicit line that 11 essays is prioritization evidence, not theoretical saturation</td>
+            </tr>
+            <tr>
+              <th scope="row"><code>cov-set-metric-literacy</code></th>
+              <td>read COR/PAR/MIS/SPU → P/R/F1; reconcile a paired MIS+SPU as one failure</td>
+              <td>in the report, the paired rows (right span+category, wrong subcategory leaf) <strong>explicitly merged into single failures before counting</strong>, with the reason (gate-2 fails → 1 MIS + 1 SPU for one prediction)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="reading" class="c-section" aria-labelledby="reading-h">
+      <p class="c-eyebrow">Read before you build</p>
+      <h2 id="reading-h">Reading</h2>
+      <aside class="c-callout c-callout--info">
+        <span class="c-callout-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16.5"/><circle cx="12" cy="7.75" r="1.1" fill="currentColor" stroke="none"/></svg>
+        </span>
+        <div class="c-callout-body">
+          <p class="c-callout-title">Measured budget (rung-1)</p>
+          <p>Core ⏱ <strong>39 min</strong> · full list (Core + Optional) ⏱ <strong>131 min (~2h 11m)</strong>. Times measured 2026-07-12 with <code>estimate-reading-time.mjs</code> @ 200 wpm on the article body. You do <strong>not</strong> need the optional set before building.</p>
+        </div>
+      </aside>
+
+      <h3>Core (⏱ 39 min)</h3>
+      <ul>
+        <li><strong>Hamel Husain &amp; Shreya Shankar — <a href="https://hamel.dev/blog/posts/field-guide/">A Field Guide to Rapidly Improving AI Products</a></strong> (Mar 2025) · ⏱ <strong>32 min</strong> · <em>Why read:</em> the canonical account of "look at your data before touching the system" and the tools-trap it prevents; the NurtureBoss 66%→95% arc is the template for what you're about to do. <em>Extract:</em> bottom-up vs top-down; "used an LLM to build a taxonomy of common failure modes… counted the frequency of each issue"; prioritize by frequency. (Note: the <em>terms</em> open/axial coding and the first-failure rule are NOT here — get those from the FAQ below.)</li>
+        <li><strong>Hamel &amp; Shreya — <a href="https://hamel.dev/blog/posts/evals-faq/why-is-error-analysis-so-important-in-llm-evals-and-how-is-it-performed.html">Evals-FAQ: "Why is error analysis so important…"</a></strong> · ⏱ <strong>2 min</strong> · <em>Why read:</em> the tightest procedural spec — this is the one you'll actually follow, step by step. It's short but dense; read it twice. <em>Extract:</em> the four named steps (Creating a Dataset → Open Coding → Axial Coding → Iterative Refinement); "note the first failure observed in a trace"; axial coding "is the most important step… count the number of failures in each category"; theoretical saturation ("≥100 to start; ~20 with no new category → stop").</li>
+        <li><strong>Eugene Yan — <a href="https://eugeneyan.com/writing/eval-process/">An LLM-as-Judge Won't Save The Product—Fixing Your Process Will</a></strong> (Apr 2025) · ⏱ <strong>5 min</strong> · <em>Why read:</em> reframes error analysis as a <em>process</em> (the scientific method), and gives the discipline you'll need in rung-2 — define the pass/fail bar before you tune. <em>Extract:</em> Observation → Annotate → Hypothesize → Experiment → Measure; "define success criteria… from day one"; "buying or building yet another evaluation tool won't save the product." (No decision tree in this article — it's a loop.)</li>
+      </ul>
+
+      <details class="c-fold">
+        <summary>
+          <div class="c-fold-front">
+            <h3>Optional / go deeper (adds ⏱ 92 min → 131 min total)</h3>
+            <p class="c-fold-sub">Bridges and corroboration — not needed before building rung-1.</p>
+          </div>
+        </summary>
+        <div class="c-fold-detail">
+          <ul>
+            <li><strong>Hamel — <a href="https://hamel.dev/blog/posts/evals/">Your AI Product Needs Evals</a></strong> (Mar 2024) · ⏱ <strong>20 min</strong> · <em>Marginal benefit — future-rung bridge:</em> situates today's work in the <strong>L1 (unit tests/assertions) / L2 (human &amp; model eval) / L3 (A/B)</strong> ladder. <em>Extract:</em> where code assertions end and an LLM judge begins ("validation that cannot be tested by assertions alone" = start of L2) — your Method-A scorer is L1-family; the rung-3 judge is L2. Bridges forward, not needed to build rung-1.</li>
+            <li><strong>applied-llms.org — <a href="https://applied-llms.org/">What We Learned from a Year of Building with LLMs, Part I</a></strong> · ⏱ <strong>70 min</strong> · <em>Marginal benefit — independent corroboration:</em> six practitioners on assertion-first eval discipline (§1.4.1) and "Look at samples of LLM inputs and outputs every day" (§2.1.2). <em>Extract:</em> the assertion-first habit; the "Intern Test" (§1.4.3) for diagnosing why a generation failed. Long; skim §1.4.</li>
+            <li><strong>DeepLearning.AI (Arize) — <a href="https://www.deeplearning.ai/courses/evaluating-ai-agents/">Evaluating AI Agents</a></strong> · ⏱ <strong>2 min</strong> (public outline only) · <em>Marginal benefit — structured-video on-ramp:</em> a paced walkthrough of the annotate→experiment cadence if you want video. <em>Extract:</em> public outline only (17 lessons; lesson 13 "Improving your LLM-as-a-judge" bridges to rung-3). Gated content not accessed; don't infer lesson content from titles.</li>
+          </ul>
+        </div>
+      </details>
+    </section>
+
+    <section id="build" class="c-section" aria-labelledby="build-h">
+      <p class="c-eyebrow">Do the work</p>
+      <h2 id="build-h">Build</h2>
+
+      <h3>Current app context</h3>
+      <p>You are reading, not changing. The run is already scored and persisted; rung-1 <strong>must not</strong> touch the agent or the scorer (that's rung-2). The surfaces you'll use:</p>
+      <ul>
+        <li><strong>The run:</strong> <code>7d58b8c2-988b-44b3-8dc0-b06a8b4874cc</code> — target <code>essay_feedback_workflow</code>, workflow v2 · agent v4 · corpus v1.4 · Method-A report v1 · <code>gemini-3.5-flash</code> · <strong>F1 0.371, COR 10 / PAR 6 / MIS 23 / SPU 15, 13 matched pairs</strong> (<a href="../progress.md#starting-state-grounded-2026-07-12">Starting state</a>). Confirm it's still the latest workflow run before you start (temp 0 → an unchanged re-run reproduces it near-exactly; the companion can re-run <code>bun run eval:workflow</code> to confirm).</li>
+        <li><strong>The viewer:</strong> the admin dashboard's <strong>Gold-vs-candidate</strong> per-essay drill-down — <code>bun run dev:admin</code> → <code>http://localhost:5174/v1/workflows/essay_feedback_workflow?run=7d58b8c2-988b-44b3-8dc0-b06a8b4874cc</code>. This <em>is</em> your data viewer (the Field Guide's "most important investment", [FG] §2 — you already have it; you don't build one).</li>
+        <li><strong>The per-observation data behind it:</strong> each scored row's <code>analyzeStepResult.report.by_observation</code> (keyed by observation id; each entry has <code>status</code> ∈ correct|partial|missed|spurious, <code>reference</code> = gold, <code>candidate</code> = agent) and <code>report.field_summary</code> (repo <a href="/Users/abtinghods/Ork/code/english-workshop/CLAUDE.md"><code>CLAUDE.md</code></a>). The companion may fetch these raw rows for you (<code>GET /api/eval-runs</code>, or SQL on <code>mastra.mastra_scorers</code>) — but <strong>you</strong> read them.</li>
+      </ul>
+
+      <h3>Exercise — do error analysis on the real run</h3>
+      <p>Go essay by essay through the failing observations of run <code>7d58b8c2</code> and produce a counted failure taxonomy with one chosen target. Concretely:</p>
+
+      <ol class="c-steps">
+        <li class="c-step">
+          <span class="c-step-marker" aria-hidden="true"></span>
+          <div class="c-step-body">
+            <h3>Open code (first pass, no theory)</h3>
+            <p>For each <em>failing</em> observation (every MIS, SPU, and PAR row — the COR rows are hits, skip them), write a one-line open note in your own words describing what actually went wrong. Look at the gold and the candidate side by side. Don't categorize yet — just journal ([FAQ] "open-ended notes… akin to journaling"). Note the first/primary failure per row; for these single-shot essays you may tag independent failures too ([FAQ]).</p>
+            <span class="c-step-tags"><span class="c-step-tag">MIS + SPU + PAR rows</span></span>
+          </div>
+        </li>
+        <li class="c-step">
+          <span class="c-step-marker" aria-hidden="true"></span>
+          <div class="c-step-body">
+            <h3>Reconcile the scorer rows into semantic failures</h3>
+            <p><em>Before</em> counting, merge each paired <strong>MIS+SPU that is the same span + same category with a different subcategory leaf</strong> into ONE failure, and write <em>why</em> (gate-2 exact-subcategory fails → the one prediction becomes both a MIS and a SPU). This is <code>cov-set-metric-literacy</code>, and it's the step that separates a real taxonomy from 38 phantom bugs. Keep genuine solo-MIS (no candidate) and solo-SPU (no gold) as their own failures.</p>
+            <span class="c-step-tags"><span class="c-step-tag">cov-set-metric-literacy</span></span>
+          </div>
+        </li>
+        <li class="c-step">
+          <span class="c-step-marker" aria-hidden="true"></span>
+          <div class="c-step-body">
+            <h3>Axial code (name the taxonomy)</h3>
+            <p>Group your reconciled failures into a small set of <strong>named</strong> modes. Let the names emerge from the data — don't import a generic label set ([FG] bottom-up). Expect a handful, e.g. distinct kinds of "right error / wrong subcategory leaf," span-drift PAR, pure recall miss — but <strong>derive them yourself</strong>; the Starting-state note is your grader's private key, not your answer.</p>
+            <span class="c-step-tags"><span class="c-step-tag">bottom-up naming</span></span>
+          </div>
+        </li>
+        <li class="c-step">
+          <span class="c-step-marker" aria-hidden="true"></span>
+          <div class="c-step-body">
+            <h3>Count</h3>
+            <p>Tally how many reconciled failures fall in each named mode ([FAQ] "count the number of failures in each category"). A tiny table is enough.</p>
+          </div>
+        </li>
+        <li class="c-step is-current">
+          <span class="c-step-marker" aria-hidden="true"></span>
+          <div class="c-step-body">
+            <h3>Prioritize — pick exactly ONE target</h3>
+            <p>Choose the single mode to attack in rung-2, justified on <strong>frequency AND impact</strong> — remember you're recall-bound (R 0.33 &lt; P 0.42), and <code>no_feedback_needed</code> CORs are not failures. State the justification in one or two sentences.</p>
+            <span class="c-step-tags"><span class="c-step-tag">frequency + impact</span><span class="c-step-tag">recall-bound</span></span>
+          </div>
+        </li>
+        <li class="c-step">
+          <span class="c-step-marker" aria-hidden="true"></span>
+          <div class="c-step-body">
+            <h3>Saturation caveat</h3>
+            <p>Add one explicit line: 11 essays is a prioritization seed, not theoretical saturation ([FAQ] "≥100 to start"); the ranking is directional, not closed.</p>
+          </div>
+        </li>
+      </ol>
+
+      <aside class="c-callout c-callout--note">
+        <span class="c-callout-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 3.5l4 4L8 20l-5 1 1-5L16.5 3.5z"/><line x1="14" y1="6" x2="18" y2="10"/></svg>
+        </span>
+        <div class="c-callout-body">
+          <p>The <code>/eval-error-analysis</code> skill can mechanically tally your codebook once you have one — it <strong>counts</strong> against your taxonomy; it does not choose the target or write the notes. Use it to check your arithmetic, not to skip the reading.</p>
+        </div>
+      </aside>
+
+      <h3>Inputs / starting evidence</h3>
+      <ul>
+        <li>The 11 essays and their gold: <a href="/Users/abtinghods/Ork/code/english-workshop/apps/main-api/src/mastra/collections/essays-v1.4.json"><code>essays-v1.4.json</code></a> (per-essay gold counts <code>3,10,2,3,4,6,0,0,3,5,0</code>).</li>
+        <li>The scored run <code>7d58b8c2</code> <code>by_observation</code> rows (companion fetches raw on request).</li>
+        <li>The Method-A definition: <a href="/Users/abtinghods/Ork/code/english-workshop/apps/main-api/src/mastra/scorers/observation-scorer-a/utils.ts"><code>observation-scorer-a/utils.ts</code></a> — re-read the three match gates and the COR/PAR/MIS/SPU roll-up if the counts confuse you.</li>
+      </ul>
+
+      <h3>Artifact to produce</h3>
+      <p>A <strong>persisted error-analysis report</strong> (written to <a href="../progress.md"><code>../progress.md</code></a> under Rung progress, or a linked file) containing: (a) open notes on the failing observations; (b) the paired-row reconciliations with reasons; (c) a named axial taxonomy; (d) per-mode counts; (e) exactly one chosen target with a frequency+impact justification; (f) the saturation caveat. It must name the exact run identity it read (target, corpus, versions, run id).</p>
+
+      <h3>Success criterion</h3>
+      <p>The report lets someone else pick up rung-2 without re-reading the raw run: they can see the named modes, the counts, why the paired rows are one failure each, and which single target was chosen and why. The unit of analysis is a <strong>distinct semantic failure</strong>, never a raw scorer row.</p>
+
+      <h3>Hints / rubric</h3>
+      <details class="c-fold">
+        <summary>
+          <div class="c-fold-front">
+            <h3>Hints (only after an attempt — see the guide's hint ladder)</h3>
+            <p class="c-fold-sub">Two hints: the one-failure test, and how to group the taxonomy.</p>
+          </div>
+        </summary>
+        <div class="c-fold-detail">
+          <ul>
+            <li>Stuck on whether two rows are one failure? Ask: do the gold row and the candidate row describe the <strong>same underlying error at the same span</strong>? If yes and only the subcategory leaf differs, it's one failure (gate 2).</li>
+            <li>Stuck on the taxonomy? Group by <em>what the agent did wrong</em>, not by grammar topic: "found it but mislabeled the leaf" vs "found a longer span than gold (PAR drift)" vs "missed it entirely (no candidate)."</li>
+          </ul>
+        </div>
+      </details>
+      <p><em>Rubric (independent mastery):</em> a counted taxonomy; paired rows reconciled with the gate-2 reason stated; exactly one target justified on frequency <strong>and</strong> impact (recall-bound read); the saturation caveat present; minimal hints needed. <em>Partial:</em> needed prompting to reconcile paired rows or to weigh impact vs raw count. <strong>No answer leakage — the taxonomy is derived by the learner, never supplied.</strong></p>
+    </section>
+
+    <section id="verify" class="c-section" aria-labelledby="verify-h">
+      <p class="c-eyebrow">Before you call it done</p>
+      <h2 id="verify-h">Verify</h2>
+      <ul>
+        <li>The analysis names the exact run identity it read (target <code>essay_feedback_workflow</code>, corpus v1.4, workflow v2 · agent v4 · scorer/report v1, run id <code>7d58b8c2-988b-44b3-8dc0-b06a8b4874cc</code>).</li>
+        <li>The unit of analysis is a <strong>distinct semantic failure</strong>, not raw MIS+SPU rows; paired rows (same span + category, wrong subcategory leaf) reconciled to one failure <strong>before</strong> counting, with the gate-2 reason stated.</li>
+        <li>The report contains open notes, a small <strong>named</strong> axial taxonomy, per-mode counts, and <strong>exactly one</strong> next target justified by frequency <strong>and</strong> impact.</li>
+        <li>It states that the 11-essay seed is prioritization evidence, not theoretical saturation.</li>
+      </ul>
+    </section>
+
+    <footer class="page-footer">
+      <p>Generated artifact · edit the markdown source and re-render. Source: <code>d3-rung-1.md</code>.</p>
+    </footer>
+  </main>
+</div>
+
+<!-- Agent-readable source mirror — keep in sync with the visible content -->
+<script type="text/markdown" id="artifact-source">
+# Rung rung-1 — Error-analyze the current run
+
+**Requirement:** From the current comparable workflow baseline, read the failing observations trace by trace, turn them into a small **counted** failure taxonomy, and choose exactly one next target justified by frequency and impact.
+
+---
+
+## Primer
+
+> You are about to do the single highest-leverage thing in applied AI: **look at your data**. Not a dashboard, not a summary — the actual gold-vs-candidate rows of a real eval run, one essay at a time. This rung is not about making F1 go up. It is about turning a number (F1 0.371) into a *named, counted list of failure modes* and one justified next target. Everything after today (the prompt change in rung-2, the judge in rung-3) is only as good as this reading.
+
+### Sources you're assembling from (bibliography)
+
+Everything below is assembled from six sources read in full, cached under [`../sources-raw/`](../sources-raw/). Body citations point to these:
+- **[FG]** Field Guide — [`rung1-field-guide.md`](../sources-raw/rung1-field-guide.md) (Hamel & Shreya, Mar 2025)
+- **[FAQ]** Evals-FAQ error-analysis — [`rung1-evals-faq-error-analysis.md`](../sources-raw/rung1-evals-faq-error-analysis.md) (near-verbatim on-page capture)
+- **[YAN]** Yan, "…Fixing Your Process Will" — [`rung1-yan-eval-process.md`](../sources-raw/rung1-yan-eval-process.md) (Apr 2025)
+- **[L123]** Hamel, "Your AI Product Needs Evals" — [`rung1-hamel-your-ai-product-needs-evals.md`](../sources-raw/rung1-hamel-your-ai-product-needs-evals.md) (optional; L1/L2/L3 ladder)
+- **[ALL]** applied-llms.org Part I — [`rung1-applied-llms-part1.md`](../sources-raw/rung1-applied-llms-part1.md) (optional)
+- **App code/data** — cited to the exact file/run in this repo.
+
+> **Fidelity note (source-level):** [FAQ] is a near-verbatim Readability capture (reliable to quote). [FG], [YAN], [L123], [ALL] are faithful *reconstructions* via WebFetch (a small model rendered them) — quoted phrases are high-confidence but not guaranteed character-exact; the figures were cross-checked. See each raw dump's caveat before quoting.
+
+---
+
+### 1. The mental model: error analysis is a bottom-up, counted process — not a metric and not a tool
+
+The instinct a strong SWE brings — "the F1 is 0.371, let me tweak the prompt" — is exactly the trap. Three of your sources open by naming it:
+
+- Hamel calls skipping error analysis **"the most common mistake,"** and error analysis itself **"the single most valuable activity in AI development"** and **"consistently the highest-ROI activity"** ([FG] §1). The failure it prevents is the **"tools trap"**: adopting a framework/dashboard and getting a "false sense of measurement and progress" while the real, domain-specific failure never appears on a generic metric ([FG] §1).
+- Yan's title is the whole argument: **"An LLM-as-Judge Won't Save The Product—Fixing Your Process Will."** Adding "another tool, metric, or LLM-as-judge… sidesteps the core problem and avoids the real work" ([YAN]). Evals are a *process*, not a purchase.
+- The Evals-FAQ states it flatly: **"Error analysis is the most important activity in evals. Error analysis helps you decide what evals to write in the first place. It allows you to identify failure modes unique to your application and data"** ([FAQ]).
+
+The method is **bottom-up**, and the contrast with top-down is the load-bearing distinction. Top-down analysis starts from generic, off-the-shelf labels (hallucination, toxicity, a generic F1 dashboard) and "often misses domain-specific issues"; bottom-up "forces you to look at actual data and lets metrics naturally emerge" ([FG] §1). The FAQ's version: error analysis "ensures that the evaluation metrics you develop are supported by real application behaviors instead of counter-productive generic metrics (which most platforms nudge you to use)" ([FAQ]).
+
+> **Why this is exactly your situation (app fact).** You already *have* a top-down metric: Method-A pooled **F1 0.371** on run `7d58b8c2-988b-44b3-8dc0-b06a8b4874cc` ([progress.md → Starting state](../progress.md#starting-state-grounded-2026-07-12)). That number tells you the agent is missing a lot (recall 0.33 < precision 0.42) but tells you *nothing* about **what kind** of miss. Rung-1 is the bottom-up read that turns 0.371 into a list you can act on. The Field Guide's own success story is this exact arc: NurtureBoss read real conversation logs, found a domain-specific failure (date handling, "failing 66% of the time"), built tests for it, and drove it "from 33% to 95%" ([FG] §1) — none of which a generic dashboard would have surfaced.
+
+```
+  TOP-DOWN (where you are now)          BOTTOM-UP (where rung-1 takes you)
+  ┌───────────────────────┐            ┌───────────────────────────────┐
+  │  F1 = 0.371           │            │  read 11 essays' gold-vs-cand │
+  │  P 0.42  R 0.33       │   ──vs──►  │  → open notes (first failure) │
+  │  COR10 PAR6 MIS23 SPU15│           │  → axial taxonomy (named modes)│
+  └───────────────────────┘            │  → COUNT each mode            │
+   "something is wrong"                │  → pick ONE target (freq+impact)│
+                                       └───────────────────────────────┘
+                                        "THIS is wrong, N times, fix it"
+```
+
+### 2. The four-step procedure (open → axial → count → prioritize)
+
+The Evals-FAQ gives the tightest procedural spec, and — importantly — it is the source that **names the steps** ([FAQ]; the Field Guide describes the *activity* but does not use the terms "open coding"/"axial coding" — verified absent, [FG] attribution note):
+
+1. **Creating a dataset** — "Gathering representative traces of user interactions with the LLM" ([FAQ]).
+   > *App fact:* your dataset already exists — the 11 essays × their gold in [`essays-v1.4.json`](/Users/abtinghods/Ork/code/english-workshop/apps/main-api/src/mastra/collections/essays-v1.4.json) (36 gold total), scored against the agent's candidates in run `7d58b8c2`. You don't gather traces; you read the ones the run produced.
+
+2. **Open coding** — "Human annotator(s) (ideally a benevolent dictator) review and write open-ended notes about traces… akin to 'journaling'… adapted from qualitative research methodologies. When beginning, it is recommended to focus on **noting the first failure observed in a trace, as upstream errors can cause downstream issues**, though you can also tag all independent failures if feasible. A domain expert should be performing this step" ([FAQ]). The Field Guide's mechanical version: for each row, write "open-ended notes describing the undesired behavior" ([FG] §1).
+   - **The first-failure rule** exists because errors cascade: if step 1 of a trace is wrong, everything downstream is contaminated, so you'd over-count. For a *single-shot* essay eval (no multi-turn cascade), "you can also tag all independent failures if feasible" ([FAQ]) applies — see the local-protocol note in §4 for how this interacts with set-matching.
+
+3. **Axial coding** — "Categorize the open-ended notes into a 'failure taxonomy.' In other words, group similar failures into distinct categories. **This is the most important step.** At the end, count the number of failures in each category. You can use a LLM to help with this step" ([FAQ]).
+   > **Two different superlatives — keep them straight (source-attribution).** [FAQ] says *axial coding* "is the most important step" (grouping + counting). [FG] says *error analysis as a whole* is "the single most valuable activity." Both are real; neither says "taxonomy-building is the most important step" in the Field Guide (verified — [FG] note). Cite each superlative to its own page.
+
+4. **Iterative refinement / saturation** — "Keep iterating on more traces until you reach **theoretical saturation**, meaning new traces do not seem to reveal new failure modes… aim to review at least 100 traces. My rough heuristic is if ~20 traces don't turn up a new category, you can stop (but review at least 100 to start)" ([FAQ]). "The goal is to prioritize the failures that actually happen the most, not catch every possible failure (evals are not free, so we need to be pragmatic)" ([FAQ]).
+
+Yan frames the same loop as **the scientific method**: Observation (Look at The Data) → Annotate → Hypothesize → Design & Run Experiments → Measure ([YAN]; *labels reconstructed* — see [YAN] caveat). Rung-1 is the first two boxes: **Observation + Annotate.** rung-2 is Hypothesize → Experiment → Measure. And Yan supplies the discipline that carries into rung-2: **"define success criteria… to ensure alignment and measurability from day one"** — name the pass/fail bar *before* you tune ([YAN]).
+
+```
+  Yan's loop (labels reconstructed):
+  ┌────────────┐   ┌──────────┐   ┌────────────┐   ┌──────────────┐   ┌─────────┐
+  │Observation │──►│ Annotate │──►│ Hypothesize│──►│ Run Experiment│──►│ Measure │──┐
+  │(look@data) │   │(label 1st│   │(why fail?  │   │(1 change)    │   │(vs base)│  │
+  └────────────┘   │ failure) │   │ prioritize)│   └──────────────┘   └─────────┘  │
+        ▲          └──────────┘   └────────────┘                                    │
+        └──────────────────────  rung-1 = these two  ─┘   rung-2 = these three ─────┘
+```
+
+### 3. Set-metric literacy: reading COR / PAR / MIS / SPU, and why they are not the failure count
+
+This is the second owned concept (`cov-set-metric-literacy`) and it is an **app fact**, grounded entirely in the Method-A scorer code, not in the reading. Method A is a **set-matching** eval (SemEval-style), so its counts are about *matching*, not about *distinct semantic failures* — and the gap between those two is the whole point of the rung.
+
+**How Method A matches** (from [`observation-scorer-a/utils.ts`](/Users/abtinghods/Ork/code/english-workshop/apps/main-api/src/mastra/scorers/observation-scorer-a/utils.ts), `match_observations`): a candidate observation matches a gold observation only when **all three gates pass**:
+
+```
+  gate 1:  candidate.category    === gold.category          (exact)
+  gate 2:  candidate.subcategory === gold.subcategory       (exact string)
+  gate 3:  location token-multiset Jaccard ≥ 0.5            (DEFAULT_MATCH_THRESHOLD)
+```
+
+Matching is **greedy 1:1** — each gold claims its highest-overlap unclaimed candidate (`claimed` set in the code). The roll-up buckets (SemEval labels, from the `MatchCounts` type):
+
+| bucket | meaning | code |
+|---|---|---|
+| **COR** (correct) | matched, location Jaccard **== 1** | pair with perfect span |
+| **PAR** (partial) | matched, location Jaccard **< 1** | pair with span drift |
+| **MIS** (missed) | a **gold** with no matching candidate | false negative |
+| **SPU** (spurious) | a **candidate** with no matching gold | false positive |
+
+And the metrics (`compute_metrics`), with **partial credit** (a PAR counts as half):
+
+```
+  found      = COR + 0.5·PAR
+  precision  = found / (COR + PAR + SPU)      // of what the agent said, how much was right
+  recall     = found / (COR + PAR + MIS)      // of the gold, how much the agent found
+  F1         = harmonic mean(precision, recall)
+```
+
+> **App fact (the baseline, [Starting state](../progress.md#starting-state-grounded-2026-07-12)):** run `7d58b8c2` pooled **COR 10 / PAR 6 / MIS 23 / SPU 15**, P 0.419, R 0.333, F1 0.371. Note the pooled F1 is recomputed from *summed* counts across essays, **not** the mean of per-essay F1s (repo [`CLAUDE.md`](/Users/abtinghods/Ork/code/english-workshop/CLAUDE.md)).
+
+#### The reconciliation that is the crux of the rung
+
+Here is the trap set-metric literacy must defuse. **A single mislabelled prediction can surface as BOTH a MIS and a SPU.** If the agent finds the right span and right category but emits the *wrong subcategory leaf*, gate 2 (`subcategory !== gold.subcategory`) blocks the match. The consequence, in code:
+- the **gold** it was trying to name becomes a **MIS** (no candidate matched it), and
+- the **candidate** becomes a **SPU** (it matched no gold).
+
+So **one semantic failure ("agent saw the error but named the wrong leaf") = 1 MIS + 1 SPU** in the counts. Therefore **23 MIS + 15 SPU is NOT 38 independent failures.** Some unknown number of them are the same prediction failing gate 2 twice.
+
+> **App fact — this is real in your baseline, not hypothetical.** Pulled from run `7d58b8c2`, essay `corrections-and-improvements-long` (F1 0.182, COR 1 / PAR 0 / MIS 5 / SPU 4), the `by_observation` rows include these **paired** MIS+SPU (same span, same category `grammar`, different subcategory leaf):
+>
+> | gold (→ MIS) | candidate (→ SPU) | same span? |
+> |---|---|---|
+> | `grammar/voice_active_passive` "She born in a small village" | `grammar/passive_voice` "She born in a small village" | ✅ identical |
+> | `grammar/tense` "she work very hard since she was a child" | `grammar/tense_consistency` "she work very hard…" | ✅ identical |
+> | `grammar/possessive` "a person life" | `grammar/possessive_nouns` "a person life" | ✅ identical |
+> | `grammar/dependent_preposition` "listen her for hours" | `grammar/prepositional_verbs` "I can listen her for hours" | ≈ overlap (candidate span longer) |
+>
+> That's **4 MIS + 4 SPU = 8 rows** on this one essay that are really **~4 distinct failures** ("right error, wrong subcategory leaf"). Contrast the genuine miss on the same essay: gold `tone/warmth` (a long sentence) has **no candidate at all** → a pure MIS, a *distinct* recall failure. And essay `corrections-only-short`: gold `grammar/indefinite_article` "My sister is nurse" MIS ↔ candidate `grammar/articles` "My sister is nurse" SPU — again **one** failure, not two.
+
+**Why the subcategory leaf drifts (root-cause app fact).** The agent's `subcategory` field is an **open `z.string()`, not a closed enum** — the ~280-leaf taxonomy blows Gemini's structured-output schema limit, so the *only* thing steering the model to the exact gold leaf is the prompt's SUBCATEGORY guidance ([Starting state](../progress.md#starting-state-grounded-2026-07-12); agent [`english-evaluator.agent.ts`](/Users/abtinghods/Ork/code/english-workshop/apps/main-api/src/mastra/agents/english-evaluator.agent.ts)). This is *why* you get near-synonym leaves (`passive_voice` vs the gold `voice_active_passive`). It is a live candidate for the rung-2 hypothesis — but rung-1 only *names and counts*; it does not fix.
+
+> **Do not read past this without internalizing the distinction:** the **unit of analysis** for error analysis is a **distinct semantic failure**, not a scorer row. The scorer counts rows (MIS/SPU); *you* count failures. Reconciling paired rows *before* counting is the difference between "prioritize the subcategory-leaf problem (huge)" and "chase 38 phantom bugs."
+
+### 4. Failure modes & pitfalls to guard against
+
+Four distinct evidence classes are in play in this rung; keep them separate:
+
+- **Source claim** — open/axial/count/saturation/first-failure/prioritize-by-frequency ([FAQ], [FG], [YAN]).
+- **App fact** — Method-A gates, COR/PAR/MIS/SPU, the paired-row mechanism, the real `by_observation` examples above, the open-`z.string()` subcategory (cited to code/run/Starting state).
+- **Local inference** — e.g. "the 11-essay seed cannot be *saturated*." Entailed by [FAQ]'s "review at least 100 to start," since 11 ≪ 100 — but **the source never mentions our corpus.** Label it ours.
+- **Local protocol** — e.g. "reconcile paired MIS+SPU as one failure before counting." This is a *sprint decision* about how to apply open/axial coding to a set-matching metric; it is not stated by Hamel/Yan (their first-failure rule is about *cascading multi-turn traces*, [FAQ]). It's the honest bottom-up reading of *this* scorer.
+
+Specific traps:
+- **Counting rows, not failures.** Treating 23 MIS + 15 SPU as 38 independent modes. The paired-row reconciliation above is the antidote. (App-grounded.)
+- **Fixing before counting.** The urge to jump to "let me constrain the subcategory" is rung-2. Open→axial→**count** first; the count is what justifies the target ([FAQ] "count the number of failures in each category"; [FG] "counted the frequency of each issue").
+- **Calling 11 essays "saturated."** You have not reached saturation; you have a *prioritization seed*. [FAQ]'s heuristic is "≥100 to start." With 11 essays you can *rank* failure modes but not *close* the taxonomy. Say so explicitly. (Local inference on [FAQ].)
+- **Prioritizing by raw frequency alone, ignoring impact.** The three `no_feedback_needed` essays score COR=1 (a correct "stay silent" — [`utils.ts` `evaluate`](/Users/abtinghods/Ork/code/english-workshop/apps/main-api/src/mastra/scorers/observation-scorer-a/utils.ts), the empty-gold branch). A COR is not a failure to chase. And recall (0.33) < precision (0.42) → you are **recall-bound**: the biggest lever is the failures that *cost recall* (MIS and the MIS-half of paired rows), not the SPU-only noise. Frequency **and** impact ([FG] prioritizes by frequency; the recall-bound impact read is a local inference on the baseline metrics).
+- **Goodhart is NOT your rung-1 concept.** [ALL] §1.4.4 invokes Goodhart's Law for *over-optimizing a single eval* (NIAH). That is scoped to over-optimization; do not import it into rung-1's set-metric reading. (Attribution discipline — [ALL] note.)
+
+### Learning coverage
+
+Each owned concept maps to evidence you must *produce* in the Build (not just read here):
+
+| coverage_id | concept | evidence you must produce in the Build |
+|---|---|---|
+| `cov-error-analysis` | open → axial → count → prioritize; first-failure rule; small-seed ≠ saturation | a persisted report with: per-failing-observation open notes → a **named** axial taxonomy → **per-mode counts** → **exactly one** target justified on frequency **and** impact; an explicit line that 11 essays is prioritization evidence, not theoretical saturation |
+| `cov-set-metric-literacy` | read COR/PAR/MIS/SPU → P/R/F1; reconcile a paired MIS+SPU as one failure | in the report, the paired rows (right span+category, wrong subcategory leaf) **explicitly merged into single failures before counting**, with the reason (gate-2 fails → 1 MIS + 1 SPU for one prediction) |
+
+---
+
+## Reading
+
+> **Measured budget (rung-1):** Core ⏱ **39 min** · full list (Core + Optional) ⏱ **131 min (~2h 11m)**. Times measured 2026-07-12 with `estimate-reading-time.mjs` @ 200 wpm on the article body. You do **not** need the optional set before building.
+
+### Core (⏱ 39 min)
+
+- **Hamel Husain & Shreya Shankar — [A Field Guide to Rapidly Improving AI Products](https://hamel.dev/blog/posts/field-guide/)** (Mar 2025) · ⏱ **32 min** · *Why read:* the canonical account of "look at your data before touching the system" and the tools-trap it prevents; the NurtureBoss 66%→95% arc is the template for what you're about to do. *Extract:* bottom-up vs top-down; "used an LLM to build a taxonomy of common failure modes… counted the frequency of each issue"; prioritize by frequency. (Note: the *terms* open/axial coding and the first-failure rule are NOT here — get those from the FAQ below.)
+- **Hamel & Shreya — [Evals-FAQ: "Why is error analysis so important…"](https://hamel.dev/blog/posts/evals-faq/why-is-error-analysis-so-important-in-llm-evals-and-how-is-it-performed.html)** · ⏱ **2 min** · *Why read:* the tightest procedural spec — this is the one you'll actually follow, step by step. It's short but dense; read it twice. *Extract:* the four named steps (Creating a Dataset → Open Coding → Axial Coding → Iterative Refinement); "note the first failure observed in a trace"; axial coding "is the most important step… count the number of failures in each category"; theoretical saturation ("≥100 to start; ~20 with no new category → stop").
+- **Eugene Yan — [An LLM-as-Judge Won't Save The Product—Fixing Your Process Will](https://eugeneyan.com/writing/eval-process/)** (Apr 2025) · ⏱ **5 min** · *Why read:* reframes error analysis as a *process* (the scientific method), and gives the discipline you'll need in rung-2 — define the pass/fail bar before you tune. *Extract:* Observation → Annotate → Hypothesize → Experiment → Measure; "define success criteria… from day one"; "buying or building yet another evaluation tool won't save the product." (No decision tree in this article — it's a loop.)
+
+### Optional / go deeper (adds ⏱ 92 min → 131 min total)
+
+- **Hamel — [Your AI Product Needs Evals](https://hamel.dev/blog/posts/evals/)** (Mar 2024) · ⏱ **20 min** · *Marginal benefit — future-rung bridge:* situates today's work in the **L1 (unit tests/assertions) / L2 (human & model eval) / L3 (A/B)** ladder. *Extract:* where code assertions end and an LLM judge begins ("validation that cannot be tested by assertions alone" = start of L2) — your Method-A scorer is L1-family; the rung-3 judge is L2. Bridges forward, not needed to build rung-1.
+- **applied-llms.org — [What We Learned from a Year of Building with LLMs, Part I](https://applied-llms.org/)** · ⏱ **70 min** · *Marginal benefit — independent corroboration:* six practitioners on assertion-first eval discipline (§1.4.1) and "Look at samples of LLM inputs and outputs every day" (§2.1.2). *Extract:* the assertion-first habit; the "Intern Test" (§1.4.3) for diagnosing why a generation failed. Long; skim §1.4.
+- **DeepLearning.AI (Arize) — [Evaluating AI Agents](https://www.deeplearning.ai/courses/evaluating-ai-agents/)** · ⏱ **2 min** (public outline only) · *Marginal benefit — structured-video on-ramp:* a paced walkthrough of the annotate→experiment cadence if you want video. *Extract:* public outline only (17 lessons; lesson 13 "Improving your LLM-as-a-judge" bridges to rung-3). Gated content not accessed; don't infer lesson content from titles.
+
+---
+
+## Build
+
+### Current app context
+
+You are reading, not changing. The run is already scored and persisted; rung-1 **must not** touch the agent or the scorer (that's rung-2). The surfaces you'll use:
+
+- **The run:** `7d58b8c2-988b-44b3-8dc0-b06a8b4874cc` — target `essay_feedback_workflow`, workflow v2 · agent v4 · corpus v1.4 · Method-A report v1 · `gemini-3.5-flash` · **F1 0.371, COR 10 / PAR 6 / MIS 23 / SPU 15, 13 matched pairs** ([Starting state](../progress.md#starting-state-grounded-2026-07-12)). Confirm it's still the latest workflow run before you start (temp 0 → an unchanged re-run reproduces it near-exactly; the companion can re-run `bun run eval:workflow` to confirm).
+- **The viewer:** the admin dashboard's **Gold-vs-candidate** per-essay drill-down — `bun run dev:admin` → `http://localhost:5174/v1/workflows/essay_feedback_workflow?run=7d58b8c2-988b-44b3-8dc0-b06a8b4874cc`. This *is* your data viewer (the Field Guide's "most important investment", [FG] §2 — you already have it; you don't build one).
+- **The per-observation data behind it:** each scored row's `analyzeStepResult.report.by_observation` (keyed by observation id; each entry has `status` ∈ correct|partial|missed|spurious, `reference` = gold, `candidate` = agent) and `report.field_summary` (repo [`CLAUDE.md`](/Users/abtinghods/Ork/code/english-workshop/CLAUDE.md)). The companion may fetch these raw rows for you (`GET /api/eval-runs`, or SQL on `mastra.mastra_scorers`) — but **you** read them.
+
+### Exercise — do error analysis on the real run
+
+Go essay by essay through the failing observations of run `7d58b8c2` and produce a counted failure taxonomy with one chosen target. Concretely:
+
+1. **Open code (first pass, no theory).** For each *failing* observation (every MIS, SPU, and PAR row — the COR rows are hits, skip them), write a one-line open note in your own words describing what actually went wrong. Look at the gold and the candidate side by side. Don't categorize yet — just journal ([FAQ] "open-ended notes… akin to journaling"). Note the first/primary failure per row; for these single-shot essays you may tag independent failures too ([FAQ]).
+2. **Reconcile the scorer rows into semantic failures.** *Before* counting, merge each paired **MIS+SPU that is the same span + same category with a different subcategory leaf** into ONE failure, and write *why* (gate-2 exact-subcategory fails → the one prediction becomes both a MIS and a SPU). This is `cov-set-metric-literacy`, and it's the step that separates a real taxonomy from 38 phantom bugs. Keep genuine solo-MIS (no candidate) and solo-SPU (no gold) as their own failures.
+3. **Axial code (name the taxonomy).** Group your reconciled failures into a small set of **named** modes. Let the names emerge from the data — don't import a generic label set ([FG] bottom-up). Expect a handful, e.g. distinct kinds of "right error / wrong subcategory leaf," span-drift PAR, pure recall miss — but **derive them yourself**; the Starting-state note is your grader's private key, not your answer.
+4. **Count.** Tally how many reconciled failures fall in each named mode ([FAQ] "count the number of failures in each category"). A tiny table is enough.
+5. **Prioritize — pick exactly ONE target.** Choose the single mode to attack in rung-2, justified on **frequency AND impact** — remember you're recall-bound (R 0.33 < P 0.42), and `no_feedback_needed` CORs are not failures. State the justification in one or two sentences.
+6. **Saturation caveat.** Add one explicit line: 11 essays is a prioritization seed, not theoretical saturation ([FAQ] "≥100 to start"); the ranking is directional, not closed.
+
+*(The `/eval-error-analysis` skill can mechanically tally your codebook once you have one — it **counts** against your taxonomy; it does not choose the target or write the notes. Use it to check your arithmetic, not to skip the reading.)*
+
+### Inputs / starting evidence
+
+- The 11 essays and their gold: [`essays-v1.4.json`](/Users/abtinghods/Ork/code/english-workshop/apps/main-api/src/mastra/collections/essays-v1.4.json) (per-essay gold counts `3,10,2,3,4,6,0,0,3,5,0`).
+- The scored run `7d58b8c2` `by_observation` rows (companion fetches raw on request).
+- The Method-A definition: [`observation-scorer-a/utils.ts`](/Users/abtinghods/Ork/code/english-workshop/apps/main-api/src/mastra/scorers/observation-scorer-a/utils.ts) — re-read the three match gates and the COR/PAR/MIS/SPU roll-up if the counts confuse you.
+
+### Artifact to produce
+
+A **persisted error-analysis report** (written to [`../progress.md`](../progress.md) under Rung progress, or a linked file) containing: (a) open notes on the failing observations; (b) the paired-row reconciliations with reasons; (c) a named axial taxonomy; (d) per-mode counts; (e) exactly one chosen target with a frequency+impact justification; (f) the saturation caveat. It must name the exact run identity it read (target, corpus, versions, run id).
+
+### Success criterion
+
+The report lets someone else pick up rung-2 without re-reading the raw run: they can see the named modes, the counts, why the paired rows are one failure each, and which single target was chosen and why. The unit of analysis is a **distinct semantic failure**, never a raw scorer row.
+
+### Hints / rubric
+
+*Hints (only after an attempt — see the guide's hint ladder):*
+- Stuck on whether two rows are one failure? Ask: do the gold row and the candidate row describe the **same underlying error at the same span**? If yes and only the subcategory leaf differs, it's one failure (gate 2).
+- Stuck on the taxonomy? Group by *what the agent did wrong*, not by grammar topic: "found it but mislabeled the leaf" vs "found a longer span than gold (PAR drift)" vs "missed it entirely (no candidate)."
+
+*Rubric (independent mastery):* a counted taxonomy; paired rows reconciled with the gate-2 reason stated; exactly one target justified on frequency **and** impact (recall-bound read); the saturation caveat present; minimal hints needed. *Partial:* needed prompting to reconcile paired rows or to weigh impact vs raw count. **No answer leakage — the taxonomy is derived by the learner, never supplied.**
+
+---
+
+## Verify
+
+- [ ] The analysis names the exact run identity it read (target `essay_feedback_workflow`, corpus v1.4, workflow v2 · agent v4 · scorer/report v1, run id `7d58b8c2-988b-44b3-8dc0-b06a8b4874cc`).
+- [ ] The unit of analysis is a **distinct semantic failure**, not raw MIS+SPU rows; paired rows (same span + category, wrong subcategory leaf) reconciled to one failure **before** counting, with the gate-2 reason stated.
+- [ ] The report contains open notes, a small **named** axial taxonomy, per-mode counts, and **exactly one** next target justified by frequency **and** impact.
+- [ ] It states that the 11-essay seed is prioritization evidence, not theoretical saturation.
+</script>
+
+<!-- == COMPONENT SCRIPTS == -->
+<script>
+(function(){
+  document.querySelectorAll('.c-codeblock').forEach(function(block){
+    var btn = block.querySelector('.c-codeblock-copy');
+    var pre = block.querySelector('pre');
+    if(!btn || !pre) return;
+    var label = btn.textContent;
+    function feedback(text, copied){
+      btn.textContent = text;
+      btn.classList.toggle('is-copied', !!copied);
+      setTimeout(function(){
+        btn.textContent = label;
+        btn.classList.remove('is-copied');
+      }, 1600);
+    }
+    function fallbackCopy(text){
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'absolute';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      try{
+        document.execCommand('copy');
+        feedback('Copied', true);
+      }catch(e){
+        feedback('Copy failed', false);
+      }
+      document.body.removeChild(ta);
+    }
+    btn.addEventListener('click', function(){
+      var text = pre.innerText;
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(
+          function(){ feedback('Copied', true); },
+          function(){ fallbackCopy(text); }
+        );
+      }else{
+        fallbackCopy(text);
+      }
+    });
+  });
+})();
+</script>
+<script type="module">
+try {
+  const React = await import("react");
+  const { createRoot } = await import("react-dom/client");
+  const E = await import("https://esm.sh/@excalidraw/excalidraw@0.18.0?external=react,react-dom");
+  const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+  // Excalidraw's font must be loaded BEFORE convertToExcalidrawElements, or label
+  // text is measured with fallback metrics and overflows its shape.
+  try { await document.fonts.load("20px Excalifont"); } catch {}
+  // convertToExcalidrawElements does NOT grow shapes to fit their labels — measure
+  // and widen them ourselves (keeps each shape's center fixed).
+  const mctx = document.createElement("canvas").getContext("2d");
+  const fitLabels = (raw) => {
+    for (const el of raw) {
+      if (!el.label || !el.width) continue;
+      const fs = el.label.fontSize || 20;
+      mctx.font = `${fs}px Excalifont`;
+      const needW = Math.max(...el.label.text.split("\n").map(l => mctx.measureText(l).width)) + 64;
+      if (needW > el.width) { el.x -= (needW - el.width) / 2; el.width = needW; }
+      const needH = el.label.text.split("\n").length * fs * 1.25 + 36;
+      if (needH > el.height) { el.y -= (needH - el.height) / 2; el.height = needH; }
+    }
+    return raw;
+  };
+  for (const sceneEl of document.querySelectorAll("script.c-diagram-excalidraw-scene")) {
+    const fig = sceneEl.closest(".c-diagram-excalidraw");
+    const host = fig.querySelector(".c-diagram-excalidraw-canvas");
+    const toggle = fig.querySelector(".c-diagram-excalidraw-toggle");
+    try {
+      const raw = fitLabels(JSON.parse(sceneEl.textContent));
+      const elements = E.convertToExcalidrawElements(
+        raw.filter(el => !["cameraUpdate", "delete", "restoreCheckpoint"].includes(el.type)),
+        { regenerateIds: false });
+      // Default display: inline SVG export (crisp, correct text — this is also how the
+      // excalidraw-mcp app renders inline). NOT the <Excalidraw> component, whose canvas
+      // text painter clips label glyphs in an embedded context.
+      const svg = await E.exportToSvg({ elements, appState: { exportWithDarkMode: dark }, files: null });
+      host.appendChild(svg);
+      fig.classList.add("is-live");
+      // Optional: swap in the interactive canvas (pan/zoom) on demand.
+      let root = null;
+      toggle.hidden = false;
+      toggle.addEventListener("click", () => {
+        if (!root) {
+          host.classList.add("is-interactive");
+          host.textContent = "";
+          root = createRoot(host);
+          root.render(React.createElement(E.Excalidraw, {
+            excalidrawAPI: (api) => {
+              const fit = () => api.scrollToContent(api.getSceneElements(), { fitToContent: true, viewportZoomFactor: 0.9 });
+              requestAnimationFrame(fit);
+              setTimeout(fit, 1500);
+            },
+            initialData: { elements, appState: { viewModeEnabled: true, zenModeEnabled: true, gridSize: null, theme: dark ? "dark" : "light" } },
+            viewModeEnabled: true
+          }));
+          toggle.textContent = "Static image";
+        } else {
+          root.unmount();
+          root = null;
+          host.classList.remove("is-interactive");
+          host.textContent = "";
+          host.appendChild(svg);
+          toggle.textContent = "Live canvas";
+        }
+      });
+    } catch { /* bad scene JSON — ASCII fallback stays visible */ }
+  }
+} catch { /* offline / CDN unreachable — ASCII fallbacks stay visible */ }
+</script>
+<script>
+  (function(){
+    // scrollspy for the sidebar TOC
+    var links=[].slice.call(document.querySelectorAll('nav.toc a'));
+    var map={}; links.forEach(function(a){var id=a.getAttribute('href').slice(1); map[id]=a;});
+    if('IntersectionObserver' in window){
+      var obs=new IntersectionObserver(function(entries){
+        entries.forEach(function(en){
+          if(en.isIntersecting){
+            links.forEach(function(a){a.removeAttribute('aria-current');});
+            if(map[en.target.id]) map[en.target.id].setAttribute('aria-current','true');
+          }
+        });
+      },{rootMargin:'-20% 0px -70% 0px'});
+      document.querySelectorAll('main section[id]').forEach(function(s){obs.observe(s);});
+    }
+  })();
+</script>
+</body>
+</html>

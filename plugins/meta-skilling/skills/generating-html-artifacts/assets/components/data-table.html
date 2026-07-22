@@ -1,0 +1,78 @@
+<!--
+COMPONENT: data-table
+WHEN: genuinely tabular data — rows of the same shape the reader scans or compares: endpoint latency budgets, migration checklists with owners, experiment arms, error budgets. Always a real <table>, never divs.
+AVOID: don't use it for options × judgment-axes with a recommendation (that's comparison-matrix) or for 2-3 key numbers (that's stat-cards).
+SCHEMA: optional caption (what the table shows), column headers, rows. Numeric columns get class="num" on both th and td. Full content width; scrolls horizontally on narrow screens.
+VARIANTS: numeric alignment via .num (right-aligned, tabular figures).
+ASSEMBLY: copy the <style> block into the page's == COMPONENT STYLES == slot, the HTML fragment into a <section>. No script. Keep the .c-table-scroll wrapper — it's the responsive overflow.
+-->
+<style>
+  /* data-table — scoped under .c-table */
+  .c-table-scroll{overflow-x:auto; margin:24px 0; border:1px solid var(--border);
+                  border-radius:var(--radius); background:var(--card)}
+  .c-table{width:100%; border-collapse:collapse; font-size:16px}
+  .c-table caption{caption-side:bottom; text-align:left; font-size:16px;
+                   color:var(--muted-foreground); padding:12px 20px; border-top:1px solid var(--border)}
+  .c-table th{font-size:14px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+              color:var(--muted-foreground); text-align:left; padding:14px 20px;
+              border-bottom:2px solid var(--border); white-space:nowrap}
+  .c-table td{padding:14px 20px; border-bottom:1px solid var(--border); vertical-align:top}
+  .c-table tbody tr:last-child td{border-bottom:none}
+  .c-table .num{text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap}
+  .c-table tbody th[scope="row"]{font-size:16px; letter-spacing:0; text-transform:none;
+                                 color:var(--foreground); font-weight:600; white-space:normal}
+  @media (prefers-reduced-motion: no-preference){
+    .c-table tbody tr{transition:background .12s}
+  }
+  .c-table tbody tr:hover{background:var(--accent)}
+</style>
+
+<div class="c-table-scroll" role="region" aria-label="Latency budget per endpoint" tabindex="0">
+  <table class="c-table">
+    <caption>p95 latency measured in staging, 14-day window ending March 14. Budget = the value alerting fires on.</caption>
+    <thead>
+      <tr>
+        <th scope="col">Endpoint</th>
+        <th scope="col">Owner</th>
+        <th scope="col" class="num">p50 (ms)</th>
+        <th scope="col" class="num">p95 (ms)</th>
+        <th scope="col" class="num">Budget (ms)</th>
+        <th scope="col">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th scope="row">GET /sessions/:id</th>
+        <td>Auth team</td>
+        <td class="num">3</td>
+        <td class="num">11</td>
+        <td class="num">25</td>
+        <td>Within budget</td>
+      </tr>
+      <tr>
+        <th scope="row">POST /sessions</th>
+        <td>Auth team</td>
+        <td class="num">9</td>
+        <td class="num">34</td>
+        <td class="num">50</td>
+        <td>Within budget</td>
+      </tr>
+      <tr>
+        <th scope="row">GET /dashboard/aggregate</th>
+        <td>Analytics team</td>
+        <td class="num">120</td>
+        <td class="num">480</td>
+        <td class="num">400</td>
+        <td>Over budget — cache rollout in flight</td>
+      </tr>
+      <tr>
+        <th scope="row">POST /webhooks/stripe</th>
+        <td>Billing team</td>
+        <td class="num">41</td>
+        <td class="num">150</td>
+        <td class="num">300</td>
+        <td>Within budget</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

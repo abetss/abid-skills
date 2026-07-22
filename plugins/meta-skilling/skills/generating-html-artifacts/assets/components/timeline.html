@@ -1,0 +1,67 @@
+<!--
+COMPONENT: timeline
+WHEN: a chronological sequence of events where *when* matters — incident timelines, release history, project milestones with dates. Each event gets a timestamp chip and a card on a vertical rail.
+AVOID: don't use it for ordered-but-timeless process steps (that's steps) or for a schedule with 2-3 entries (prose is clearer).
+SCHEMA: per entry: timestamp (short — "14:06" or "Mar 3"), body with optional bold lead-in + 1-2 sentences, optional dot kind marking the event type.
+VARIANTS: dot kind — default (neutral), --impact (destructive, things got worse), --ok (success, mitigated/resolved), --key (primary, turning point).
+ASSEMBLY: copy the <style> block into the page's == COMPONENT STYLES == slot, the HTML fragment into a <section>. No script.
+-->
+<style>
+  /* timeline — scoped under .c-tl */
+  .c-tl{position:relative; margin:24px 0; padding:4px 0 4px 16px}
+  .c-tl::before{content:""; position:absolute; left:16px; top:8px; bottom:8px;
+                width:2px; background:var(--border)}
+  .c-tl-entry{position:relative; padding:0 0 24px 32px}
+  .c-tl-entry:last-child{padding-bottom:0}
+  .c-tl-dot{position:absolute; left:-5px; top:8px; width:12px; height:12px; border-radius:50%;
+            background:var(--muted-foreground); border:2px solid var(--background);
+            box-sizing:content-box}
+  .c-tl-dot--impact{background:var(--destructive)}
+  .c-tl-dot--ok{background:var(--success)}
+  .c-tl-dot--key{background:var(--primary)}
+  .c-tl-time{display:inline-block; font-family:ui-monospace,Menlo,Monaco,Consolas,monospace;
+             font-size:14px; color:var(--foreground); background:var(--card);
+             border:1px solid var(--border); border-radius:6px; padding:2px 10px; margin-bottom:8px}
+  .c-tl-body{background:var(--card); border:1px solid var(--border);
+             border-radius:var(--radius); padding:16px 20px; font-size:16px; max-width:72ch}
+  .c-tl-body p{margin:0 0 8px; font-size:16px}
+  .c-tl-body p:last-child{margin-bottom:0}
+</style>
+
+<div class="c-tl">
+  <div class="c-tl-entry">
+    <span class="c-tl-dot" aria-hidden="true"></span>
+    <span class="c-tl-time">14:02</span>
+    <div class="c-tl-body">
+      <p>Config change <code>cfg-9a12</code> promoted to production via the standard rollout pipeline.</p>
+    </div>
+  </div>
+  <div class="c-tl-entry">
+    <span class="c-tl-dot c-tl-dot--impact" aria-hidden="true"></span>
+    <span class="c-tl-time">14:06</span>
+    <div class="c-tl-body">
+      <p><strong>Impact starts.</strong> Sync workers begin queueing on pool checkout; p95 latency climbs past 4&nbsp;s and the load balancer starts returning 502s.</p>
+    </div>
+  </div>
+  <div class="c-tl-entry">
+    <span class="c-tl-dot" aria-hidden="true"></span>
+    <span class="c-tl-time">14:07</span>
+    <div class="c-tl-body">
+      <p>Alert fires: <code>sync_5xx_rate &gt; 2%</code> for 60&nbsp;s. On-call acknowledges and starts triage.</p>
+    </div>
+  </div>
+  <div class="c-tl-entry">
+    <span class="c-tl-dot c-tl-dot--key" aria-hidden="true"></span>
+    <span class="c-tl-time">14:31</span>
+    <div class="c-tl-body">
+      <p><strong>Turning point.</strong> Pool-wait saturation spotted in the worker dashboard; investigation pivots from app deploys to infra config.</p>
+    </div>
+  </div>
+  <div class="c-tl-entry">
+    <span class="c-tl-dot c-tl-dot--ok" aria-hidden="true"></span>
+    <span class="c-tl-time">14:53</span>
+    <div class="c-tl-body">
+      <p><strong>Mitigated.</strong> <code>cfg-9a12</code> rolled back; error rate returns to baseline within 6 minutes.</p>
+    </div>
+  </div>
+</div>

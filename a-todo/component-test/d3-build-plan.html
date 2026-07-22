@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>rung-3 build plan — grammar-feedback judge (holistic)</title>
+<style>
+  /* ---- palette: light (default) ---- */
+  :root{
+      --card-foreground:var(--foreground);--primary-foreground:#ffffff;--secondary-foreground:#ffffff;--code-comment:#5b6168;--code-keyword:#9c3a2c;--code-string:#155e3b;--code-number:#7a4f00;--code-fn:#6f42c1;--success:#1c6b46;--warning:#8a5a00;--destructive:#b4453a;
+    /* code surface FOLLOWS the theme (light here, dark in @media); --inverse stays dark in both themes for dark buttons / inverted panels */
+    --code-bg:#f1f1ee; --code-fg:#1a1d21; --inverse:#16191d; --inverse-foreground:#f2f3f4;
+    --background:#f7f7f5; --card:#ffffff; --foreground:#1a1d21; --muted-foreground:#33383f;
+    --border:#d9d8d4; --primary:#1c6b46; --accent:#e6f1ec; --accent-foreground:#10472d;
+    --radius:14px; --maxw:1600px;
+    color-scheme:light dark; font-synthesis:none;
+  }
+  /* ---- palette: dark (auto-follows the OS setting; no toggle) ---- */
+  @media (prefers-color-scheme: dark){
+    :root{
+        --primary-foreground:#06210f;--secondary-foreground:#06210f;--success:#5bbd8a;--warning:#e0b357;--destructive:#e0897a;
+      --code-bg:#16191d; --code-fg:#f2f3f4; --code-comment:#9aa0a8; --code-keyword:#7fd0a3; --code-string:#c9d99a; --code-number:#e0b083; --code-fn:#c9b98a;
+      --background:#14171a; --card:#1d2126; --foreground:#f2f3f4; --muted-foreground:#cdd2d8;
+      --border:#2c323a; --primary:#5bbd8a; --accent:#16352a; --accent-foreground:#9fe3c0;
+    }
+  }
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--background); color:var(--foreground);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.7; font-size:18px; letter-spacing:.1px;
+  }
+  .skip{position:absolute; left:-9999px; top:0; background:var(--primary); color:#fff;
+        padding:12px 18px; border-radius:0 0 10px 0; z-index:100; font-weight:700}
+  .skip:focus{left:0}
+  a{color:var(--primary); text-decoration:none; border-bottom:1px solid transparent}
+  a:hover{border-bottom-color:var(--primary)}
+  :focus-visible{outline:3px solid var(--primary); outline-offset:2px; border-radius:4px}
+
+  /* ---- page frame: centered 1600px shell, sidebar TOC + fluid content ---- */
+  .layout{display:grid; grid-template-columns:260px minmax(0,1fr); gap:0; max-width:var(--maxw); margin:0 auto}
+  nav.toc{position:sticky; top:0; align-self:start; max-height:100vh; overflow:auto;
+          padding:40px 18px 40px 28px; border-right:1px solid var(--border)}
+  nav.toc .toc-title{font-size:14px; letter-spacing:.12em; text-transform:uppercase;
+                     color:var(--muted-foreground); font-weight:700; margin:0 0 14px}
+  nav.toc a{display:block; padding:8px 12px; border-radius:8px; color:var(--muted-foreground);
+            font-size:16px; border-bottom:none; margin-bottom:2px}
+  nav.toc a:hover{background:var(--accent); color:var(--accent-foreground)}
+  nav.toc a[aria-current="true"]{background:var(--accent); color:var(--accent-foreground); font-weight:700}
+
+  main{padding:48px 48px 120px; min-width:0}
+  .page-footer{margin-top:64px; padding-top:24px; border-top:1px solid var(--border)}
+  .page-footer p{font-size:16px; color:var(--muted-foreground)}
+  header.page{margin-bottom:48px}
+  h1{font-size:40px; line-height:1.15; margin:0 0 20px; letter-spacing:-.5px}
+  .lead{font-size:21px; color:var(--foreground); max-width:72ch; margin:0}
+  h2{font-size:28px; margin:0 0 12px; letter-spacing:-.3px}
+  h3{font-size:21px; margin:24px 0 8px}
+  p,li{font-size:18px}
+  section{margin-top:56px}
+  /* Prose stays at a readable measure; components (tables, matrices, diagrams,
+     diffs, stat rows) span the full content width. */
+  p,li,blockquote{max-width:72ch}
+
+  /* generic card surface — components build on this */
+  .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:24px 26px}
+
+  /* code block — surface + text FOLLOW the theme (light-on-light, dark-on-dark), high contrast in both.
+     Syntax classes (.kw/.fn/.str/.cm/.num) pull from the themed --code-* tokens, so they flip too. */
+  pre.code{background:var(--code-bg); color:var(--code-fg); border:1px solid var(--border);
+           border-radius:10px; padding:16px 18px; overflow-x:auto; max-width:none;
+           font:14px/1.6 ui-monospace,Menlo,Monaco,Consolas,monospace}
+  pre.code .kw{color:var(--code-keyword)} pre.code .fn{color:var(--code-fn)}
+  pre.code .str{color:var(--code-string)} pre.code .cm{color:var(--code-comment)} pre.code .num{color:var(--code-number)}
+  code{font-family:ui-monospace,Menlo,Monaco,Consolas,monospace; font-size:.88em;
+       background:var(--code-bg); color:var(--code-fg); padding:2px 6px; border-radius:6px}
+  pre.code code{background:none; padding:0}
+  /* dark button / inverted panel — stays dark in BOTH themes (use --inverse, never --card or theme inks) */
+  .btn-inverse{background:var(--inverse); color:var(--inverse-foreground); border:none;
+               border-radius:8px; padding:10px 16px; font-weight:600; cursor:pointer}
+
+  /* pre-rendered diagrams (see scripts/render_diagrams.py): one figure, two SVGs,
+     the right one shown per theme. */
+  figure.diagram{margin:28px 0; padding:24px; background:var(--background);
+                 border:1px solid var(--border); border-radius:var(--radius);
+                 overflow-x:auto; text-align:center}
+  figure.diagram svg{max-width:100%; height:auto}
+  /* mermaid sizes label boxes with its own (headless) font; the viewer's font can be
+     wider and clip the text. Let the centered labels spill instead of clipping. */
+  figure.diagram foreignObject{overflow:visible}
+  figure.diagram .nodeLabel,figure.diagram .edgeLabel,figure.diagram .er.entityLabel{white-space:nowrap}
+  figure.diagram figcaption{margin-top:14px; font-size:16px; color:var(--muted-foreground)}
+  .diagram-dark{display:none}
+  .diagram-light{display:block}
+  @media (prefers-color-scheme:dark){
+    .diagram-light{display:none}
+    .diagram-dark{display:block}
+  }
+
+  /* == COMPONENT STYLES == */
+
+  /* section — scoped under .c-section */
+  .c-section .c-eyebrow{font-size:14px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
+                        color:var(--primary); margin:0 0 8px}
+  .c-section .c-lede{font-size:20px; line-height:1.6; color:var(--muted-foreground);
+                     max-width:72ch; margin:0 0 16px}
+
+  /* steps — scoped under .c-steps */
+  .c-steps{list-style:none; margin:24px 0; padding:0; max-width:none; counter-reset:c-step}
+  .c-step{position:relative; display:grid; grid-template-columns:48px minmax(0,1fr);
+          gap:16px; counter-increment:c-step}
+  .c-step::before{content:""; position:absolute; left:23px; top:52px; bottom:4px;
+                  width:2px; background:var(--border)}
+  .c-step:last-child::before{display:none}
+  .c-step-marker{position:relative; z-index:1; width:48px; height:48px; border-radius:50%;
+                 display:flex; align-items:center; justify-content:center;
+                 background:var(--card); border:2px solid var(--border);
+                 color:var(--foreground); font-size:18px; font-weight:700}
+  .c-step-marker::before{content:counter(c-step, decimal-leading-zero)}
+  .c-step.is-done .c-step-marker{background:var(--success); border-color:var(--success); color:var(--primary-foreground)}
+  .c-step.is-done .c-step-marker::before{content:"✓"}
+  .c-step.is-current .c-step-marker{border-color:var(--primary); color:var(--primary)}
+  .c-step-body{padding-bottom:32px}
+  .c-step:last-child .c-step-body{padding-bottom:0}
+  .c-step-body h3{margin:8px 0 4px; font-size:21px}
+  .c-step-body p{margin:0 0 8px; font-size:16px; color:var(--muted-foreground); max-width:72ch}
+  .c-step-tags{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px}
+  .c-step-tag{font-size:14px; font-family:ui-monospace,Menlo,Monaco,Consolas,monospace;
+              background:var(--accent); color:var(--accent-foreground);
+              border-radius:8px; padding:3px 10px; white-space:nowrap}
+
+  /* callout — scoped under .c-callout */
+  .c-callout{display:flex; gap:16px; align-items:flex-start;
+             background:var(--card); border:1px solid var(--border); border-left:4px solid var(--primary);
+             border-radius:var(--radius); padding:20px 24px; margin:24px 0}
+  .c-callout-icon{flex:none; margin-top:3px; color:var(--primary)}
+  .c-callout-body{min-width:0}
+  .c-callout-title{margin:0 0 4px; font-size:18px; font-weight:700}
+  .c-callout-body>p{margin:0 0 8px; font-size:18px; max-width:72ch}
+  .c-callout-body>p:last-child{margin-bottom:0}
+  .c-callout--note{border-left-color:var(--muted-foreground)}
+  .c-callout--note .c-callout-icon{color:var(--muted-foreground)}
+  .c-callout--warning{border-left-color:var(--warning)}
+  .c-callout--warning .c-callout-icon{color:var(--warning)}
+  .c-callout--danger{border-left-color:var(--destructive)}
+  .c-callout--danger .c-callout-icon{color:var(--destructive)}
+
+  @media (max-width:900px){
+    .layout{grid-template-columns:1fr}
+    nav.toc{position:static; max-height:none; border-right:none; border-bottom:1px solid var(--border);
+            padding:24px 20px}
+    main{padding:32px 20px 80px}
+    h1{font-size:32px}
+  }
+  @media (prefers-reduced-motion: no-preference){
+    html{scroll-behavior:smooth}
+    nav.toc a{transition:background .15s,border-color .15s,color .15s}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<div class="layout">
+  <nav class="toc" aria-label="Contents">
+    <p class="toc-title">Contents</p>
+    <a href="#overview" aria-current="true">Overview</a>
+    <a href="#phase-a">A · Data + labels</a>
+    <a href="#phase-b">B · Judge prompt</a>
+    <a href="#phase-c">C · Wire as scorer</a>
+    <a href="#phase-d">D · Calibrate</a>
+    <a href="#phase-e">E · Online</a>
+    <a href="#phase-f">F · Close out</a>
+    <a href="#caveats">App notes / caveats</a>
+  </nav>
+
+  <main id="main">
+    <header class="page">
+      <h1>rung-3 build plan — grammar-feedback judge (holistic)</h1>
+      <p class="lead">Judge design (settled): a <strong>holistic</strong> LLM-as-judge that grades the evaluator's grammar observations on an essay — <em>did it catch the real errors (coverage) AND are its corrections right (correctness)?</em> → <code>passed</code> (binary) + <code>note</code>, per essay.</p>
+    </header>
+
+    <section id="overview" class="c-section" aria-labelledby="overview-h">
+      <p class="c-eyebrow">Settled design · Ordering rules · Status</p>
+      <h2 id="overview-h">Overview</h2>
+      <p>This matches Hamel's critique-shadowing (one holistic pass/fail + critique); decomposing into separate correctness/coverage judges is a <em>later</em> step (Hamel Step 7), only if calibration/error-analysis shows we need it.</p>
+      <p><strong>Two ordering rules that override the naive sequence:</strong></p>
+      <ol>
+        <li><strong>Label before you polish the prompt</strong> — "you cannot write a good judge prompt until you've seen the data" (Hamel). Criteria + few-shot examples are an <em>output</em> of labelling.</li>
+        <li><strong>Online comes after calibration</strong> — never deploy an uncalibrated judge.</li>
+      </ol>
+      <p><strong>Agent file:</strong> <code>apps/main-api/src/mastra/agents/english-evaluator/evals/grammer-observation-critic.agent.ts</code> (currently a bare <code>Agent</code>; input = <code>{ input, observations: Observation[] }</code>, output = <code>{ passed, note }</code>).</p>
+      <p>Legend: <code>[me]</code> = companion fetches/runs mechanically · <code>[you]</code> = your judgment / your code.</p>
+
+      <aside class="c-callout c-callout--warning">
+        <span class="c-callout-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5L22 20H2L12 3.5z"/><line x1="12" y1="9.5" x2="12" y2="14"/><circle cx="12" cy="17" r="1.1" fill="currentColor" stroke="none"/></svg>
+        </span>
+        <div class="c-callout-body">
+          <p class="c-callout-title">Current blocker — Step 2 (the human labels)</p>
+          <p>Nothing downstream can start without them. Step 1 (fetch the set) is ready to run on request.</p>
+        </div>
+      </aside>
+    </section>
+
+    <section id="phase-a" class="c-section" aria-labelledby="phase-a-h">
+      <p class="c-eyebrow">Phase A · Steps 1–2</p>
+      <h2 id="phase-a-h">Data + labels — FIRST, before any prompt work</h2>
+      <ol class="c-steps">
+        <li class="c-step">
+          <span class="c-step-marker" aria-hidden="true"></span>
+          <div class="c-step-body">
+            <h3>Fetch the calibration set</h3>
+            <p>Fetch the calibration set from run <code>fa5b792a</code>: per essay, the essay text + its grammar observations (location / problem / suggested fix). Per-essay, because the judge is per-essay.</p>
+            <span class="c-step-tags"><span class="c-step-tag">[me]</span><span class="c-step-tag">run fa5b792a</span></span>
+          </div>
+        </li>
+        <li class="c-step is-current">
+          <span class="c-step-marker" aria-hidden="true"></span>
+          <div class="c-step-body">
+            <h3>Hand-label ~10 essays — the anchor</h3>
+            <p>Hand-label ~10 essays — holistic <strong>PASS/FAIL + note</strong>. Record class balance (how many fails). <strong>This is the anchor; everything downstream depends on it.</strong> Task instructions for a labeller: <code>apps/main-api/src/mastra/features/english-evaluator/evals/progress/label-task-for-friend.md</code>. Labeller must be strong at English grammar, one consistent person, no AI assistance, no answer key.</p>
+            <span class="c-step-tags"><span class="c-step-tag">[you / friend]</span><span class="c-step-tag">label-task-for-friend.md</span></span>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="phase-b" class="c-section" aria-labelledby="phase-b-h">
+      <p class="c-eyebrow">Phase B · Steps 3–5</p>
+      <h2 id="phase-b-h">The judge prompt — derived from those labels</h2>
+      <ol class="c-steps" style="counter-reset:c-step 2">
+        <li class="c-step">
+          <span class="c-step-marker" aria-hidden="true"></span>
+          <div class="c-step-body">
+            <h3>Soften the hard "≥80% match" rule</h3>
+            <p>Soften the hard "≥80% match" rule into a holistic call expressed in the <code>note</code> (keep the AI re-finding issues as <em>context</em> it reasons over; don't gate on a fixed ratio).</p>
+            <span class="c-step-tags"><span class="c-step-tag">[you]</span></span>
+          </div>
+        </li>
+        <li class="c-step">
+          <span class="c-step-marker" aria-hidden="true"></span>
+          <div class="c-step-body">
+            <h3>Fold in few-shot examples + write the criteria</h3>
+            <p>Fold 2–4 of the human labels in as <strong>few-shot examples</strong> (critique-before-verdict) + write the criteria that labelling surfaced.</p>
+            <span class="c-step-tags"><span class="c-step-tag">[you]</span></span>
+          </div>
+        </li>
+        <li class="c-step">
+          <span class="c-step-marker" aria-hidden="true"></span>
+          <div class="c-step-body">
+            <h3>Pick the judge model</h3>
+            <p>Pick the judge model (same Gemini vs a stronger model — self-preference tradeoff).</p>
+            <span class="c-step-tags"><span class="c-step-tag">[you]</span></span>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="phase-c" class="c-section" aria-labelledby="phase-c-h">
+      <p class="c-eyebrow">Phase C · Steps 6–8</p>
+      <h2 id="phase-c-h">Wire it as a scorer — unlocks offline + persistence + online</h2>
+      <ol class="c-steps" style="counter-reset:c-step 5">
+        <li class="c-step">
+          <span class="c-step-marker" aria-hidden="true"></span>
+          <div class="c-step-body">
+            <h3>Wrap the agent in a createScorer sibling</h3>
+            <p>Wrap the agent in a <code>createScorer</code> sibling — <code>passed</code>→1/0, <code>note</code>→reason, distinct <code>scorerId</code>. (Template to copy: <code>observation-a.scorer.ts</code>.)</p>
+            <span class="c-step-tags"><span class="c-step-tag">[me+you]</span><span class="c-step-tag">observation-a.scorer.ts</span></span>
+          </div>
+        </li>
+        <li class="c-step">
+          <span class="c-step-marker" aria-hidden="true"></span>
+          <div class="c-step-body">
+            <h3>Register on Mastra + configure storage</h3>
+            <p>Register on the Mastra instance + configure <code>storage</code> so verdicts persist to <code>mastra.mastra_scorers</code> (a bare <code>scorer.run()</code> does not save).</p>
+            <span class="c-step-tags"><span class="c-step-tag">[me]</span><span class="c-step-tag">mastra.mastra_scorers</span></span>
+          </div>
+        </li>
+        <li class="c-step">
+          <span class="c-step-marker" aria-hidden="true"></span>
+          <div class="c-step-body">
+            <h3>Add it to the offline eval run</h3>
+            <p>Add it to the offline eval run (<code>bun run eval:workflow</code>) beside Method A; inject the per-essay input via <code>preprocess</code>/<code>createPrompt</code> (<code>run.input</code> is type-dependent, no first-class <code>groundTruth</code>).</p>
+            <span class="c-step-tags"><span class="c-step-tag">[me+you]</span><span class="c-step-tag">bun run eval:workflow</span></span>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="phase-d" class="c-section" aria-labelledby="phase-d-h">
+      <p class="c-eyebrow">Phase D · Steps 9–12 · the rung's actual deliverable</p>
+      <h2 id="phase-d-h">Calibrate</h2>
+      <ol class="c-steps" style="counter-reset:c-step 8">
+        <li class="c-step">
+          <span class="c-step-marker" aria-hidden="true"></span>
+          <div class="c-step-body">
+            <h3>Run the eval</h3>
+            <p>Run the eval → judge scores the labelled essays.</p>
+            <span class="c-step-tags"><span class="c-step-tag">[me]</span></span>
+          </div>
+        </li>
+        <li class="c-step">
+          <span class="c-step-marker" aria-hidden="true"></span>
+          <div class="c-step-body">
+            <h3>Build the calibration table</h3>
+            <p>Build the <strong>calibration table</strong>: judge verdict vs the human label — raw agreement + PASS/FAIL <strong>confusion counts</strong> + <strong>class balance</strong>. (Compare <em>verdicts</em> for the metric; use the <em>notes</em> to understand disagreements.)</p>
+            <span class="c-step-tags"><span class="c-step-tag">[you+me]</span></span>
+          </div>
+        </li>
+        <li class="c-step">
+          <span class="c-step-marker" aria-hidden="true"></span>
+          <div class="c-step-body">
+            <h3>Iterate on the disagreements</h3>
+            <p>If agreement <code>&lt; 8/10</code>: read the disagreement cells, adjust criteria/few-shot, re-run. Iterate (~3 rounds, per Hamel). If class-imbalanced (e.g. 9 pass / 1 fail), report precision/recall on the minority class, not raw agreement.</p>
+            <span class="c-step-tags"><span class="c-step-tag">[you]</span></span>
+          </div>
+        </li>
+        <li class="c-step">
+          <span class="c-step-marker" aria-hidden="true"></span>
+          <div class="c-step-body">
+            <h3>Record lineage + self-preference</h3>
+            <p>Record generator/judge <strong>lineage + directional self-preference</strong> (generator = Gemini; judge = ___; direction noted, <strong>no magnitude imported</strong> from the GPT-4/Claude figures).</p>
+            <span class="c-step-tags"><span class="c-step-tag">[you]</span></span>
+          </div>
+        </li>
+      </ol>
+
+      <aside class="c-callout c-callout--info">
+        <span class="c-callout-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16.5"/><circle cx="12" cy="7.75" r="1.1" fill="currentColor" stroke="none"/></svg>
+        </span>
+        <div class="c-callout-body">
+          <p class="c-callout-title">Shortcut worth knowing</p>
+          <p>You can calibrate <strong>before</strong> wrapping it as a scorer: call the agent directly over the labelled essays and compare in a table (B↔D by hand), iterate the prompt fast, then do C once it's trustworthy. Hamel did exactly this in a spreadsheet.</p>
+        </div>
+      </aside>
+    </section>
+
+    <section id="phase-e" class="c-section" aria-labelledby="phase-e-h">
+      <p class="c-eyebrow">Phase E · Steps 13–14 · only once D passes</p>
+      <h2 id="phase-e-h">Online</h2>
+      <ol class="c-steps" style="counter-reset:c-step 12">
+        <li class="c-step">
+          <span class="c-step-marker" aria-hidden="true"></span>
+          <div class="c-step-body">
+            <h3>Attach the same scorer to the workflow</h3>
+            <p>Attach the <strong>same</strong> scorer to the workflow so it runs on live submissions. This is the payoff of reference-free: <em>one identical scorer</em> runs offline (calibration) and online (production) — Method A can't, because it needs gold. Plumbing can be wired anytime; don't <em>trust</em> its output until calibrated.</p>
+            <span class="c-step-tags"><span class="c-step-tag">[me+you]</span></span>
+          </div>
+        </li>
+        <li class="c-step">
+          <span class="c-step-marker" aria-hidden="true"></span>
+          <div class="c-step-body">
+            <h3>Sanity-check on fresh online essays</h3>
+            <p>Sanity-check on a few fresh online essays.</p>
+            <span class="c-step-tags"><span class="c-step-tag">[you]</span></span>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="phase-f" class="c-section" aria-labelledby="phase-f-h">
+      <p class="c-eyebrow">Phase F · Step 15 · rung-3 is the final rung of Day 3</p>
+      <h2 id="phase-f-h">Close out</h2>
+      <ol class="c-steps" style="counter-reset:c-step 14">
+        <li class="c-step">
+          <span class="c-step-marker" aria-hidden="true"></span>
+          <div class="c-step-body">
+            <h3>Coverage evidence + checkpoint</h3>
+            <p>Coverage evidence <code>cov-judge-design</code> + <code>cov-judge-calibration</code> → checkpoint <code>days/day-03/progress.md</code> + a root <code>· work ·</code> line → <strong>end-of-day assessment</strong> (see <code>guide.md → End-of-day</code>).</p>
+            <span class="c-step-tags"><span class="c-step-tag">days/day-03/progress.md</span><span class="c-step-tag">guide.md</span></span>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="caveats" class="c-section" aria-labelledby="caveats-h">
+      <p class="c-eyebrow">Non-blocking</p>
+      <h2 id="caveats-h">Known app notes / caveats</h2>
+      <ul>
+        <li>Agent version churned 20→22→20; confirm which evaluator variant (A vs B) is live before pinning calibration lineage.</li>
+        <li>Primer <code>learn/rung-3.md</code> currently locks the judge to <em>correctness-only</em> — that was over-narrowed; this plan supersedes it with the holistic design. Reconcile the primer/brief later (non-blocking).</li>
+      </ul>
+    </section>
+
+    <footer class="page-footer">
+      <p>Generated artifact · edit the markdown source and re-render.</p>
+    </footer>
+  </main>
+</div>
+
+<!-- Agent-readable source mirror — keep in sync with the visible content -->
+<script type="text/markdown" id="artifact-source">
+# rung-3 build plan — grammar-feedback judge (holistic)
+
+**Judge design (settled):** a **holistic** LLM-as-judge that grades the evaluator's grammar observations on an essay — *did it catch the real errors (coverage) AND are its corrections right (correctness)?* → **`passed` (binary) + `note`**, per essay. This matches Hamel's critique-shadowing (one holistic pass/fail + critique); decomposing into separate correctness/coverage judges is a *later* step (Hamel Step 7), only if calibration/error-analysis shows we need it.
+
+**Two ordering rules that override the naive sequence:**
+1. **Label before you polish the prompt** — "you cannot write a good judge prompt until you've seen the data" (Hamel). Criteria + few-shot examples are an *output* of labelling.
+2. **Online comes after calibration** — never deploy an uncalibrated judge.
+
+**Agent file:** `apps/main-api/src/mastra/agents/english-evaluator/evals/grammer-observation-critic.agent.ts` (currently a bare `Agent`; input = `{ input, observations: Observation[] }`, output = `{ passed, note }`).
+
+Legend: `[me]` = companion fetches/runs mechanically · `[you]` = your judgment / your code.
+
+---
+
+## A. Data + labels — FIRST, before any prompt work
+1. `[me]` Fetch the calibration set from run `fa5b792a`: per essay, the essay text + its grammar observations (location / problem / suggested fix). Per-essay, because the judge is per-essay.
+2. `[you / friend]` Hand-label ~10 essays — holistic **PASS/FAIL + note**. Record class balance (how many fails). **This is the anchor; everything downstream depends on it.**
+   - Task instructions for a labeller: **`apps/main-api/src/mastra/features/english-evaluator/evals/progress/label-task-for-friend.md`**. Labeller must be strong at English grammar, one consistent person, no AI assistance, no answer key.
+
+## B. The judge prompt — derived from those labels
+3. `[you]` Soften the hard "≥80% match" rule into a holistic call expressed in the `note` (keep the AI re-finding issues as *context* it reasons over; don't gate on a fixed ratio).
+4. `[you]` Fold 2–4 of the human labels in as **few-shot examples** (critique-before-verdict) + write the criteria that labelling surfaced.
+5. `[you]` Pick the judge model (same Gemini vs a stronger model — self-preference tradeoff).
+
+## C. Wire it as a scorer — unlocks offline + persistence + online
+6. `[me+you]` Wrap the agent in a `createScorer` sibling — `passed`→1/0, `note`→reason, distinct `scorerId`. (Template to copy: `observation-a.scorer.ts`.)
+7. `[me]` Register on the Mastra instance + configure `storage` so verdicts persist to `mastra.mastra_scorers` (a bare `scorer.run()` does not save).
+8. `[me+you]` Add it to the offline eval run (`bun run eval:workflow`) beside Method A; inject the per-essay input via `preprocess`/`createPrompt` (`run.input` is type-dependent, no first-class `groundTruth`).
+
+## D. Calibrate — the rung's actual deliverable
+9. `[me]` Run the eval → judge scores the labelled essays.
+10. `[you+me]` Build the **calibration table**: judge verdict vs the human label — raw agreement + PASS/FAIL **confusion counts** + **class balance**. (Compare *verdicts* for the metric; use the *notes* to understand disagreements.)
+11. `[you]` If agreement `< 8/10`: read the disagreement cells, adjust criteria/few-shot, re-run. Iterate (~3 rounds, per Hamel). If class-imbalanced (e.g. 9 pass / 1 fail), report precision/recall on the minority class, not raw agreement.
+12. `[you]` Record generator/judge **lineage + directional self-preference** (generator = Gemini; judge = ___; direction noted, **no magnitude imported** from the GPT-4/Claude figures).
+
+## E. Online — only once D passes
+13. `[me+you]` Attach the **same** scorer to the workflow so it runs on live submissions. This is the payoff of reference-free: *one identical scorer* runs offline (calibration) and online (production) — Method A can't, because it needs gold. Plumbing can be wired anytime; don't *trust* its output until calibrated.
+14. `[you]` Sanity-check on a few fresh online essays.
+
+## F. Close out (rung-3 is the final rung of Day 3)
+15. Coverage evidence `cov-judge-design` + `cov-judge-calibration` → checkpoint `days/day-03/progress.md` + a root `· work ·` line → **end-of-day assessment** (see `guide.md → End-of-day`).
+
+---
+
+## Shortcut worth knowing
+You can calibrate **before** wrapping it as a scorer: call the agent directly over the labelled essays and compare in a table (B↔D by hand), iterate the prompt fast, then do C once it's trustworthy. Hamel did exactly this in a spreadsheet.
+
+## Current blocker
+**Step 2 (the human labels).** Nothing downstream can start without them. Step 1 (fetch the set) is ready to run on request.
+
+## Known app notes / caveats
+- Agent version churned 20→22→20; confirm which evaluator variant (A vs B) is live before pinning calibration lineage.
+- Primer `learn/rung-3.md` currently locks the judge to *correctness-only* — that was over-narrowed; this plan supersedes it with the holistic design. Reconcile the primer/brief later (non-blocking).
+</script>
+
+<script>
+  (function(){
+    // scrollspy for the sidebar TOC
+    var links=[].slice.call(document.querySelectorAll('nav.toc a'));
+    var map={}; links.forEach(function(a){var id=a.getAttribute('href').slice(1); map[id]=a;});
+    if('IntersectionObserver' in window){
+      var obs=new IntersectionObserver(function(entries){
+        entries.forEach(function(en){
+          if(en.isIntersecting){
+            links.forEach(function(a){a.removeAttribute('aria-current');});
+            if(map[en.target.id]) map[en.target.id].setAttribute('aria-current','true');
+          }
+        });
+      },{rootMargin:'-20% 0px -70% 0px'});
+      document.querySelectorAll('main section[id]').forEach(function(s){obs.observe(s);});
+    }
+  })();
+</script>
+</body>
+</html>

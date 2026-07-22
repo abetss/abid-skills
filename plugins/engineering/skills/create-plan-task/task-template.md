@@ -32,6 +32,9 @@ Send this as the subagent's `prompt` (general-purpose agent). Paste real context
 > [Paste design artifacts if relevant — design-discovery-result.md, view-model-props.md, [design folder]/requirements.md, any component variants referenced in plan-prep.md's design artifact section]
 > [Paste the Planning QA Scenarios for the relevant flow from plan-prep.md — these feed the QA subsection]
 > [Paste discussion outcomes if Step 3 of SKILL.md happened: agreed signature, paths, tests, QA cases]
+> [List the knowledge-base guides matched from the KB index for this task in Step 2, if any — the subagent must read each in full]
+>
+> **Before writing, consult the knowledge base.** Read the project's KB index (`a-kb/table-of-content.md`, or the repo's equivalent docs/KB table of contents). For every guide whose scope matches what this task touches — including any listed above — read it in full, cite it in the `Conventions / SOPs / Skills / Rules` block, add it to `Read for Context`, and make the Implementation follow it. Decide the relevant set from the index based on THIS task; do not assume a fixed list and do not skip the scan.
 >
 > **The task file must have exactly these four top-level sections, in this order:**
 >
@@ -228,6 +231,7 @@ Example after verification has surfaced follow-ups:
 > - QA cases live INLINE in the task file, in full detail. Do not summarize and link to `qa.md`. Each QA case ends with a single `- [ ] Pass` checkbox.
 > - All paths are project-relative (not absolute), except skill references under `/Users/abtinghods/.claude/skills/`.
 > - Inline types in the `Interface Contracts` — do not invent separate type files.
+> - Consult the KB index and cite every guide relevant to what this task touches in the `Conventions / SOPs / Skills / Rules` block — decide the set from the index per task, never a fixed list.
 
 ---
 
@@ -304,5 +308,6 @@ Open the file and confirm:
 - Reset-on-change, reset-on-new-post-verification-task, and all-must-check rules are stated in the `## Verification` header and the `## Post verification tasks` header
 - QA cases are inline and detailed (preconditions, steps, expected, `- [ ] Pass` checkbox)
 - Every actionable item across Implementation, Verification, and Post verification tasks uses the `- [ ]` checkbox format — not plain bullets or numbered lists
+- Knowledge-base guides relevant to what this task touches (matched from the KB index) are cited in the `Conventions / SOPs / Skills / Rules` block and reflected in the Implementation
 
 If anything is missing, send a targeted follow-up to the subagent — do not rewrite the file yourself.
