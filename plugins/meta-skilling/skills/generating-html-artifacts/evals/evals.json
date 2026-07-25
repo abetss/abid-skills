@@ -1,68 +1,155 @@
 {
   "skill_name": "generating-html-artifacts",
-  "notes": "Routing + contract evals. Cases 0–2 are adapted from the MIT-licensed anthropics/html-effectiveness set and test that the skill routes to the right library template AND brings the output up to this skill's contract (auto dark/light via prefers-color-scheme with no toggle, largish text >=18px body, brand palette not the warm placeholder palette, themed code surfaces via --code-* that flip with the theme, lossless progressive-disclosure depth, an agent-readable source mirror, and zero ERRORS from scripts/validate_artifact.py). Case 3 tests the bespoke fallback for long-form content. The shared contract assertions apply to every case. NOTE: the graded assertions cover the static/source contract; visual+interactive correctness in BOTH themes (code-surface flip, no overlapping diagram shapes, working interactions, console clean) still needs a browser QA pass — the LLM grader reads source, it does not render.",
+  "notes": "Component-routing + contract evals for the composition architecture. Cases 0–2 are adapted from the MIT-licensed anthropics/html-effectiveness set; they test that the run routes each content type to the right COMPONENT (or whole-page pattern) AND meets the shared contract. Case 3 tests long-form composition with pre-rendered mermaid; case 4 tests markdown-file rendering with an ASCII→Excalidraw conversion; case 5 tests diff/PR-review routing. Assertions with a \"check\" field are graded by scripts/grade_artifact.py; the rest need an LLM/human grader (routing quality, layout judgment, diagram fidelity). The scripted checks cover source-level correctness only — visual + interactive correctness in BOTH themes (code-surface flip, no overlapping diagram shapes, working interactions, clean console) still needs a browser QA pass. See evals/README.md for the full loop.",
   "shared_assertions": [
-    {"text": "Output is a single self-contained .html file (inline CSS+JS, no external CSS/JS/images, no CDN, no build step)"},
-    {"text": "Light + dark are shipped via @media (prefers-color-scheme: dark) and follow the OS setting automatically — there is NO theme toggle button, no [data-theme] override, and no localStorage theme code"},
-    {"text": "Body/content text is largish: body font-size >= 18px; no content text below 14px (small sizes only on badges/labels)"},
-    {"text": "No mid-gray low-contrast body text (secondary text uses a darker ink that meets contrast)"},
-    {"text": "Uses the skill's brand palette (green accent from brand.md), not the warm placeholder accents; no AI-slop tells (purple/violet gradients, everything centered, Inter font, uniformly rounded corners)"},
-    {"text": "Embeds an agent-readable source mirror (<script type=\"text/markdown\" id=\"artifact-source\">) holding the content as markdown"},
-    {"text": "Code blocks FOLLOW the theme via the --code-* tokens — light surface + dark syntax in light mode, dark surface + bright syntax in dark mode. Code is NOT pinned to a fixed-dark panel in light mode, and base/identifier code text is NOT hardcoded light hex (e.g. #E8E6DE). Only intentionally-dark elements use --inverse. Every referenced token (--card, --code-bg, --code-fg, --inverse) is defined — an undefined var() renders black"},
-    {"text": "Depth is lossless: every piece of source detail (reasoning, options, tradeoffs, specifics, diagrams) stays REACHABLE in the output via progressive disclosure (folds / drill-down), with nothing summarized away. Folds are applied where there is genuine depth and NOT forced onto thin items with nothing behind them"},
-    {"text": "Passes `python scripts/validate_artifact.py <file>.html` with zero ERRORS (accessibility warnings are acceptable)"},
-    {"text": "Before building, the run names its chosen layout + runner-up in one line"}
+    {"text": "Output is a single self-contained .html file (inline CSS+JS, no external CSS/JS/images, no CDN beyond the sanctioned Excalidraw embed)", "check": "self-contained"},
+    {"text": "Light + dark ship via @media (prefers-color-scheme: dark) following the OS automatically — no theme toggle, no [data-theme], no localStorage theme code", "check": "auto-theme"},
+    {"text": "Embeds an agent-readable source mirror (<script type=\"text/markdown\" id=\"artifact-source\">) holding the content as markdown", "check": "source-mirror"},
+    {"text": "Passes `python scripts/validate_artifact.py <file>.html` with zero ERRORS (accessibility warnings are acceptable) — covers font sizes, gray text, undefined tokens, duplicate ids, broken in-page links, and demo-placeholder leaks", "check": "validator-clean"},
+    {"text": "Uses the skill's brand palette (accent from brand.md), not placeholder accents; no AI-slop tells (purple/violet gradients, everything centered, Inter font, uniformly rounded corners)"},
+    {"text": "Code blocks FOLLOW the theme via the --code-* tokens — light surface in light mode, dark surface in dark mode; code is not pinned to a fixed-dark panel"},
+    {"text": "Depth is lossless: every piece of source detail (reasoning, options, tradeoffs, specifics, diagrams) stays REACHABLE in the output via progressive disclosure (tldr-card up front, details-fold for depth); nothing is summarized away"},
+    {"text": "The run summary ends with a component inventory: every source block mapped to the component used (or prose/callout/fold) with a one-line reason"}
   ],
   "evals": [
     {
       "id": 0,
       "name": "migration-options-comparison",
-      "prompt": "We're deciding how to move our monolith off the legacy billing service and I need to bring three options to the team: (A) lift-and-shift the existing code onto the new platform as-is, (B) re-architect billing into its own service with a clean API, (C) a hybrid where we strangle it module by module. Each has different cost, risk, and timeline tradeoffs. Capture this as an artifact people can use to compare the three side by side and pick one — not three paragraphs they read in order.",
-      "expected_output": "A single self-contained .html artifact laying the three options out side-by-side with cost/risk/timeline tradeoffs inline per option for comparison. Routes to the side-by-side comparison template (01-exploration-code-approaches), not a sequential deck or plain document.",
+      "prompt": "We're deciding how to move our monolith off the legacy billing service and I need to bring three options to the team: (A) lift-and-shift the existing code onto the new platform as-is, (B) re-architect billing into its own service with a clean API, (C) a hybrid where we strangle it module by module. Each has different cost, risk, and timeline tradeoffs. Capture this as an HTML artifact people can use to compare the three side by side and pick one — not three paragraphs they read in order.",
+      "expected_output": "A single self-contained .html composed from the component library: the three options side-by-side in comparison-matrix across the shared axes cost/risk/timeline, with a recommendation and the reasoning kept reachable.",
       "files": [],
       "assertions": [
-        {"text": "Routes to template 01 (three code approaches / side-by-side comparison) and names it before building"},
-        {"text": "All three options (A lift-and-shift, B re-architect, C hybrid) are present and laid out in parallel columns, not stacked sequentially"},
-        {"text": "Cost, risk, and timeline are shown per option so they can be compared across options on shared axes"}
+        {"text": "Routes the three options to the comparison-matrix component (shared axes), not plain prose or pros-cons", "check": "uses-component:comparison-matrix"},
+        {"text": "All three options are present (lift-and-shift shown)", "check": "contains:lift-and-shift"},
+        {"text": "The strangler/hybrid option is present", "check": "contains:strangle"},
+        {"text": "Cost, risk, and timeline appear as shared comparison axes across all three options (rows or columns), so they can be compared on the same scales"},
+        {"text": "A recommendation is stated with its reasoning — the page helps the team pick, not just list"}
       ]
     },
     {
       "id": 1,
       "name": "outage-postmortem",
-      "prompt": "Last night our payment service fell over for about 40 minutes — it OOM-killed under a traffic spike at 22:14, health checks started failing, we failed over to the backup pool at 22:38 and were fully recovered by 22:54. I've got the rough timeline and a couple of log excerpts. Write this up as a proper post-mortem I can circulate: what happened minute by minute, what we saw, root cause, and the follow-up actions.",
-      "expected_output": "A single self-contained .html artifact structured as an incident post-mortem: a minute-by-minute timeline, log excerpts, root cause, and a follow-up checklist. Routes to the incident-timeline template (12-incident-report).",
+      "prompt": "Last night our payment service fell over for about 40 minutes — it OOM-killed under a traffic spike at 22:14, health checks started failing, we failed over to the backup pool at 22:38 and were fully recovered by 22:54. I've got the rough timeline and a couple of log excerpts. Write this up as a proper post-mortem HTML artifact I can circulate: what happened minute by minute, what we saw, root cause, and the follow-up actions.",
+      "expected_output": "A single self-contained .html post-mortem: headline impact up front (stat-cards or tldr-card), a minute-by-minute timeline component with the key timestamps, log excerpts in code-block, root cause, and follow-up actions as steps/checklist.",
       "files": [],
       "assertions": [
-        {"text": "Routes to template 12 (incident timeline) and names it before building"},
-        {"text": "Contains a chronological minute-by-minute timeline with the key timestamps (22:14, 22:38, 22:54)"},
-        {"text": "Includes a root cause and a follow-up / action-item section (ideally a checklist)"},
-        {"text": "Reads as a skimmable structured report, not a flat wall of prose"}
+        {"text": "Routes the chronology to the timeline component", "check": "uses-component:timeline"},
+        {"text": "Key timestamp 22:14 (OOM kill) present", "check": "contains:22:14"},
+        {"text": "Key timestamp 22:38 (failover) present", "check": "contains:22:38"},
+        {"text": "Key timestamp 22:54 (recovered) present", "check": "contains:22:54"},
+        {"text": "Headline impact (40-minute outage, trigger) is visible at a glance via stat-cards or tldr-card, not buried mid-page"},
+        {"text": "Root cause and follow-up actions are present; follow-ups read as an actionable checklist/steps, not vague intentions"},
+        {"text": "Log excerpts render in theme-following code blocks, not plain paragraphs"}
       ]
     },
     {
       "id": 2,
       "name": "backlog-triage-editor",
-      "prompt": "I've got a backlog of about 20 tickets for next quarter's planning and I need to sort them into Now / Next / Later / Cut. I'd rather drag them around than describe an ordering in text. Make me a little tool where I can move each ticket into a bucket, and when I'm done give me a way to get the final ordering back out as text I can paste into the planning doc. Here are the tickets: search autocomplete, SSO login, dark mode, invoice PDF export, rate limiting, mobile nav redesign, audit log, bulk user import, webhook retries, 2FA, CSV export, in-app notifications, API v2, password reset flow, team roles, usage dashboard, email digests, onboarding checklist, data retention settings, GDPR delete.",
-      "expected_output": "A single self-contained .html artifact implementing an interactive triage board with Now/Next/Later/Cut buckets, draggable tickets, and an export-to-text/markdown button. Routes to the ticket-triage-board template (18-editor-triage-board).",
+      "prompt": "I've got a backlog of about 20 tickets for next quarter's planning and I need to sort them into Now / Next / Later / Cut. I'd rather drag them around than describe an ordering in text. Make me a little HTML tool where I can move each ticket into a bucket, and when I'm done give me a way to get the final ordering back out as text I can paste into the planning doc. Here are the tickets: search autocomplete, SSO login, dark mode, invoice PDF export, rate limiting, mobile nav redesign, audit log, bulk user import, webhook retries, 2FA, CSV export, in-app notifications, API v2, password reset flow, team roles, usage dashboard, email digests, onboarding checklist, data retention settings, GDPR delete.",
+      "expected_output": "A single self-contained .html where the WHOLE artifact is the triage-board page pattern (not a composed document): Now/Next/Later/Cut buckets, all ~20 tickets draggable, export-to-text/markdown.",
       "files": [],
       "assertions": [
-        {"text": "Routes to template 18 (ticket triage board) and names it before building"},
-        {"text": "Has the four buckets Now / Next / Later / Cut and the ~20 named tickets present as movable items"},
-        {"text": "Tickets can be moved between buckets (drag-and-drop or equivalent interaction wired in inline JS)"},
-        {"text": "Provides an export/copy action that emits the final ordering as text/markdown"}
+        {"text": "Recognizes the whole artifact is one interactive tool and uses the triage-board page pattern", "check": "uses-pattern:triage-board"},
+        {"text": "Ticket 'GDPR delete' present (sample that tickets survived)", "check": "contains:GDPR delete"},
+        {"text": "Ticket 'webhook retries' present (sample that tickets survived)", "check": "contains:webhook retries"},
+        {"text": "All four buckets Now / Next / Later / Cut exist and all ~20 named tickets are present as movable items"},
+        {"text": "Tickets can be moved between buckets (drag-and-drop or an equivalent wired interaction)"},
+        {"text": "An export/copy action emits the final ordering as paste-able text/markdown"}
       ]
     },
     {
       "id": 3,
-      "name": "longform-findings-bespoke-fallback",
-      "prompt": "Capture these findings as an artifact: a narrative write-up of our week-long auth refactor — the background, what we changed across five areas, the reasoning and tradeoffs behind each decision, two mermaid diagrams of the new token flow, and open questions. It's long-form and meant to be read top to bottom with a table of contents.",
-      "expected_output": "A single self-contained .html artifact built from the bespoke sidebar-TOC scaffold (assets/template.html), because no purpose-built template fits a long-form narrative document. Uses the sidebar TOC with scrollspy, renders <!-- more --> depth folds as <details> cards, and pre-renders the mermaid blocks to dual-theme inline SVG via scripts/render_diagrams.py.",
+      "name": "longform-auth-refactor",
+      "prompt": "Capture these findings as an HTML artifact: a narrative write-up of our week-long auth refactor — the background, what we changed across five areas, the reasoning and tradeoffs behind each decision, two mermaid diagrams of the new token flow, and open questions. It's long-form and meant to be read top to bottom with a table of contents.",
+      "expected_output": "A single self-contained .html composed onto the shell as a long-form document: sidebar TOC (top-level entries plus sub-entries for dense sections), per-area reasoning behind details-folds, both mermaid blocks pre-rendered to dual-theme inline SVG via scripts/render_diagrams.py.",
       "files": [],
       "assertions": [
-        {"text": "Recognizes no library template fits and falls back to the bespoke scaffold (assets/template.html); names this choice before building"},
-        {"text": "Uses a sidebar table of contents for navigation (long-form linear document)"},
-        {"text": "Each mermaid diagram is pre-rendered to inline SVG with both a light and a dark variant (no CDN mermaid at view time)"},
-        {"text": "Preserves depth: per-decision reasoning/tradeoffs are kept (e.g. behind <details> folds), not summarized away"}
+        {"text": "Composed as a long-form document with a sidebar TOC (this is a document, not a page pattern)", "check": "toc"},
+        {"text": "TOC has sub-entries for dense sections", "check": "toc-subs"},
+        {"text": "Mermaid diagrams are pre-rendered inline figures, never CDN mermaid at view time", "check": "mermaid-prerendered"},
+        {"text": "Per-decision depth uses details-fold", "check": "uses-component:details-fold"},
+        {"text": "Depth is lossless: the reasoning/tradeoffs behind each of the five areas stays reachable behind folds, not summarized away"},
+        {"text": "Each mermaid figure has a light and a dark SVG variant so it reads in both themes"}
+      ]
+    },
+    {
+      "id": 4,
+      "name": "ascii-diagram-learning-doc",
+      "prompt": "Render the markdown file evals/fixtures/rung-mini.md into an HTML artifact (same base name, .html).",
+      "expected_output": "A single self-contained .html rendering of the fixture: the ASCII diagram converted to an embedded Excalidraw scene (SVG by default, live-canvas toggle, ASCII fallback), the comparison table as data-table, the command in code-block, the <!-- more --> depth as a details-fold, vocabulary kept lossless.",
+      "files": ["evals/fixtures/rung-mini.md"],
+      "assertions": [
+        {"text": "The ASCII diagram becomes an embedded Excalidraw scene with the ASCII fallback preserved", "check": "excalidraw-embed"},
+        {"text": "The comparison table routes to data-table", "check": "uses-component:data-table"},
+        {"text": "The command/example routes to code-block", "check": "uses-component:code-block"},
+        {"text": "The <!-- more --> depth routes to details-fold", "check": "uses-component:details-fold"},
+        {"text": "The Excalidraw scene faithfully converts the ASCII diagram: same boxes (web client, API server, database) and arrows, labels inside their shapes, nothing overlapping"},
+        {"text": "With the CDN unreachable the page still shows the original ASCII diagram in the fallback <pre> (verify by inspecting the fallback markup or by loading offline)"}
+      ]
+    },
+    {
+      "id": 5,
+      "name": "pr-review-diff",
+      "prompt": "Help me review this PR by creating an HTML artifact that describes it. I'm not familiar with the retry/backoff logic so focus on that. Render the actual diff, color-code findings by severity, and annotate the lines they refer to.\n\nThe PR changes src/retry.ts:\n```diff\n export async function fetchWithRetry(url: string, tries = 3) {\n-  for (let i = 0; i < tries; i++) {\n-    try { return await fetch(url); } catch (e) { /* ignore */ }\n-  }\n-  throw new Error('unreachable');\n+  let delay = 100;\n+  for (let i = 0; i < tries; i++) {\n+    try { return await fetch(url); }\n+    catch (e) { await new Promise(r => setTimeout(r, delay)); delay *= 2; }\n+  }\n+  return fetch(url); // last attempt surfaces the real error\n }\n```\nFindings: (high) the old catch swallowed every error making outages invisible — fixed by the final unguarded fetch; (medium) backoff has no jitter, so synchronized clients can thundering-herd; (low) delay is not capped — a long retry chain could wait minutes.",
+      "expected_output": "A single self-contained .html PR review: the diff rendered in diff-viewer with add/remove styling, findings annotated onto the lines they refer to and color-coded by severity (high/medium/low), the retry/backoff explanation given the most depth (annotated-code).",
+      "files": [],
+      "assertions": [
+        {"text": "The diff routes to the diff-viewer component", "check": "uses-component:diff-viewer"},
+        {"text": "The thundering-herd / jitter finding is present", "check": "contains:jitter"},
+        {"text": "The actual diff renders with added/removed line styling, not quoted as plain text"},
+        {"text": "Each finding is attached to the diff line(s) it refers to (inline or margin annotation), color-coded or labelled by severity — not a detached list at the end"},
+        {"text": "The retry/backoff logic gets the deepest treatment (e.g. annotated-code walking the loop), matching the user's stated focus"}
+      ]
+    },
+    {
+      "id": 6,
+      "name": "routing-gauntlet",
+      "prompt": "Render the markdown file evals/fixtures/gauntlet.md into an HTML artifact (same base name, .html).",
+      "expected_output": "A single self-contained .html where EVERY block of the dense fixture lands on its proper component: tldr-card, stat-cards, data-table (exact latency), chart (trend + before/after — the shape blocks), comparison-matrix (session-store decision), pros-cons (no-common-scale pair), timeline (incident), steps (runbook), checklist (follow-ups), glossary, quote, callout (flush warning), details-fold (option depth), tabs (per-platform install), code-block, diff-viewer, annotated-code, file-tree, diagram-excalidraw (ASCII sketch), diagram-mermaid (token flow), flowchart (deploy pipeline), figure (Figure 1). No page pattern — this is a composed document.",
+      "files": ["evals/fixtures/gauntlet.md"],
+      "assertions": [
+        {"text": "TL;DR up front", "check": "uses-component:tldr-card"},
+        {"text": "Week-in-numbers KPIs → stat-cards", "check": "uses-component:stat-cards"},
+        {"text": "Exact latency table → data-table", "check": "uses-component:data-table"},
+        {"text": "Trend + before/after blocks → chart", "check": "uses-component:chart"},
+        {"text": "Session-store decision → comparison-matrix", "check": "uses-component:comparison-matrix"},
+        {"text": "No-common-scale pair → pros-cons", "check": "uses-component:pros-cons"},
+        {"text": "Incident chronology → timeline", "check": "uses-component:timeline"},
+        {"text": "Rollout runbook → steps", "check": "uses-component:steps"},
+        {"text": "Follow-up actions → checklist", "check": "uses-component:checklist"},
+        {"text": "Vocabulary → glossary", "check": "uses-component:glossary"},
+        {"text": "Attributed Gemini quotation → quote", "check": "uses-component:quote"},
+        {"text": "Flush warning → callout (visible, not folded)", "check": "uses-component:callout"},
+        {"text": "Per-option depth → details-fold", "check": "uses-component:details-fold"},
+        {"text": "Per-platform install → tabs", "check": "uses-component:tabs"},
+        {"text": "CLI example → code-block", "check": "uses-component:code-block"},
+        {"text": "Merged retry fix → diff-viewer", "check": "uses-component:diff-viewer"},
+        {"text": "Backoff walkthrough → annotated-code", "check": "uses-component:annotated-code"},
+        {"text": "Repo layout → file-tree", "check": "uses-component:file-tree"},
+        {"text": "ASCII system sketch → diagram-excalidraw", "check": "excalidraw-embed"},
+        {"text": "Token-flow mermaid → pre-rendered figure", "check": "mermaid-prerendered"},
+        {"text": "Deploy pipeline with per-stage detail → flowchart", "check": "uses-component:flowchart"},
+        {"text": "Load-test export → numbered figure", "check": "uses-component:figure"},
+        {"text": "Not a page pattern (composed document, not a tool)", "check": "not-contains:class=\"board\""},
+        {"text": "Depth is lossless across the whole fixture — every block's real content (numbers, names, timestamps, owners) is present and reachable"},
+        {"text": "The page is not all chrome: prose reading flow still carries the narrative between components (polish pass, weight balance)"}
+      ]
+    },
+    {
+      "id": 7,
+      "name": "routing-borderline",
+      "prompt": "Render the markdown file evals/fixtures/borderline.md into an HTML artifact (same base name, .html).",
+      "expected_output": "A single self-contained .html where each deliberately borderline block picks the RIGHT component over its neighbor: sequence-without-timestamps → steps NOT timeline; options-without-shared-axes → pros-cons NOT comparison-matrix; eight metrics → data-table NOT stat-cards; must-not-miss warning → callout NOT details-fold.",
+      "files": ["evals/fixtures/borderline.md"],
+      "assertions": [
+        {"text": "Migration sequence → steps", "check": "uses-component:steps"},
+        {"text": "…not timeline (no timestamps worth showing)", "check": "not-contains:class=\"c-tl\""},
+        {"text": "Hosting options → pros-cons", "check": "uses-component:pros-cons"},
+        {"text": "…not comparison-matrix (no shared axes)", "check": "not-contains:c-matrix"},
+        {"text": "Eight metrics → data-table", "check": "uses-component:data-table"},
+        {"text": "…not stat-cards (more than 5 numbers)", "check": "not-contains:c-stats"},
+        {"text": "Flush warning → callout", "check": "uses-component:callout"},
+        {"text": "…not details-fold (must be visible on first read)", "check": "not-contains:c-fold"}
       ]
     }
   ]

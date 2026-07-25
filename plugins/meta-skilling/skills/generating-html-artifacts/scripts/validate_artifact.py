@@ -8,8 +8,12 @@ parses inline CSS with regex and cannot resolve the full cascade, so it errs tow
 flagging things for human review rather than silently passing. Exit code is non-zero
 if any ERROR is found.
 """
+import html as html_mod
 import re
 import sys
+from pathlib import Path
+
+SKILL_ROOT = Path(__file__).resolve().parent.parent
 
 
 def read(path):
@@ -42,6 +46,42 @@ def is_gray(rgb):
     # exclude near-black ink (dark) and near-white (fine on dark bg)
     mid_luminance = 150 <= total <= 600
     return near_neutral and mid_luminance
+
+
+def demo_signatures():
+    """Distinctive demo phrases from the component/pattern fragments.
+
+    Each fragment ships with sample content the generator must replace. Phrases of
+    4+ words from that sample content are distinctive enough that finding one in a
+    real artifact means demo placeholder text leaked through.
+    """
+    sigs = {}
+    for folder in ("assets/components", "assets/patterns"):
+        for frag in sorted((SKILL_ROOT / folder).glob("*.html")):
+            text = frag.read_text(encoding="utf-8")
+            text = re.sub(r"<!--.*?-->", " ", text, flags=re.S)
+            text = re.sub(r"<style.*?</style>", " ", text, flags=re.S)
+            text = re.sub(r"<script.*?</script>", " ", text, flags=re.S)
+            text = re.sub(r"<[^>]+>", "\n", text)
+            text = html_mod.unescape(text)
+            phrases = set()
+            for line in text.splitlines():
+                norm = " ".join(line.split())
+                words = [w for w in norm.split() if re.search(r"[a-zA-Z0-9]", w)]
+                if len(words) >= 4 and len(norm) >= 20:
+                    phrases.add(norm)
+            if phrases:
+                sigs[frag.name] = phrases
+    return sigs
+
+
+def visible_text(html):
+    """Artifact text with scripts (incl. the source mirror), styles and tags removed."""
+    text = re.sub(r"<script.*?</script>", " ", html, flags=re.S | re.I)
+    text = re.sub(r"<style.*?</style>", " ", text, flags=re.S | re.I)
+    text = re.sub(r"<!--.*?-->", " ", text, flags=re.S)
+    text = re.sub(r"<[^>]+>", " ", text)
+    return " ".join(html_mod.unescape(text).split())
 
 
 def main():
@@ -122,14 +162,18 @@ def main():
     else:
         warnings.append("Could not find an explicit body font-size — confirm body text is >=18px.")
 
-    # --- undefined surface tokens (an undefined var(--x) used as a color/fill renders BLACK) ---
-    critical = ["card", "code-bg", "code-fg", "inverse", "inverse-foreground"]
-    for tok in critical:
-        used = re.search(r"var\(\s*--" + re.escape(tok) + r"\s*\)", html)
-        defined = re.search(r"--" + re.escape(tok) + r"\s*:", html)
-        if used and not defined:
-            errors.append(f"--{tok} is used via var() but never defined — "
-                          f"undefined custom properties render as black/transparent, not a fallback.")
+    # --- undefined CSS custom properties (an undefined var(--x) renders BLACK/transparent) ---
+    # Scan markup + styles only; the markdown source mirror may legitimately quote CSS.
+    code_zones = re.sub(r"<script.*?</script>", " ", html, flags=re.S | re.I)
+    refs = set()
+    for m in re.finditer(r"var\(\s*(--[\w-]+)\s*(\)|,)", code_zones):
+        if m.group(2) == ")":  # no fallback — an undefined ref renders garbage
+            refs.add(m.group(1))
+    defs = set(re.findall(r"(--[\w-]+)\s*:", code_zones))
+    undefined = sorted(refs - defs)
+    if undefined:
+        errors.append(f"Custom properties used via var() but never defined: {', '.join(undefined)} — "
+                      "undefined custom properties render as black/transparent, not a fallback.")
 
     # --- blocking dialogs (freeze the page + any automated QA) ---
     dialogs = sorted({m for m in re.findall(r"\b(alert|confirm|prompt)\s*\(", html)})
@@ -145,6 +189,34 @@ def main():
             grays.add(m.group(1))
     if grays:
         warnings.append(f"Possible gray text colors (verify contrast / replace with darker ink): {sorted(grays)}")
+
+    # --- duplicate ids (break TOC links, scrollspy, aria) ---
+    ids = re.findall(r'\bid\s*=\s*"([^"]+)"', html)
+    dupes = sorted({i for i in ids if ids.count(i) > 1})
+    if dupes:
+        errors.append(f"Duplicate id attribute(s): {', '.join(dupes)} — ids must be unique "
+                      "(give each diagram SVG and component instance its own prefix).")
+
+    # --- in-page navigation integrity ---
+    anchors = sorted(set(re.findall(r'href\s*=\s*"#([^"]+)"', low)))
+    broken = [a for a in anchors if not re.search(r'\bid\s*=\s*"' + re.escape(a) + r'"', html)]
+    if broken:
+        errors.append(f"In-page link(s) point to missing ids: {', '.join('#' + b for b in broken)}.")
+    if 'class="toc"' in low:
+        section_ids = set(re.findall(r"<section[^>]*\bid\s*=\s*\"([^\"]+)\"", html))
+        unlinked = sorted(s for s in section_ids if s not in anchors)
+        if unlinked:
+            warnings.append(f"Sections not reachable from any in-page link: {', '.join(unlinked)} "
+                            "— add them to the TOC.")
+
+    # --- demo placeholder leak (skipped in the showcase page itself) ---
+    if "<!-- showcase: demo content intentional -->" not in html:
+        vis = visible_text(html)
+        for frag_name, phrases in demo_signatures().items():
+            leaked = sorted(p for p in phrases if p in vis)
+            if leaked:
+                errors.append(f"Demo placeholder text from {frag_name} leaked into the artifact: "
+                              f"\"{leaked[0][:80]}\" — replace every sample with real content.")
 
     # --- report ---
     print(f"Validating: {path}\n")

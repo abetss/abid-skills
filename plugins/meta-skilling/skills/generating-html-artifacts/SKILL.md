@@ -13,7 +13,7 @@ Unlike a template library, this skill never forces the whole page into one shape
 
 ## How this skill runs
 
-This skill runs in a **forked subagent** (`context: fork`) on the **haiku** model so the reference-reading, generation, and validation stay out of the main conversation context. A fork does **not** inherit the conversation — it sees only this skill body plus `$ARGUMENTS`. The invoking agent must pass what's needed in the arguments: the **source** to render (a markdown file path is ideal — pass the path, not pasted text) and the **output** `.html` path. Work only from `$ARGUMENTS` and files on disk (including `brand.md` / `memory.md` / `references/`); never assume conversation history.
+This skill runs in a **forked subagent** (`context: fork`) on the model set in the frontmatter above, so the reference-reading, generation, and validation stay out of the main conversation context. A fork does **not** inherit the conversation — it sees only this skill body plus `$ARGUMENTS`. The invoking agent must pass what's needed in the arguments: the **source** to render (a markdown file path is ideal — pass the path, not pasted text) and the **output** `.html` path. Work only from `$ARGUMENTS` and files on disk (including `brand.md` / `memory.md` / `references/`); never assume conversation history.
 
 $ARGUMENTS
 
@@ -60,7 +60,8 @@ Copy this checklist and track progress:
 - [ ] 9. Fix every error and review warnings; re-run until clean
 - [ ] 10. If you invented a reusable block, save a candidate component + note it in your summary (see "Growing the library")
 - [ ] 11. A simple content/document artifact needs no browser QA (the validator covers the hard rules). If the artifact has rendered diagrams or interactive JS, open the file once (`open <file>.html` — never a web server) and check both themes: no shapes overlap, interactions work, console is error-free.
-- [ ] 12. End your summary with the component inventory (step 3), then the artifact's full absolute path on its own line.
+- [ ] 12. Polish pass: re-read the artifact top to bottom as a reader, not a builder (references/design-rules.md, "The polish pass") — hierarchy, rhythm, alignment, fit, weight balance. Refine what's there rather than adding more.
+- [ ] 13. End your summary with the component inventory (step 3), then the artifact's full absolute path on its own line.
 ```
 
 **Step 2 — page shape:** patterns are the exception, composition is the rule. A document that *mentions* a board/deck/config is still a document — compose it.
@@ -72,7 +73,10 @@ Copy this checklist and track progress:
 See `references/components-catalog.md` — it has a quick-scan routing table and a card per component (when / avoid / schema / variants). Read the component FILE before using it: the header comment carries the assembly contract (what goes in the head slot, what's per-instance, which ids must be unique). Common pairings:
 
 - Options with shared criteria + a recommendation → `comparison-matrix`; without shared axes → `pros-cons`.
-- Chronology with timestamps → `timeline`; timeless procedure → `steps`.
+- Chronology with timestamps → `timeline`; timeless procedure → `steps`; unordered to-dos → `checklist`.
+- Numbers to look up → `data-table`; numbers to see as a shape → `chart`; 2–5 headline KPIs → `stat-cards`.
+- Vocabulary the page assumes (4+ terms) → `glossary`; an attributed quotation → `quote`.
+- Parallel variants of one slot (per-language, per-platform) → `tabs`; a cited image or illustration → `figure`.
 - Code to copy → `code-block`; a change to review → `diff-viewer`; code to teach → `annotated-code`.
 - ASCII diagram → `diagram-excalidraw`; mermaid → `diagram-mermaid`; process with per-step depth → `flowchart`.
 

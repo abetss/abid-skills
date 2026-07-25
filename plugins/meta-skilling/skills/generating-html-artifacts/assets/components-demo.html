@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Component library — showcase</title>
+<!-- showcase: demo content intentional -->
 <style>
   /* ---- palette: light (default) ---- */
   :root{
@@ -476,6 +477,69 @@
     html{scroll-behavior:smooth}
     nav.toc a{transition:background .15s,border-color .15s,color .15s}
   }
+  /* ---- component: quote ---- */
+  .c-quote{margin:32px 0; padding:4px 0 4px 28px; border-left:4px solid var(--primary); max-width:72ch}
+  .c-quote-text{margin:0; font-size:22px; line-height:1.5; font-weight:600; color:var(--foreground)}
+  .c-quote-text::before{content:"“"}
+  .c-quote-text::after{content:"”"}
+  .c-quote-cap{margin-top:12px; font-size:15px; color:var(--muted-foreground)}
+  .c-quote-cap b{color:var(--foreground); font-weight:700}
+
+  /* ---- component: tabs ---- */
+  .c-tabs{margin:24px 0; border:1px solid var(--border); border-radius:var(--radius); background:var(--card)}
+  .c-tabs-bar{display:flex; gap:4px; padding:8px 8px 0; border-bottom:1px solid var(--border); flex-wrap:wrap}
+  .c-tabs-btn{appearance:none; border:1px solid transparent; border-bottom:none; background:none; cursor:pointer;
+              font:inherit; font-size:15px; font-weight:600; color:var(--muted-foreground);
+              padding:10px 16px; border-radius:10px 10px 0 0}
+  .c-tabs-btn:hover{color:var(--foreground)}
+  .c-tabs-btn[aria-selected="true"]{color:var(--foreground); background:var(--background);
+              border-color:var(--border); position:relative; top:1px}
+  .c-tabs-btn:focus-visible{outline:2px solid var(--primary); outline-offset:2px}
+  .c-tabs-panel{padding:20px 24px}
+  .c-tabs-panel[hidden]{display:none}
+  .c-tabs-panel>:first-child{margin-top:0}
+  .c-tabs-panel>:last-child{margin-bottom:0}
+
+  /* ---- component: chart ---- */
+  .c-chart{background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+           padding:20px 24px; margin:24px 0}
+  .c-chart-title{margin:0 0 12px; font-size:16px; font-weight:700; letter-spacing:.02em;
+                 color:var(--muted-foreground); text-transform:uppercase; letter-spacing:.08em}
+  .c-chart-body svg{display:block; width:100%; height:auto}
+  .c-chart-legend{display:flex; gap:20px; margin-top:10px; font-size:14px; font-weight:600;
+                  color:var(--muted-foreground)}
+  .c-chart-legend span{display:inline-flex; align-items:center; gap:7px}
+  .c-chart-legend i{width:12px; height:12px; border-radius:3px; display:inline-block}
+
+  /* ---- component: checklist ---- */
+  .c-check{background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+           padding:8px 24px; margin:24px 0}
+  .c-check-label{font-size:14px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+                 color:var(--muted-foreground); margin:16px 0 4px}
+  .c-check-item{display:flex; gap:14px; align-items:flex-start; padding:12px 0;
+                border-bottom:1px solid var(--border)}
+  .c-check-item:last-child{border-bottom:none}
+  .c-check-item input{flex:none; width:20px; height:20px; margin-top:4px; accent-color:var(--primary)}
+  .c-check-item input:checked~.c-check-text{color:var(--muted-foreground); text-decoration:line-through}
+  .c-check-text{font-size:17px}
+  .c-check-note{display:block; font-size:14px; color:var(--muted-foreground); margin-top:2px; text-decoration:none}
+
+  /* ---- component: glossary ---- */
+  .c-gloss{display:grid; grid-template-columns:repeat(auto-fit, minmax(340px, 1fr));
+           gap:0 32px; margin:24px 0}
+  .c-gloss-item{display:grid; grid-template-columns:minmax(120px,max-content) 1fr; gap:16px;
+                padding:14px 0; border-top:1px solid var(--border); align-items:baseline}
+  .c-gloss-item>dt{font-weight:700; color:var(--foreground); font-size:17px}
+  .c-gloss-item>dt code{font-size:15px}
+  .c-gloss-item>dd{margin:0; color:var(--foreground); font-size:17px; max-width:72ch}
+
+  /* ---- component: figure ---- */
+  .c-figure{margin:28px 0; background:var(--card); border:1px solid var(--border);
+            border-radius:var(--radius); padding:20px 24px}
+  .c-figure-media{display:flex; justify-content:center}
+  .c-figure-media svg,.c-figure-media img{max-width:100%; height:auto}
+  .c-figure-cap{margin-top:14px; font-size:15px; color:var(--muted-foreground)}
+  .c-figure-cap b{color:var(--foreground); font-weight:700}
 </style>
 
 <!-- ===== diagram-excalidraw: ONCE PER PAGE head block (sanctioned pinned-CDN exception) ===== -->
@@ -500,13 +564,18 @@
     <a href="#section">section</a>
     <a href="#tldr-card">tldr-card</a>
     <a href="#callout">callout</a>
+    <a href="#quote">quote</a>
     <a href="#details-fold">details-fold</a>
+    <a href="#tabs">tabs</a>
     <a href="#stat-cards">stat-cards</a>
+    <a href="#chart">chart</a>
     <a href="#data-table">data-table</a>
     <a href="#comparison-matrix">comparison-matrix</a>
     <a href="#pros-cons">pros-cons</a>
     <a href="#timeline">timeline</a>
     <a href="#steps">steps</a>
+    <a href="#checklist">checklist</a>
+    <a href="#glossary">glossary</a>
     <p class="toc-title toc-group">Code</p>
     <a href="#code-block">code-block</a>
     <a href="#diff-viewer">diff-viewer</a>
@@ -516,6 +585,7 @@
     <a href="#diagram-excalidraw">diagram-excalidraw</a>
     <a href="#diagram-mermaid">diagram-mermaid</a>
     <a href="#flowchart">flowchart</a>
+    <a href="#figure">figure</a>
   </nav>
 
   <main id="main">
@@ -526,7 +596,7 @@
 
     <section id="overview" aria-labelledby="overview-h">
       <h2 id="overview-h">Overview</h2>
-      <p>This page assembles all 17 library components, grouped by family: <strong>Display</strong> (10), <strong>Code</strong> (4), and <strong>Diagrams</strong> (3). Each section shows one component's demo fragment exactly as it ships, preceded by a one-line note on when to reach for it. Check every component in both light and dark theme — the palette follows the OS setting automatically.</p>
+      <p>This page assembles all 23 library components, grouped by family: <strong>Display</strong> (16), <strong>Code</strong> (4), and <strong>Diagrams</strong> (4). Each section shows one component's demo fragment exactly as it ships, preceded by a one-line note on when to reach for it. Check every component in both light and dark theme — the palette follows the OS setting automatically.</p>
     </section>
 
     <!-- ==================== DISPLAY ==================== -->
@@ -603,6 +673,16 @@
       </aside>
     </section>
 
+    <section id="quote" aria-labelledby="quote-h">
+      <h2 id="quote-h">quote</h2>
+      <p class="demo-note">An attributed quotation whose weight comes from who said it — name + source in the caption.</p>
+
+      <figure class="c-quote">
+        <blockquote class="c-quote-text">It is important that the task type is used consistently between indexing and querying, or retrieval quality silently degrades.</blockquote>
+        <figcaption class="c-quote-cap"><b>Gemini embedding docs</b> — task-type reference, the warning that justified the embed() refactor</figcaption>
+      </figure>
+    </section>
+
     <section id="details-fold" aria-labelledby="details-fold-h">
       <h2 id="details-fold-h">details-fold</h2>
       <p class="demo-note">Overview→detail splits: an always-visible verdict line with the full reasoning behind a click. Native disclosure — no script.</p>
@@ -634,6 +714,28 @@
       </details>
     </section>
 
+    <section id="tabs" aria-labelledby="tabs-h">
+      <h2 id="tabs-h">tabs</h2>
+      <p class="demo-note">2–5 parallel variants of the same slot — per-platform steps, per-language code. Keyboard: ←/→ moves between tabs.</p>
+
+      <div class="c-tabs">
+        <div class="c-tabs-bar" role="tablist" aria-label="Install steps per platform">
+          <button class="c-tabs-btn" role="tab" id="t1-tab-mac" aria-controls="t1-panel-mac" aria-selected="true">macOS</button>
+          <button class="c-tabs-btn" role="tab" id="t1-tab-linux" aria-controls="t1-panel-linux" aria-selected="false">Linux</button>
+          <button class="c-tabs-btn" role="tab" id="t1-tab-win" aria-controls="t1-panel-win" aria-selected="false">Windows</button>
+        </div>
+        <div class="c-tabs-panel" role="tabpanel" id="t1-panel-mac" aria-labelledby="t1-tab-mac">
+          <p>Install with Homebrew: <code>brew install bm-search</code>, then run <code>bm init</code> once to build the index.</p>
+        </div>
+        <div class="c-tabs-panel" role="tabpanel" id="t1-panel-linux" aria-labelledby="t1-tab-linux" hidden>
+          <p>Grab the tarball from the releases page, untar into <code>~/.local/bin</code>, then run <code>bm init</code>.</p>
+        </div>
+        <div class="c-tabs-panel" role="tabpanel" id="t1-panel-win" aria-labelledby="t1-tab-win" hidden>
+          <p>Use WSL2 and follow the Linux steps — the native Windows build lags one release behind.</p>
+        </div>
+      </div>
+    </section>
+
     <section id="stat-cards" aria-labelledby="stat-cards-h">
       <h2 id="stat-cards-h">stat-cards</h2>
       <p class="demo-note">A KPI band of 2–5 big-number cards — headline metrics at a glance before the prose.</p>
@@ -660,6 +762,21 @@
           <div class="c-stat-delta c-stat-delta--up">▲ up from 97.4% after flaky-test fixes</div>
         </div>
       </div>
+    </section>
+
+    <section id="chart" aria-labelledby="chart-h">
+      <h2 id="chart-h">chart</h2>
+      <p class="demo-note">Numbers as a shape — bar for magnitude comparison, line for trend. Rendered from a JSON data-chart attribute; no dependencies, themes via tokens.</p>
+
+      <figure class="c-chart" data-chart='{"type":"bar","unit":"ms","highlight":2,"labels":["/search","/embed","/index","/export"],"series":[{"name":"Before the cache","values":[420,380,510,190]},{"name":"After the cache","values":[210,240,260,150]}]}'>
+        <figcaption class="c-chart-title">P95 latency by endpoint — the /index rewrite is the win</figcaption>
+        <div class="c-chart-body"></div>
+      </figure>
+
+      <figure class="c-chart" data-chart='{"type":"line","unit":"k","labels":["W1","W2","W3","W4","W5","W6","W7","W8"],"series":[{"name":"Weekly active readers","values":[12,15,14,19,24,23,29,34]}]}'>
+        <figcaption class="c-chart-title">Readership doubled after the newsletter mention in week 5</figcaption>
+        <div class="c-chart-body"></div>
+      </figure>
     </section>
 
     <section id="data-table" aria-labelledby="data-table-h">
@@ -886,6 +1003,54 @@
           </div>
         </li>
       </ol>
+    </section>
+
+    <section id="checklist" aria-labelledby="checklist-h">
+      <h2 id="checklist-h">checklist</h2>
+      <p class="demo-note">Unordered action items with real checkboxes — follow-ups, pre-launch checks. Ticks are session-local; no script.</p>
+
+      <div class="c-check">
+        <p class="c-check-label">Follow-up actions</p>
+        <div class="c-check-item">
+          <input type="checkbox" id="chk1-a" checked>
+          <span class="c-check-text">Add a memory-headroom alert at 80% of the cgroup limit
+            <span class="c-check-note">owner: infra — the OOM gave no warning before the kill</span></span>
+        </div>
+        <div class="c-check-item">
+          <input type="checkbox" id="chk1-b">
+          <span class="c-check-text">Rehearse the failover runbook end to end
+            <span class="c-check-note">the 22:38 failover worked, but two steps were from memory</span></span>
+        </div>
+        <div class="c-check-item">
+          <input type="checkbox" id="chk1-c">
+          <span class="c-check-text">Cap retry fan-out during partial outages
+            <span class="c-check-note">prevents the retry storm that turned the spike fatal</span></span>
+        </div>
+      </div>
+    </section>
+
+    <section id="glossary" aria-labelledby="glossary-h">
+      <h2 id="glossary-h">glossary</h2>
+      <p class="demo-note">Vocabulary the rest of the page assumes — a scannable term/definition grid for 4+ terms.</p>
+
+      <dl class="c-gloss">
+        <div class="c-gloss-item">
+          <dt>RRF</dt>
+          <dd>Reciprocal Rank Fusion — merges two ranked lists by position (1/(60+rank)), ignoring the engines' incompatible raw scores.</dd>
+        </div>
+        <div class="c-gloss-item">
+          <dt><code>embedding</code></dt>
+          <dd>A fixed-length vector of semantic coordinates; texts about the same thing land near each other regardless of wording.</dd>
+        </div>
+        <div class="c-gloss-item">
+          <dt>ANN index</dt>
+          <dd>Approximate nearest-neighbor structure — trades a little recall for orders of magnitude of lookup speed at scale.</dd>
+        </div>
+        <div class="c-gloss-item">
+          <dt><code>chunk</code></dt>
+          <dd>The unit of text one embedding represents; chunking decides what "one result" even means in dense search.</dd>
+        </div>
+      </dl>
     </section>
 
     <!-- ==================== CODE ==================== -->
@@ -1272,6 +1437,23 @@
 </div>
 
 <!-- Agent-readable source mirror — keep in sync with the visible content -->
+    <section id="figure" aria-labelledby="figure-h">
+      <h2 id="figure-h">figure</h2>
+      <p class="demo-note">A numbered, captioned visual with a stable anchor — for images and hand-built SVGs prose cites by number.</p>
+
+      <figure class="c-figure" id="fig-cache-hit">
+        <div class="c-figure-media">
+          <svg viewBox="0 0 420 130" width="560" height="174" role="img" aria-label="Cache hit rate climbing to 94 percent after warmup">
+            <polyline points="20,110 80,95 140,80 200,55 260,40 320,25 400,20" fill="none"
+                      stroke="var(--primary)" stroke-width="3" stroke-linecap="round"/>
+            <text x="20" y="126" font-size="12" fill="var(--muted-foreground)">cold start</text>
+            <text x="332" y="126" font-size="12" fill="var(--muted-foreground)">after warmup</text>
+          </svg>
+        </div>
+        <figcaption class="c-figure-cap"><b>Figure 1.</b> Hit rate reaches 94% within ten minutes of a cold start — the warmup cron is doing its job.</figcaption>
+      </figure>
+    </section>
+
 <script type="text/markdown" id="artifact-source">
 # Component library — showcase
 
@@ -1281,13 +1463,18 @@ Every component in assets/components/ rendered with its demo content — the vis
 - section — anchored topic wrapper (eyebrow + h2 + lede)
 - tldr-card — up-front page summary card
 - callout — must-not-miss aside (info / note / warning / danger)
+- quote — attributed pull-quote with source caption
 - details-fold — native disclosure with verdict line up front
+- tabs — 2–5 parallel variants of one slot, keyboard-navigable
 - stat-cards — KPI band of big-number cards
+- chart — dependency-free inline-SVG bar/line from a data attribute
 - data-table — real table for tabular data
 - comparison-matrix — options × decision axes with a recommendation
 - pros-cons — headed advantage/drawback columns
 - timeline — chronological events on a vertical rail
 - steps — ordered process on a numbered connector rail
+- checklist — tickable unordered action items
+- glossary — term/definition grid for assumed vocabulary
 
 ## Code
 - code-block — multi-line code with header bar and copy button
@@ -1299,6 +1486,7 @@ Every component in assets/components/ rendered with its demo content — the vis
 - diagram-excalidraw — ASCII diagram as embedded Excalidraw scene (CDN, ASCII fallback)
 - diagram-mermaid — pre-rendered mermaid as two inline SVGs (light + dark)
 - flowchart — clickable-step flow with sticky detail panel
+- figure — numbered, captioned visual with a stable anchor
 </script>
 
 <!-- == COMPONENT SCRIPTS == -->
@@ -1444,6 +1632,89 @@ try {
     } catch { /* bad scene JSON — ASCII fallback stays visible */ }
   }
 } catch { /* offline / CDN unreachable — ASCII fallbacks stay visible */ }
+</script>
+
+<!-- component: tabs (wires every .c-tabs) -->
+<script>
+(function(){
+  document.querySelectorAll(".c-tabs").forEach(function(root){
+    var btns=[].slice.call(root.querySelectorAll(".c-tabs-btn"));
+    function activate(btn){
+      btns.forEach(function(b){
+        var on=b===btn;
+        b.setAttribute("aria-selected",on?"true":"false");
+        var panel=root.querySelector("#"+b.getAttribute("aria-controls"));
+        if(panel)panel.hidden=!on;
+      });
+    }
+    btns.forEach(function(b,i){
+      b.addEventListener("click",function(){activate(b);});
+      b.addEventListener("keydown",function(e){
+        if(e.key!=="ArrowRight"&&e.key!=="ArrowLeft")return;
+        var j=(i+(e.key==="ArrowRight"?1:btns.length-1))%btns.length;
+        btns[j].focus();activate(btns[j]);e.preventDefault();
+      });
+    });
+  });
+})();
+</script>
+
+<!-- component: chart (renders every .c-chart from its data-chart JSON) -->
+<script>
+(function(){
+  var COLORS=["var(--primary)","var(--muted-foreground)"]; // NB: --primary == --success in the brand palette, so series 2 uses the ink token for contrast
+  var NS="http://www.w3.org/2000/svg";
+  function el(name,attrs){var e=document.createElementNS(NS,name);for(var k in attrs)e.setAttribute(k,attrs[k]);return e;}
+  document.querySelectorAll(".c-chart").forEach(function(fig){
+    var d;try{d=JSON.parse(fig.getAttribute("data-chart"));}catch(e){return;}
+    var body=fig.querySelector(".c-chart-body");if(!body)return;
+    var W=640,H=280,ML=64,MB=42,MT=14,MR=10,pw=W-ML-MR,ph=H-MT-MB;
+    var max=0;d.series.forEach(function(s){s.values.forEach(function(v){if(v>max)max=v;});});
+    max=max*1.15||1;
+    var fmt=function(v){return v>=100?Math.round(v):Math.round(v*10)/10;};
+    var svg=el("svg",{viewBox:"0 0 "+W+" "+H,role:"img","aria-label":fig.querySelector(".c-chart-title").textContent});
+    for(var g=0;g<=4;g++){var y=MT+ph-(ph*g/4);
+      svg.appendChild(el("line",{x1:ML,y1:y,x2:W-MR,y2:y,stroke:"var(--border)","stroke-width":1}));
+      var t=el("text",{x:ML-8,y:y+4,"text-anchor":"end","font-size":13,fill:"var(--muted-foreground)"});
+      t.textContent=fmt(max*g/4)+(d.unit||"");svg.appendChild(t);}
+    var n=d.labels.length,slot=pw/n;
+    if(d.type==="line"){
+      d.series.forEach(function(s,si){
+        var pts=s.values.map(function(v,i){return [ML+slot*(i+.5),MT+ph-ph*v/max];});
+        var path=pts.map(function(p,i){return (i?"L":"M")+p[0].toFixed(1)+","+p[1].toFixed(1);}).join(" ");
+        svg.appendChild(el("path",{d:path,fill:"none",stroke:COLORS[si%2],"stroke-width":3,"stroke-linejoin":"round","stroke-linecap":"round"}));
+        pts.forEach(function(p,i){
+          var hot=d.highlight===i;
+          svg.appendChild(el("circle",{cx:p[0],cy:p[1],r:hot?6:4.5,fill:hot?"var(--warning)":COLORS[si%2]}));
+        });
+      });
+    }else{
+      var bw=Math.min(44,(slot-16)/d.series.length);
+      d.series.forEach(function(s,si){
+        s.values.forEach(function(v,i){
+          var hot=d.highlight===i;
+          var h=ph*v/max,x=ML+slot*i+(slot-bw*d.series.length)/2+bw*si,y=MT+ph-h;
+          svg.appendChild(el("rect",{x:x,y:y,width:bw,height:h,rx:5,fill:hot?"var(--warning)":COLORS[si%2]}));
+          var t=el("text",{x:x+bw/2,y:y-7,"text-anchor":"middle","font-size":13,"font-weight":600,fill:"var(--foreground)"});
+          t.textContent=v+(d.unit||"");svg.appendChild(t);
+        });
+      });
+    }
+    d.labels.forEach(function(lb,i){
+      var t=el("text",{x:ML+slot*(i+.5),y:H-14,"text-anchor":"middle","font-size":13,fill:"var(--muted-foreground)"});
+      t.textContent=lb;svg.appendChild(t);
+    });
+    body.appendChild(svg);
+    if(d.series.length>1||d.series[0].name){
+      var leg=document.createElement("div");leg.className="c-chart-legend";
+      d.series.forEach(function(s,si){
+        var sp=document.createElement("span"),sw=document.createElement("i");
+        sw.style.background=COLORS[si%2];sp.appendChild(sw);sp.appendChild(document.createTextNode(s.name));leg.appendChild(sp);
+      });
+      body.appendChild(leg);
+    }
+  });
+})();
 </script>
 
 <script>

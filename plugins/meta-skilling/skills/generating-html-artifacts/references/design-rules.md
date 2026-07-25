@@ -164,3 +164,14 @@ The templates are correct, but *adapting* them re-introduces these bugs — and 
 - **Define every token you reference.** `fill:var(--code-bg)` or `background:var(--card)` with the token *undefined* renders **black** / transparent — not a fallback. Confirm `--card`, `--code-bg`, `--inverse` etc. exist in `:root`.
 - **Interactions must actually work.** Click through every button/flow you add; a prototype that doesn't advance is worse than a static page.
 - **Don't drive navigation through mandatory scroll-snap.** `scroll-snap-type: y mandatory` + `scroll-snap-stop: always` fights `scrollIntoView()`/`scrollTo()` and can strand the view on slide 1 while the counter advances. For slide decks / step flows, show one panel at a time with a class toggle (`.slide.active{display:flex}`, others `display:none`) — robust and theme-agnostic.
+
+## The polish pass (before declaring done)
+
+After the artifact validates, take one final pass over it as a **reader**, not a builder. The goal is cohesion, not more content — if the instinct is to add another component, stop and instead make what is already there more of a piece. This pass is where "correct" becomes "crafted":
+
+- **Hierarchy:** exactly one loudest element per screenful. If the tldr-card, three callouts, and a highlighted matrix all shout at once, demote the callouts.
+- **Rhythm:** section gaps consistent; no two components cramped together without their margins; no headings stacked without intervening prose.
+- **Alignment:** cards in a row read as a set; stat and chart numerals stay tabular; table columns line up.
+- **Fit:** nothing overflows, overlaps, or clips — diagram labels inside their shapes, chart axis labels inside the plot, inline SVGs sized deliberately (explicit width/height, not stretched).
+- **Weight balance:** the page shouldn't be all chrome — if folds, callouts, and cards outnumber plain reading flow roughly 3:1, promote some content back to prose.
+- Read the page once in **each theme**. The "someone labored over this" impression comes from this pass, not from more features.

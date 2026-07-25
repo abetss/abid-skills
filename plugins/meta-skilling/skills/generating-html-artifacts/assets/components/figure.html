@@ -1,0 +1,29 @@
+<!--
+COMPONENT: figure
+WHEN: a visual asset that prose refers to by number — a screenshot, an exported image, a hand-built SVG illustration that isn't a diagram-* component. The numbered caption lets text say "see Figure 2" and gives the asset a stable anchor.
+AVOID: mermaid blocks (diagram-mermaid), ASCII diagrams (diagram-excalidraw), data series (chart), images that are decoration (leave them out).
+SCHEMA: per figure — an id (fig-<slug>) so prose can link to it, the media (inline SVG or an inlined <img>), a numbered caption stating the takeaway (not just "screenshot of X"). Give inline SVGs explicit width/height attributes — a bare viewBox stretches to the full card width and blows up its text.
+VARIANTS: none; number figures sequentially across the page (Figure 1, Figure 2…).
+ASSEMBLY: copy the <style> block into the page's == COMPONENT STYLES == slot, the <figure> into a <section>. No script. Images must be inlined (data URI or SVG) — no external files.
+-->
+<style>
+  /* figure — scoped under .c-figure */
+  .c-figure{margin:28px 0; background:var(--card); border:1px solid var(--border);
+            border-radius:var(--radius); padding:20px 24px}
+  .c-figure-media{display:flex; justify-content:center}
+  .c-figure-media svg,.c-figure-media img{max-width:100%; height:auto}
+  .c-figure-cap{margin-top:14px; font-size:15px; color:var(--muted-foreground)}
+  .c-figure-cap b{color:var(--foreground); font-weight:700}
+</style>
+
+<figure class="c-figure" id="fig-cache-hit">
+  <div class="c-figure-media">
+    <svg viewBox="0 0 420 130" width="560" height="174" role="img" aria-label="Cache hit rate climbing to 94 percent after warmup">
+      <polyline points="20,110 80,95 140,80 200,55 260,40 320,25 400,20" fill="none"
+                stroke="var(--primary)" stroke-width="3" stroke-linecap="round"/>
+      <text x="20" y="126" font-size="12" fill="var(--muted-foreground)">cold start</text>
+      <text x="332" y="126" font-size="12" fill="var(--muted-foreground)">after warmup</text>
+    </svg>
+  </div>
+  <figcaption class="c-figure-cap"><b>Figure 1.</b> Hit rate reaches 94% within ten minutes of a cold start — the warmup cron is doing its job.</figcaption>
+</figure>

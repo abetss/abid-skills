@@ -1,0 +1,22 @@
+<!--
+COMPONENT: quote
+WHEN: an attributed quotation that carries weight because of WHO said it — a line from a cited article, a decision-maker's words, a user from research. Attribution is the point; without a source it's a callout.
+AVOID: quoting yourself (prose or callout); long excerpts (summarize + link); more than one or two per page.
+SCHEMA: the quotation (1–3 sentences), attribution (name), source (work/article — link it when a URL exists).
+VARIANTS: none.
+ASSEMBLY: copy the <style> block into the page's == COMPONENT STYLES == slot, the <figure> into a <section>. No script.
+-->
+<style>
+  /* quote — scoped under .c-quote */
+  .c-quote{margin:32px 0; padding:4px 0 4px 28px; border-left:4px solid var(--primary); max-width:72ch}
+  .c-quote-text{margin:0; font-size:22px; line-height:1.5; font-weight:600; color:var(--foreground)}
+  .c-quote-text::before{content:"“"}
+  .c-quote-text::after{content:"”"}
+  .c-quote-cap{margin-top:12px; font-size:15px; color:var(--muted-foreground)}
+  .c-quote-cap b{color:var(--foreground); font-weight:700}
+</style>
+
+<figure class="c-quote">
+  <blockquote class="c-quote-text">It is important that the task type is used consistently between indexing and querying, or retrieval quality silently degrades.</blockquote>
+  <figcaption class="c-quote-cap"><b>Gemini embedding docs</b> — task-type reference, the warning that justified the embed() refactor</figcaption>
+</figure>

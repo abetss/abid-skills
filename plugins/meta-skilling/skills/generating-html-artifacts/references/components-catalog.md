@@ -22,17 +22,23 @@ compare, scan, follow, judge, copy, or explore?"** — not "what topic is this."
 | Any top-level topic | [section](#section) | sub-part of a topic (h3 + prose) |
 | The conclusion, up front | [tldr-card](#tldr-card) | mid-page emphasis (callout) |
 | Caveat / risk / prerequisite inline | [callout](#callout) | page-level summary (tldr-card) |
+| Attributed quotation (who said it matters) | [quote](#quote) | your own emphasis (callout) |
 | Detail that should be opt-in | [details-fold](#details-fold) | critical warnings; nesting folds |
+| 2–5 parallel variants of one slot | [tabs](#tabs) | every reader needs every variant |
 | 2–5 headline numbers | [stat-cards](#stat-cards) | >5 numbers (data-table) |
+| Numbers best seen as a shape | [chart](#chart) | exact value lookup (data-table) |
 | Genuinely tabular rows | [data-table](#data-table) | options × judgment axes (matrix) |
 | 2–4 options × shared axes, with a pick | [comparison-matrix](#comparison-matrix) | no recommendation to make |
 | Alternatives without shared axes | [pros-cons](#pros-cons) | shared criteria (matrix) |
 | Chronology where *when* matters | [timeline](#timeline) | timeless process (steps) |
 | Ordered process / phases | [steps](#steps) | timestamped events (timeline) |
+| Unordered action items to tick off | [checklist](#checklist) | ordered procedure (steps) |
+| Vocabulary the page assumes (4+ terms) | [glossary](#glossary) | <4 terms (inline); long defs (fold) |
 | Copyable code sample | [code-block](#code-block) | inline mentions (`code`); diffs |
 | A unified diff | [diff-viewer](#diff-viewer) | plain code (code-block) |
 | Code needing per-line explanation | [annotated-code](#annotated-code) | self-explanatory snippets |
 | Repo layout / where things live | [file-tree](#file-tree) | interactive explorer needed |
+| Image/SVG prose cites by number | [figure](#figure) | mermaid/ASCII/data series |
 | ASCII/ANSI box diagram in source | [diagram-excalidraw](#diagram-excalidraw) | ordinary code block; mermaid |
 | ```mermaid``` block in source | [diagram-mermaid](#diagram-mermaid) | ASCII source; clickable steps |
 | Process with per-step detail | [flowchart](#flowchart) | static structure, no detail |
@@ -72,6 +78,14 @@ Static/structural display components — the backbone of document-style artifact
 - **Schema:** variant, optional bold title, 1-2 sentences.
 - **Variants:** `info` (primary), `note` (neutral), `warning`, `danger` — classes `c-callout--info/note/warning/danger`.
 
+### quote
+- **File:** `assets/components/quote.html`
+- **It is:** an attributed pull-quote — large quoted text on a primary left bar, with a name + source caption.
+- **When to use:** a quotation whose weight comes from who said it — cited articles, decision-makers, users from research.
+- **Avoid when:** quoting yourself (prose or callout), long excerpts, or more than one or two per page.
+- **Schema:** 1–3 sentence quotation, attribution name, source (linked when a URL exists).
+- **Variants:** none.
+
 ### details-fold
 - **File:** `assets/components/details-fold.html`
 - **It is:** a native `<details>` card — always-visible title + verdict line, full detail behind a click. No JS.
@@ -79,6 +93,14 @@ Static/structural display components — the backbone of document-style artifact
 - **Avoid when:** hiding critical warnings or the main conclusion; never nest folds.
 - **Schema:** per fold — h3 title, one-line summary (the verdict), detail body (any content).
 - **Variants:** add `open` to start expanded.
+
+### tabs
+- **File:** `assets/components/tabs.html`
+- **It is:** an accessible tab set (real `role=tablist` + buttons, ←/→ keyboard support) showing one of 2–5 panels in the same slot.
+- **When to use:** parallel variants of one thing — per-language code, per-platform install steps, before/after states.
+- **Avoid when:** every reader needs every variant (stack sections instead), >5 tabs, or sequential content (tabs hide order).
+- **Schema:** per tab — 1–2 word label + panel content; the most common case starts active.
+- **Variants:** none structurally. IDs must be unique per instance (prefix per instance, e.g. `t1-`, `t2-`).
 
 ### stat-cards
 - **File:** `assets/components/stat-cards.html`
@@ -95,6 +117,14 @@ Static/structural display components — the backbone of document-style artifact
 - **Avoid when:** options × judgment axes with a recommendation (comparison-matrix) or 2-3 key numbers (stat-cards).
 - **Schema:** optional caption, column headers, rows; `class="num"` on numeric th/td for right-aligned tabular figures.
 - **Variants:** numeric alignment via `.num`.
+
+### chart
+- **File:** `assets/components/chart.html`
+- **It is:** a dependency-free inline-SVG bar or line chart rendered from a JSON `data-chart` attribute — grid lines, axis labels, value labels, legend, one highlightable item; themes via tokens.
+- **When to use:** numbers the reader should see as a *shape* — magnitude comparison across categories (bar) or trend across ordered points (line); 2–12 points, 1–2 series.
+- **Avoid when:** exact value lookup matters more than shape (data-table — and keep the table alongside when both matter), >2 series or >12 points, or anything needing a real charting library.
+- **Schema:** `{ type: "bar"|"line", unit?, highlight?, labels[], series: [{ name, values[] }] }` in `data-chart` (single-quoted attribute); the `<figcaption>` states the takeaway in words.
+- **Variants:** bar / line; `highlight` index flags one bar/point in `--warning`. One shared `<script>` wires all instances.
 
 ### comparison-matrix
 - **File:** `assets/components/comparison-matrix.html`
@@ -127,6 +157,22 @@ Static/structural display components — the backbone of document-style artifact
 - **Avoid when:** timestamped events (timeline) or unordered lists.
 - **Schema:** per step — h3 title, 1-3 sentences, optional mono tags; optional status class on the `<li>`.
 - **Variants:** step status — default, `is-done` (filled ✓ marker), `is-current` (primary ring).
+
+### checklist
+- **File:** `assets/components/checklist.html`
+- **It is:** a card of real checkboxes with imperative action items and optional owner/why notes; ticked items strike through. No JS.
+- **When to use:** unordered action items the reader works through — postmortem follow-ups, pre-launch checks, migration preconditions.
+- **Avoid when:** ordered procedures (steps) or status reporting (ticks are session-local and unsaved).
+- **Schema:** optional group label; per item — verb-first label, optional note (owner, deadline, why).
+- **Variants:** pre-ticked via `checked`. IDs unique per instance (`chk1-`, `chk2-`…).
+
+### glossary
+- **File:** `assets/components/glossary.html`
+- **It is:** a two-column definition grid (`<dl>`) — bold term (code-formatted for identifiers) + 1–2 sentence definition, auto-fitting columns.
+- **When to use:** vocabulary the rest of the page assumes — acronym decoders, term lists of 4+ entries.
+- **Avoid when:** fewer than 4 terms (define inline), definitions with examples (details-fold or a section), more than term+definition columns (data-table).
+- **Schema:** per item — term, 1–2 sentence definition.
+- **Variants:** none.
 
 ---
 
@@ -170,7 +216,7 @@ Components for showing code, diffs, and project structure. All follow the theme 
 
 ## Diagram components
 
-Pick by source format: ASCII box drawing → `diagram-excalidraw`; ```mermaid``` block → `diagram-mermaid`; a process with per-step detail worth exploring → `flowchart`.
+Pick by source format: ASCII box drawing → `diagram-excalidraw`; ```mermaid``` block → `diagram-mermaid`; a process with per-step detail worth exploring → `flowchart`; a cited image or illustration → `figure`.
 
 ### diagram-excalidraw
 - **File:** `assets/components/diagram-excalidraw.html`
@@ -195,6 +241,14 @@ Pick by source format: ASCII box drawing → `diagram-excalidraw`; ```mermaid```
 - **Avoid when:** the diagram is static structure with no per-step detail (use `diagram-mermaid`) or comes from an ASCII source (use `diagram-excalidraw`).
 - **Schema:** per flowchart — steps (key, title, one-line meta, variant, detail block with heading + meta + body + optional `pre.code`), with labeled branch lanes after a decision step. Each detail block's `data-step` must match its button's.
 - **Variants:** step variants — default, `.is-decision` (accent gate), `.is-failure` (destructive border/lane), `.is-terminal` (success border). Multiple instances per page OK.
+
+### figure
+- **File:** `assets/components/figure.html`
+- **It is:** a numbered, captioned figure card with a stable `id` — the generic wrapper for screenshots, exported images (inlined), and hand-built SVG illustrations that prose cites by number ("see Figure 2").
+- **When to use:** a visual asset the text refers to by number or that needs a takeaway caption and anchor.
+- **Avoid when:** mermaid blocks (diagram-mermaid), ASCII diagrams (diagram-excalidraw), data series (chart), or purely decorative images (leave those out).
+- **Schema:** `id="fig-<slug>"`, media (inline SVG or inlined `<img>` — no external files), numbered caption stating the takeaway. Number figures sequentially across the page.
+- **Variants:** none.
 
 ---
 
