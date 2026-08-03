@@ -27,6 +27,16 @@ with `/plugin disable <name>@abid-skills`.
 
 ## How to use these skills
 
+
+### TLDR
+1. Start work with writing requirements using the `write-requirements`.
+2. Plan the work. `plan-prep`. (Discovers status quoue, the gaps and potentailly go through architecutre sessions and how to verify the work)
+3. Complete the work `executing-all-tasks`
+4. Create guide, docs and release note `release`.
+
+### More in Debth
+
+
 The skills compose into larger workflows. The [`workflows/`](workflows/) folder holds
 cheat sheets showing how to chain them for common jobs — each shows the happy path first,
 then alternates:
@@ -49,19 +59,3 @@ plugins/<name>/
   agents/<agent>.md               # bundled agents (where applicable)
 workflows/                        # cheat sheets: how to chain the skills
 ```
-
-## Not included (repo-specific)
-
-These skills are tied to a specific codebase shape (ZenStack/Prisma `schema.zmodel`,
-`@@allow` policies, PIPEDA, an `apps/e2e` Page-Object-Model layout) and were left out
-until generalized:
-
-- `security-review-upliv`, `writing-e2e-tests`
-
-## Notes / caveats
-
-- Some skill descriptions reference other skills by bare name (e.g. capture-findings →
-  generating-html-artifacts). Co-dependent skills are bundled in the same plugin so they
-  resolve together. A few cross-plugin references may need namespacing review.
-- Several design skills assume **Storybook**; `manual-qa-case-writing` includes a
-  **PIPEDA** compliance dimension. These are portable but opinionated — adapt as needed.
