@@ -1,0 +1,42 @@
+<!--
+COMPONENT (candidate): chart-frame
+WHEN: embedding a pre-rendered chart SVG (Vega-Lite, D3, matplotlib, etc.) that has a baked-in
+white background and dark axis/label text. Wraps the standard `figure` component's media slot
+with a FIXED-LIGHT surface — not the themed --card — so the chart stays legible and framed in
+both light and dark mode, instead of a dark page bleeding around a white chart. The inner
+`.chart-scroll` gives the chart its own horizontal-scroll boundary so a narrow viewport scrolls
+the chart, never the page body.
+AVOID: charts authored with theme tokens that already flip (e.g. the `chart` component's inline
+SVG, which uses var(--foreground)/var(--border) and so already themes itself) — those go straight
+in a themed card. Only use chart-frame for externally-rendered raster-style SVGs you cannot
+recolor per theme.
+SCHEMA: put the raw inlined SVG markup (with its own width/height/viewBox) inside
+`.chart-scroll`; nothing else changes. Pair with `figure.html`'s `<figcaption class="c-figure-cap">`
+for the numbered caption. One instance per chart; class names are shared/prefix-scoped so multiple
+charts on a page are fine.
+ASSEMBLY: copy the <style> block into == COMPONENT STYLES ==, then inside a `.c-figure` (from
+figure.html) replace the `.c-figure-media` div with `.chart-frame > .chart-scroll > <svg>...`.
+No script.
+-->
+<style>
+  /* chart-frame — scoped under .chart-frame / .chart-scroll */
+  .chart-frame{background:#ffffff; border:1px solid var(--border);
+               border-radius:calc(var(--radius) - 4px); padding:16px}
+  .chart-scroll{overflow-x:auto}
+  .chart-scroll svg{display:block; margin:0 auto}
+</style>
+
+<figure class="c-figure" id="fig-demo-chart">
+  <div class="chart-frame">
+    <div class="chart-scroll">
+      <svg xmlns="http://www.w3.org/2000/svg" width="360" height="140" viewBox="0 0 360 140" role="img" aria-label="Demo bar chart, three bars rising left to right">
+        <rect width="360" height="140" fill="white"/>
+        <text x="10" y="20" font-family="Arial, sans-serif" font-size="11" fill="#000">Demo (external renderer output — fixed white bg)</text>
+        <rect x="30" y="80" width="60" height="40" fill="#4c78a8"/>
+        <rect x="150" y="50" width="60" height="70" fill="#4c78a8"/>
+        <rect x="270" y="30" width="60" height="90" fill="#4c78a8"/>
+      </svg>
+    </div>
+  </div>
+  <figcaption class="c-figure-cap"><b>Figure X.</b> Caption stating the takeaway.</figcaption>
+</figure>

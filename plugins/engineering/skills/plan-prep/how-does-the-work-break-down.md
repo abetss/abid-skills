@@ -374,7 +374,7 @@ a Regular entry for today using Tab/Enter/Space only.
 
 Present summary:
 - Total task count by wave
-- Execution options: `execute-all-supervised` skill (parallel with supervisor) or `executing-single-plan-task` skill (one at a time)
+- Execution options: `executing-all-tasks` skill (supervised, parallel where dependencies allow) or `executing-single-plan-task` skill (one at a time)
 - Hand over the path to `task/task-list.md` as the entry point for execution
 
 ## Mid-execution additions
