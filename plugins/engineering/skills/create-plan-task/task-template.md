@@ -10,7 +10,7 @@ Every actionable item in a task file is a checkbox that progresses through three
 - `- [-]` — in progress
 - `- [x]` — done
 
-This applies to every bullet under `## Implementation → Tests (What to Test)`, every bullet under `## Implementation → Steps`, every bullet under all four `## Verification` subsections, and every bullet added later to `## Post verification tasks`. **Never** use plain bullets or numbered lists for actionable items.
+This applies to every bullet under `## Implementation → Tests (What to Test)`, every bullet under `## Implementation → Steps`, every present `## Verification` subsection, and every bullet added later to `## Post verification tasks`. **Never** use plain bullets or numbered lists for actionable items.
 
 Top-level task status (the `[ ]/[-]/[x]` next to the task in `task-list.md`) lives in `task-list.md`, not in the task file.
 
@@ -30,8 +30,8 @@ Send this as the subagent's `prompt` (general-purpose agent). Paste real context
 > [Paste relevant sections from plan-prep.md — the flow diagram for this task, technical details, reference files]
 > [Paste from architecture-decisions.md if relevant]
 > [Paste design artifacts if relevant — design-discovery-result.md, view-model-props.md, [design folder]/requirements.md, any component variants referenced in plan-prep.md's design artifact section]
-> [Paste the Planning QA Scenarios for the relevant flow from plan-prep.md — these feed the QA subsection]
-> [Paste discussion outcomes if Step 3 of SKILL.md happened: agreed signature, paths, tests, QA cases]
+> [Paste discussion outcomes if Step 3 of SKILL.md happened: agreed signature, paths, and targeted tests]
+> [Paste task-level QA only when the user explicitly requested it; otherwise state that QA is omitted]
 > [List the knowledge-base guides matched from the KB index for this task in Step 2, if any — the subagent must read each in full]
 >
 > **Before writing, consult the knowledge base.** Read the project's KB index (`a-kb/table-of-content.md`, or the repo's equivalent docs/KB table of contents). For every guide whose scope matches what this task touches — including any listed above — read it in full, cite it in the `Conventions / SOPs / Skills / Rules` block, add it to `Read for Context`, and make the Implementation follow it. Decide the relevant set from the index based on THIS task; do not assume a fixed list and do not skip the scan.
@@ -40,12 +40,12 @@ Send this as the subagent's `prompt` (general-purpose agent). Paste real context
 >
 > 1. `## Context` — what the implementer needs to understand
 > 2. `## Implementation` — how to build it
-> 3. `## Verification` — how to know it's done (four fixed subsections)
+> 3. `## Verification` — the smallest checks needed to prove this task's isolated outcome; Code review is required and other subsections are conditional
 > 4. `## Post verification tasks` — placeholder for artifacts produced during verification
 >
 > Do NOT include an `Implementation Steps` or `Verification Steps` section at the top level. Those belong inside `## Implementation` and `## Verification` respectively.
 >
-> Omit any subsection that is truly not applicable (e.g., no QA section for a pure internal-library task). Never leave a subsection empty with a placeholder — remove it entirely.
+> Omit `### QA` unless the caller explicitly supplied task-level QA. Omit `### Automation tests` when no targeted automated check is necessary, and omit `### Others` when the caller supplied no additional check. Never invent QA or broad verification and never leave an empty placeholder.
 >
 > **Follow this task file structure exactly:**
 
@@ -111,7 +111,7 @@ function transform_feature_data(
 
 **Tests (What to Test):**
 
-New tests to write for this task. Describe the behavior and example input — no assertions, no implementation. Each test is a checkbox that progresses `[ ]` → `[-]` (writing) → `[x]` (written).
+Only include tests necessary to prove this isolated outcome. Describe the behavior and example input — no assertions, no implementation. Omit this subsection when no new test is necessary. Each included test is a checkbox that progresses `[ ]` → `[-]` (writing) → `[x]` (written).
 
 - [ ] handles normal case
   - input: `{ field_one: "test", field_two: 100, nested: { sub_field: "value" } }`
@@ -134,68 +134,32 @@ Each step is a checkbox. Progress `[ ]` → `[-]` (working on it) → `[x]` (don
 
 All verification checkboxes must be `- [x]` before this task is complete.
 
-**Reset rule:** If code review or QA findings require code changes — or any new item is added to `## Post verification tasks` below — reset ALL checkboxes in this section to `- [ ]` and re-run every subsection from scratch. A previous pass is meaningless once code changes.
+**Reset rule:** If a verification finding requires code changes — or any new item is added to `## Post verification tasks` below — reset ALL checkboxes in this section to `- [ ]` and re-run every present subsection from scratch. A previous pass is meaningless once code changes.
 
 **Checkbox semantics:** `[ ]` = todo, `[-]` = in progress, `[x]` = done. A checkbox can only be marked `[x]` when fully verified. Failures are blockers — fix or raise them.
 
 ### Automation tests
 
-Tests to run in order as part of verifying this task. May include the newly written tests from the Implementation section, related existing tests impacted by this change, or a broader suite.
+Run only the smallest targeted commands needed for this task's changed unit and immediate integration seam. A package-wide, repository-wide, or feature-wide command appears only when the caller explicitly supplied it with a task-specific reason.
 
-- [ ] `path/to/test_file.test.ts` — [specific scenario or "all tests in file"]
-- [ ] `path/to/related_test.test.ts` — [what to verify still passes]
-- [ ] [e.g., "Full suite: `pnpm test:unit` in affected package"]
+- [ ] `path/to/test_file.test.ts` — [specific behavior this task changes]
+- [ ] `path/to/related_test.test.ts` — [immediate integration seam, only when applicable]
 
 ### Code review
 
-Code review agents to dispatch with their scope. Each item names a convention or profile AND the files it applies to.
-
-- [ ] `code-review-team` agent — convention `agents/conventions/naming.md` on `path/to/file.ts`
-- [ ] `code-review-team` agent — profile `accessibility` on `path/to/ui-component.tsx`
-- [ ] All findings addressed in code or flagged in `code-review.md` under `## Task NN: [title]`
-
-### QA
-
-Manual QA cases for this task. Each case is written INLINE in detail using the `manual-qa-case-writing` skill format. Do not link out to `qa.md` — the cases live here in the task file.
-
-**Case 1 — Happy path: [descriptive title]**
-- Preconditions: [setup required, roles, state]
-- Steps:
-  1. Navigate to `/path/to/page`
-  2. Click [element — specific selector or label]
-  3. Fill [field] with [value]
-  4. Submit
-- Expected: [observable outcome — what the user sees, where they land, what message appears]
-- [ ] Pass
-
-**Case 2 — Edge case: [descriptive title]**
-- Preconditions: [setup]
-- Steps:
-  1. ...
-- Expected: [observable outcome]
-- [ ] Pass
-
-**Case 3 — Accessibility (REQUIRED for UI work):**
-- Keyboard navigation: Tab order logical, all interactive elements reachable, focus indicators visible
-- Screen reader: ARIA labels present and descriptive, semantic HTML, dynamic updates announced
-- Color contrast: 4.5:1 for normal text, 3:1 for large text / UI controls
-- Touch targets: minimum 44×44px, adequate spacing
-- Motion: respects `prefers-reduced-motion`
-- [ ] Pass
+- [ ] Run `code-style-reviewer` with exactly one assignment using role `reviewer-junior` over every file changed by this task; address its findings before checking this item
 
 ### Others
 
-Other commands or checks to run for this task.
+Include only caller-supplied checks that directly prove this isolated outcome and are not tests or code review. Omit this subsection when none apply.
 
-- [ ] `pnpm biome` (format + lint)
-- [ ] `pnpm check:types`
-- [ ] [task-specific: e.g., `pnpm db:migrate` + verify schema]
+- [ ] [targeted task-specific check and why it is necessary]
 
 ---
 
 ## Post verification tasks
 
-Follow-up items surfaced during this task's verification (code review findings, QA bugs, etc.). This section starts empty and is populated as verification runs. Each item is a checkbox: `[ ]` = todo, `[-]` = in progress, `[x]` = done.
+Follow-up items surfaced during this task's verification. This section starts empty and is populated as verification runs. Each item is a checkbox: `[ ]` = todo, `[-]` = in progress, `[x]` = done.
 
 **IMPORTANT — the moment any new item is added to this section:**
 
@@ -206,8 +170,7 @@ Follow-up items surfaced during this task's verification (code review findings, 
 **Code Review follow-ups:**
 - (empty — populated when code review surfaces findings that need fixing)
 
-**QA follow-ups:**
-- (empty — populated if QA surfaces issues beyond the inline cases above)
+Add a **QA follow-ups** block only when the user explicitly requested task-level QA.
 
 Example after verification has surfaced follow-ups:
 
@@ -215,20 +178,19 @@ Example after verification has surfaced follow-ups:
 - [x] Fix: contrast ratio on disabled button — `code-review.md#task-03-button-contrast`
 - [-] Refactor: extract duplicated validation — `code-review.md#task-03-dup-validation`
 - [ ] Review: confirm access policy — `code-review.md#task-03-access-policy`
-
-**QA follow-ups:**
-- [ ] Fix: flaky test on slow networks — `qa.md#task-03-network-flake`
 ```
 
 > **Important rules the subagent must follow:**
 >
 > - Use the exact four top-level section headings (`## Context`, `## Implementation`, `## Verification`, `## Post verification tasks`) — do not rename, reorder, or add other top-level sections.
-> - Use the exact four subsection headings under `## Verification` (`### Automation tests`, `### Code review`, `### QA`, `### Others`).
-> - Omit a subsection only when it is truly non-applicable (e.g., no QA for a pure internal refactor). Never leave a subsection with just a placeholder.
-> - **Every actionable item uses the `- [ ]` checkbox format.** This applies to: every bullet under `## Implementation → Tests (What to Test)`, every bullet under `## Implementation → Steps`, every bullet under all four `## Verification` subsections, and every bullet added later to `## Post verification tasks`. Never use plain `- bullet` or `1. numbered` for actionable items — always `- [ ]`.
+> - `### Code review` is always present and contains exactly one `code-style-reviewer` assignment using role `reviewer-junior` over every file changed by the task.
+> - `### Automation tests` contains only the smallest necessary targeted commands and may be omitted when no automated check is needed.
+> - `### QA` appears only when the caller states that the user explicitly requested task-level QA.
+> - `### Others` appears only for caller-supplied, directly relevant checks. Never leave a subsection with just a placeholder.
+> - **Every actionable item uses the `- [ ]` checkbox format.** This applies to every included test, every implementation step, every present Verification subsection, and every Post verification task. Never use plain bullets or numbered lists for actionable items.
 > - All items start as `- [ ]`. The three states are: `- [ ]` (todo), `- [-]` (in progress), `- [x]` (done).
 > - `## Post verification tasks` starts empty. When items are added later, the reset rule for `## Verification` applies (see below).
-> - QA cases live INLINE in the task file, in full detail. Do not summarize and link to `qa.md`. Each QA case ends with a single `- [ ] Pass` checkbox.
+> - When the user explicitly requested task-level QA, keep those cases inline and limited to the supplied scope. Otherwise omit QA entirely.
 > - All paths are project-relative (not absolute), except skill references under `/Users/abtinghods/.claude/skills/`.
 > - Inline types in the `Interface Contracts` — do not invent separate type files.
 > - Consult the KB index and cite every guide relevant to what this task touches in the `Conventions / SOPs / Skills / Rules` block — decide the set from the index per task, never a fixed list.
@@ -285,15 +247,9 @@ describe('transform_feature_data', () => {
 })
 ```
 
-## How to Write QA Cases
+## How to Write User-Requested QA Cases
 
-Each case has: Preconditions, numbered Steps, Expected outcome (observable, not internal state), and a single `[ ]` checkbox for Pass. For UI work, ALWAYS include an Accessibility case covering keyboard, screen reader, contrast, touch targets, and motion.
-
-Include:
-- Happy path (at least one)
-- Edge cases derived from Planning QA Scenarios in `plan-prep.md`
-- Error/permission cases where relevant
-- Accessibility case (required for UI)
+Use this section only when the caller states that the user explicitly requested task-level QA. Each supplied case has Preconditions, numbered Steps, Expected outcome, and a single `[ ]` checkbox for Pass. Keep the cases within the user's requested scope; do not derive additional cases from Planning QA Scenarios.
 
 ---
 
@@ -302,11 +258,11 @@ Include:
 Open the file and confirm:
 
 - `## Context` has Why / Current State / Desired State, plus the reference blocks (Files, Depends on, Read for Context, Similar Files, Conventions)
-- `## Implementation` has Interface Contracts, Tests (What to Test) as `- [ ]` checkboxes, and Steps as `- [ ]` checkboxes — in that order
-- `## Verification` has the four subsections (Automation tests, Code review, QA, Others), each with task-specific `- [ ]` checkboxes
-- `## Post verification tasks` exists as a placeholder with Code Review follow-ups / QA follow-ups structure, and states the reset rule
+- `## Implementation` has Interface Contracts and Steps; Tests (What to Test) appears between them only when targeted tests are necessary
+- `## Verification` contains exactly one Code review assignment using role `reviewer-junior`; Automation tests and Others contain only caller-supplied targeted checks, and QA appears only when explicitly requested by the user
+- `## Post verification tasks` exists with Code Review follow-ups, optional QA follow-ups only when QA was requested, and the reset rule
 - Reset-on-change, reset-on-new-post-verification-task, and all-must-check rules are stated in the `## Verification` header and the `## Post verification tasks` header
-- QA cases are inline and detailed (preconditions, steps, expected, `- [ ] Pass` checkbox)
+- Any explicitly requested QA cases are inline and limited to the supplied scope
 - Every actionable item across Implementation, Verification, and Post verification tasks uses the `- [ ]` checkbox format — not plain bullets or numbered lists
 - Knowledge-base guides relevant to what this task touches (matched from the KB index) are cited in the `Conventions / SOPs / Skills / Rules` block and reflected in the Implementation
 

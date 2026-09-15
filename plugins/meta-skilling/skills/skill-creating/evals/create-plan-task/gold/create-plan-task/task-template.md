@@ -145,10 +145,10 @@ Tests to run in order as part of verifying this task. May include the newly writ
 
 ### Code review
 
-Code review agents to dispatch with their scope. Each item names a convention or profile AND the files it applies to.
+Code review assignments to dispatch with their scope. Each item names a reviewer lens, its evidence, and the files it applies to.
 
-- [ ] `code-review-team` agent — convention `agents/conventions/naming.md` on `path/to/file.ts`
-- [ ] `code-review-team` agent — profile `accessibility` on `path/to/ui-component.tsx`
+- [ ] `code-review-manager` — `code-style-reviewer` with convention `agents/conventions/naming.md` on `path/to/file.ts`
+- [ ] `code-review-manager` — `security-reviewer` with threat-model evidence on `path/to/endpoint.ts`
 - [ ] All findings addressed in code or flagged in `code-review.md` under `## Task NN: [title]`
 
 ### QA

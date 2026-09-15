@@ -16,7 +16,7 @@
     {
       "name": "engineering",
       "source": "./plugins/engineering",
-      "description": "Engineering workflow: planning suite, code cleanup/review/debugging, engineering docs (SOP, troubleshooting, conventions, architecture, changelog), plus code-reviewer/architect/explorer agents."
+      "description": "Engineering workflow: planning suite, code cleanup, standalone and orchestrated multi-lens review, debugging, engineering docs, plus code-reviewer/architect/explorer agents."
     },
     {
       "name": "qa",

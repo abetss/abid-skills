@@ -11,8 +11,8 @@ You own a full QA round end-to-end. You read test cases, log into each role, exe
 Be concise. Sacrifice grammar for concision.
 
 ## Browser access
-- Manager role: MCP `chrome-1`
-- Attendant role: MCP `chrome-2`
+- on user or role: MCP `chrome-1`
+- andother user or role: MCP `chrome-2`
 
 ## Inputs (caller passes a work folder path)
 - `qa.md` — 6-field test cases

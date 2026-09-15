@@ -87,7 +87,7 @@ The task's `## Verification` section has four subsections. Each is a gate — fa
 - [ ] [task-specific test runs]
 
 ### Code review
-- [ ] [task-specific code review agent + scope]
+- [ ] Run `code-style-reviewer` with exactly one assignment using role `reviewer-junior` over every file changed by this task
 
 ### QA
 **Case 1: [title]**
@@ -184,7 +184,7 @@ The task's `## Verification` section has four subsections. Each is a gate — fa
 
 - **Looking for `plan-tasks.md`** — The format is now a `task/` folder with `task-list.md` + `task-NN.md` files
 - **Mixing Implementation and Verification** — Implementation is what you build; Verification is what you run to confirm it works
-- **Skipping a Verification subsection** — All four (Automation tests, Code review, QA, Others) must pass unless the subsection is deliberately absent from the task file
+- **Skipping a Verification subsection** — Code review is always required; Automation tests, QA, or Others may be absent only when the task deliberately omits them
 - **Skipping context read** — Always read similar files and conventions first
 - **Adding unlisted features** — Only implement what's in the task
 - **Continuing after failure** — Stop and report if tests fail

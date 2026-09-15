@@ -42,7 +42,7 @@ commit conventions. A reasonable default:
 - Third person present tense ("adds" not "add")
 - If pre-commit hooks (linters, formatters) report errors, fix them properly before
   retrying — never bypass hooks.
-- Confirm the commit message with the user before committing.
+- Commit autonomously — the release invocation is explicit authorization to commit.
 
 ## Step 3: Changelog
 
@@ -71,8 +71,7 @@ If your project deploys on push:
 ## Step 6: Production deployment
 
 - **Skip condition**: if the user said "don't deploy to prod" / "skip prod", skip to Step 9.
-- Otherwise trigger production (e.g. `gh workflow run <prod-workflow> --ref <branch>`),
-  confirming with the user before triggering.
+- Otherwise trigger production (e.g. `gh workflow run <prod-workflow> --ref <branch>`). The user's release command (or "to production") is authorization to trigger deployment.
 
 ## Step 7: Monitor production
 

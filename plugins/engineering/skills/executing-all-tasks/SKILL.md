@@ -139,7 +139,7 @@ On stop, print a terse summary: tasks completed this run, task-list state (done 
 
 - **Executing a task in the supervisor context.** Invoking `executing-single-plan-task` directly collapses supervisor and implementer into one context and loses everything the architecture buys — isolation, the artifact-review boundary, fresh per-task focus. Dispatch an agent every time, even for a task that looks small.
 - **Trusting the agent's "done" report without reading the file.** Agents fabricate completion. The gate reads `task-NN.md` from disk and cross-checks the diff precisely because reports lie.
-- **Accepting a hand-written substitute for a skill run.** "I reviewed the code myself" is not a `code-review-team` run; a paragraph of QA notes is not a QA `REPORT.md`. The artifact check exists because this substitution happens and looks plausible.
+- **Accepting a hand-written substitute for a skill run.** "I reviewed the code myself" is not a `code-review-manager` run; a paragraph of QA notes is not a QA `REPORT.md`. The artifact check exists because this substitution happens and looks plausible.
 - **Stopping on an unmet dependency.** Skip to the next eligible task; only a deadlock (pending tasks, none eligible, none running) stops the run.
 - **Compacting too early or too late.** Don't compact at 10% "just in case"; don't wait until the window is nearly full and thrash.
 - **Closing the task entry from the agent's side.** Only the supervisor marks `[x]` in `task-list.md`, after the gate passes — that boundary is what makes the verification real.

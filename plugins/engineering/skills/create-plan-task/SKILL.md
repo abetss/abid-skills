@@ -8,7 +8,7 @@ argument-hint: "[optional: work folder path] [optional: short task description]"
 
 Produce one well-formed implementation task in an existing plan-prep work folder.
 
-The task file follows the same four-section structure used everywhere in the project (`## Context` / `## Implementation` / `## Verification` / `## Post verification tasks`), with checkbox progress tracking and inline QA cases.
+The task file follows the same four-section structure used everywhere in the project (`## Context` / `## Implementation` / `## Verification` / `## Post verification tasks`) with checkbox progress tracking. It renders the verification scope supplied by the caller and does not add QA or broad checks on its own.
 
 ## Inputs
 
@@ -95,7 +95,7 @@ You only need to skim — the detailed reading is done by the subagent in Step 4
 Default behavior is **conversational, not scripted**. Decide whether discussion is needed.
 
 **Skip discussion entirely** when:
-- Mode is `from-plan-prep` AND the caller already gave you a clear task name, agreed signature, paths, tests, and QA cases (Phase 2 Step 2 of `how-does-the-work-break-down.md` happened upstream).
+- Mode is `from-plan-prep` AND the caller already gave you a clear task name, agreed signature, paths, and targeted tests (Phase 2 Step 2 of `how-does-the-work-break-down.md` happened upstream).
 - Mode is `standalone` AND the user provided a second positional argument that's specific enough (file paths, expected behavior, test scenarios).
 
 **Have a brief discussion** otherwise. Ask only what's actually ambiguous:
@@ -104,8 +104,8 @@ Default behavior is **conversational, not scripted**. Decide whether discussion 
 - Which files get created / modified / deleted?
 - What's the function/component signature (inline types)?
 - What's the input → paths-of-logic → output?
-- Which tests need to exist? (behaviors + example inputs, not assertions)
-- Which QA cases? (happy path, edge cases, accessibility for UI)
+- Which smallest targeted tests, if any, are necessary? (behaviors + example inputs, not assertions)
+- If the caller explicitly requested task-level QA, what exact QA scope did they request?
 - What does it depend on? Does anything depend on it?
 
 Don't follow a rigid script. Stop asking when you have enough to write the task file. **Don't ask questions you could answer yourself from the context files.**
@@ -116,7 +116,8 @@ Use the `Agent` tool (general-purpose subagent). The subagent does the heavy rea
 
 Follow the subagent prompt pattern in `task-template.md`. The template file also contains:
 - The exact four-section task file structure with all sub-headings
-- The Interface Contracts / Tests-What-to-Test / QA Cases how-tos
+- The Interface Contracts and targeted Tests-What-to-Test how-tos
+- The optional user-requested QA format
 - The rules the subagent must follow
 - The reset rule for `## Verification` when `## Post verification tasks` items are added
 
@@ -126,11 +127,11 @@ Open the file. Confirm:
 
 - Four top-level sections present in order: `## Context`, `## Implementation`, `## Verification`, `## Post verification tasks`
 - `## Context` has Why / Current State / Desired State + Files / Depends on / Read for Context / Similar Files / Conventions blocks
-- `## Implementation` has Interface Contracts, then `Tests (What to Test)` as `- [ ]` checkboxes, then `Steps` as `- [ ]` checkboxes
-- `## Verification` has four subsections (`### Automation tests`, `### Code review`, `### QA`, `### Others`) — each with task-specific `- [ ]` checkboxes. A subsection may be omitted ONLY if truly non-applicable (e.g. no QA for an internal-only refactor); never leave it as a placeholder.
-- `## Post verification tasks` exists as a placeholder with the Code Review follow-ups / QA follow-ups structure and the reset-rule note
+- `## Implementation` has Interface Contracts and Steps; `Tests (What to Test)` appears between them only when targeted tests are necessary
+- `## Verification` contains exactly one `### Code review` assignment using role `reviewer-junior` over every file changed by the task. `### Automation tests` contains only the smallest caller-supplied targeted commands and may be omitted when no automated check is necessary. `### QA` appears only when the caller explicitly requested task-level QA. `### Others` appears only when supplied and applicable.
+- `## Post verification tasks` exists as a placeholder with the Code Review follow-ups structure, optional QA follow-ups only when QA was requested, and the reset-rule note
 - Every actionable item is a `- [ ]` checkbox (not a numbered list, not a plain bullet)
-- QA cases (when present) are inline in full detail (preconditions, numbered steps, expected, single `- [ ] Pass` checkbox), not linked out to `qa.md`
+- User-requested QA cases, when present, are inline in full detail (preconditions, numbered steps, expected, single `- [ ] Pass` checkbox), not linked out to `qa.md`
 - Knowledge-base guides relevant to what this task touches (matched from the KB index in Step 2) are cited in the `Conventions / SOPs / Skills / Rules` block and reflected in the Implementation
 - Paths are project-relative (except skill paths under `/Users/abtinghods/.claude/skills/`)
 
@@ -173,12 +174,13 @@ End with a terse summary:
 | Tool / Skill | Used for |
 |--------------|---------|
 | `Agent` (general-purpose subagent) | Heavy reading + writing the task file (Step 4). Keeps main thread context clean. |
-| `manual-qa-case-writing` patterns | The inline QA cases in `### QA` follow this skill's 6-field format — see `task-template.md`. |
+| `manual-qa-case-writing` patterns | Used only when the caller explicitly requested task-level QA; see `task-template.md`. |
 | Edit tool | task-list.md insertion (Step 6). |
 
 ## Rules
 
-- **One task per invocation.** If the user describes multiple tasks, ask which to do first; do not bulk-create.
+- **One task per invocation.** The caller owns task boundaries. Render only the supplied task; do not merge it with another outcome or expand its verification scope.
+- **No inferred QA or broad verification.** Add task-level QA or broad test commands only when the caller explicitly supplied them.
 - **Never bootstrap a plan.** This skill assumes `plan-prep.md` + `task/task-list.md` already exist. Send the user to `plan-prep` if not.
 - **Don't ask scripted questions.** Have a brief, targeted conversation only when the task is genuinely ambiguous. The point of having `plan-prep.md` is so the skill can pull most context from there.
 - **Don't renumber existing tasks.** New tasks always take the next integer. Even if Final Validation tasks (`task-05`, `task-06`, etc.) are already numbered higher, the new task gets the next number — only the task-list.md ordering changes.

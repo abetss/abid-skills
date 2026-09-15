@@ -1,284 +1,209 @@
 ---
 name: architect-solution
-description: Use when plan-prep gap analysis identifies items needing creation or modification and architecture trade-offs must be resolved before implementation planning. Also use when the user needs to compare multiple design approaches for a technical decision.
+description: Architect, compare, review, or resolve software, system, solution, data, infrastructure, and API designs. Use for architecture questions, material technical trade-offs, plan-prep architecture decisions, assigned ADRs, or comparisons between credible implementation approaches.
 ---
 
 # Architect Solution
 
-## Overview
+Use one architecture process for direct advice, multi-perspective comparison, and plan-prep decision resolution. Keep architecture dialogue and synthesis in the main conversation. Delegate bounded evidence gathering or independent design lanes only when they improve the decision.
 
-Team-orchestrated process to resolve architecture decisions through multi-perspective exploration. Launches parallel code-architect agents with strongest module and max effort, each constrained to a different design lens, then synthesizes into a comparison for interactive decision-making with the user.
+**Core principle:** Start with the smallest viable architecture. Add alternatives, scale mechanisms, and resilience only when requirements, evidence, or material uncertainty justify them.
 
-**Core principle:** Multiple constrained perspectives surface trade-offs that a single "best guess" misses. The user decides — agents explore.
+## Modes
 
-## When to Use
+Select the smallest mode that can resolve the request.
 
-- plan-prep gap analysis has "needs creation" or "needs modification" items
-- Multiple valid architecture approaches exist and trade-offs aren't obvious
-- User needs to compare approaches before the plan-prep task breakdown creates tasks
-- Schema, API, or component design decisions with competing concerns
+| Mode | Use when | Parallel architecture lanes |
+|---|---|---|
+| **Direct** | One approach is clearly viable, the decision is bounded, or the user asks a focused architecture question | None required |
+| **Comparison** | Two or more credible approaches have material trade-offs | 2–5 lanes |
+| **Assigned ADR** | The caller supplies one stable `ADR-NNN` ID and exact ADR path | Direct or comparison, according to decision complexity |
+| **Aggregate** | Several related architecture decisions must be resolved together | Dependency-ready decisions may run concurrently |
 
-## When NOT to Use
+A bug fix, pure implementation task, or purely visual UI choice belongs to its specialized process unless it exposes a material architecture decision.
 
-- Decision is obvious (one clear approach, no real trade-offs)
-- Bug fix or hotfix (use debug skill instead)
-- Pure UI decisions (use ui-design instead)
+## Expertise Routing
 
-## Deliverables
+Expertise is progressively disclosed and never loaded as one undifferentiated library.
 
-1. **architecture-decisions.md** in work folder -- each decision with context, approaches explored, comparison, chosen approach, rationale
+### 1. Inspect plugin-local expertise first
 
-## Team Composition
+Inspect this skill's `experts/` directory for `*/expertise.md` entry points. The directory is intentionally empty by default so the plugin remains portable and does not duplicate global expertise. Treat an absent directory as empty, because version control does not preserve empty directories.
 
-Dispatch agents based on what the decision needs. Not all agents are needed for every decision.
+For every local entry point found:
 
-### Research Agents (parallel, background)
+1. Read its routing trigger.
+2. Compare it with the problem, proposed solution, constraints, likely failure modes, and quality attributes.
+3. Load the complete entry point and required relative references only when materially relevant.
 
-Dispatch before architecture exploration to gather raw material.
+### 2. Fall back to global expertise by concern
 
-| Agent | When to dispatch | What it does |
-|-------|-----------------|--------------|
-| **Context reader** | Always | Reads codebase patterns, similar features, module boundaries, conventions from a-kb/ |
-| **Constraint reader** | Schema/API/compliance involved | Reads schema.zmodel, API routes, access policies, compliance requirements |
-| **Doc reader** | Requirements or plan-prep exist | Reads requirements.md, plan-prep.md, extracts decisions needed and constraints |
+For every material concern without an applicable local expert, read:
 
-### Main Thread (interactive, sequential)
-
-The main thread does NOT do research or architecture design -- it orchestrates, synthesizes, and drives decisions with the user.
-
-**The main thread:**
-1. Presents research findings
-2. Identifies decisions needed
-3. Proposes lenses per decision (user approves/adjusts)
-4. Dispatches architecture team
-5. Synthesizes approaches into comparison
-6. Forms recommendation with rationale
-7. Presents to user for decision
-8. Records chosen approach
-
-### Architecture Team (parallel, per decision)
-
-For each decision, launch N code-architect agents in parallel. Each receives the same context but a different lens constraint in its prompt.
-
-**Agent count is dynamic** -- determined by decision complexity:
-
-| Complexity | Agent count | Signal |
-|-----------|------------|--------|
-| Simple | 2 | One obvious dimension (e.g., extend vs new) |
-| Standard | 3 | Multiple concerns but clear dimensions |
-| Complex | 4-5 | Many competing concerns, compliance, performance, accessibility |
-
-### Output Agent (after decisions made)
-
-| Agent | When to dispatch | What it does |
-|-------|-----------------|--------------|
-| **Decision writer** | All decisions resolved | Writes architecture-decisions.md with full context, comparison, and rationale |
-
-## The Architecture Resolution Loop
-
-```dot
-digraph loop {
-    "Start" [shape=doublecircle];
-    "Dispatch research agents" [shape=box];
-    "Synthesize findings" [shape=box];
-    "Identify decisions needed" [shape=box];
-    "Present decisions to user" [shape=box];
-    "User adjusts scope?" [shape=diamond];
-    "For each decision:" [shape=box, style=bold];
-    "Propose lenses" [shape=box];
-    "User approves lenses?" [shape=diamond];
-    "Dispatch architecture team" [shape=box];
-    "Synthesize approaches" [shape=box];
-    "Present comparison + recommendation" [shape=box];
-    "User picks approach?" [shape=diamond];
-    "Record decision" [shape=box];
-    "More decisions?" [shape=diamond];
-    "Dispatch output agent" [shape=box];
-    "Done" [shape=doublecircle];
-
-    "Start" -> "Dispatch research agents";
-    "Dispatch research agents" -> "Synthesize findings";
-    "Synthesize findings" -> "Identify decisions needed";
-    "Identify decisions needed" -> "Present decisions to user";
-    "Present decisions to user" -> "User adjusts scope?";
-    "User adjusts scope?" -> "Identify decisions needed" [label="yes, re-scope"];
-    "User adjusts scope?" -> "For each decision:" [label="approved"];
-    "For each decision:" -> "Propose lenses";
-    "Propose lenses" -> "User approves lenses?";
-    "User approves lenses?" -> "Propose lenses" [label="adjust"];
-    "User approves lenses?" -> "Dispatch architecture team" [label="approved"];
-    "Dispatch architecture team" -> "Synthesize approaches";
-    "Synthesize approaches" -> "Present comparison + recommendation";
-    "Present comparison + recommendation" -> "User picks approach?";
-    "User picks approach?" -> "Present comparison + recommendation" [label="wants hybrid or new lens"];
-    "User picks approach?" -> "Record decision" [label="chosen"];
-    "Record decision" -> "More decisions?";
-    "More decisions?" -> "For each decision:" [label="yes"];
-    "More decisions?" -> "Dispatch output agent" [label="no, all resolved"];
-    "Dispatch output agent" -> "Done";
-}
+```text
+/Users/abtinghods/.agents/expertise/table-of-content.md
 ```
 
-## Step-by-Step Process
+Consider every `ACTIVE` entry and its semantic routing trigger. Ignore entries in all other statuses. Load only materially relevant `expertise.md` entry points and the references they require.
 
-### Step 1: INTAKE
+Local expertise takes precedence for plugin-specific guidance. Global expertise fills concerns that local experts do not cover. When both are relevant, combine only nonconflicting guidance and state which source controls. If neither local expertise nor the global index is available, proceed with general architectural reasoning and disclose that no supplemental expertise was loaded.
 
-Read the work folder for context:
-- `plan-prep.md` -- gap analysis section (look for "needs creation", "needs modification", reuse/modify/create classifications)
-- `requirements.md` -- acceptance criteria, constraints
-- Any existing `ui-design/`, `view-model-props.md`
+Expertise routing is complete when every local entry and every `ACTIVE` global trigger has been considered and each material match has been loaded or explicitly accounted for.
 
-If no plan-prep.md exists, ask the user what decisions need to be made.
+## Architecture Baseline
 
-### Step 2: RESEARCH (parallel agents)
+Every mode must:
 
-Dispatch research agents based on what exists. Each agent returns findings to the main thread.
+1. Clarify the outcome, scope, assumptions, constraints, and measurable quality attributes.
+2. Model responsibilities, ownership boundaries, data flow, state transitions, and failure domains.
+3. Identify the simplest viable design before introducing additional infrastructure or abstractions.
+4. Compare relevant alternatives across correctness, latency, throughput, consistency, availability, operability, security, complexity, cost, migration, and testability.
+5. Apply selected expertise and reconcile overlap according to user requirements and established project conventions.
+6. Make the decision explicit: chosen option, rejected alternatives, accepted trade-offs, thresholds, failure handling, observability, migration, and verification.
 
-**Context reader prompt pattern:**
-> "Analyze the codebase for patterns relevant to [decision area]. Find similar features, existing abstractions, module boundaries, and conventions. Report: patterns found (with file:line references), similar features, key abstractions, constraints from existing architecture."
+Use only criteria that can materially change the decision. Project-specific concerns such as accessibility, privacy legislation, or a particular schema technology belong in the analysis only when project evidence makes them relevant.
 
-**Constraint reader prompt pattern:**
-> "Read schema.zmodel, API routes, and access policies relevant to [decision area]. Report: data model constraints, relationship patterns, access control patterns, compliance considerations (PIPEDA)."
+## Inputs
 
-### Step 3: SCOPE (interactive)
+Gather the available evidence for the selected mode:
 
-Present to the user:
-1. Decisions identified from gap analysis
-2. Research summary per decision
-3. Proposed complexity rating (simple/standard/complex)
+- The decision or architecture question
+- Requirements and acceptance criteria
+- Existing architecture, code, schemas, contracts, tests, and conventions
+- Similar implementations and reusable platform capabilities
+- Constraints, quality attributes, and unresolved questions
+- For assigned ADR mode: stable ID, exact output path, owner, and blocking state
+- For aggregate mode: work folder and decision dependency graph
 
-User confirms or adjusts: add/remove decisions, change complexity, add constraints.
+Missing evidence that could change the decision is a blocker or a research assignment. Missing evidence that cannot change the decision should be recorded as a bounded follow-up.
 
-### Step 4: LENS SELECTION (interactive, per decision)
+## Exploration Proposal
 
-For each decision, propose lenses based on the decision's domain. Lenses are **design philosophies that constrain the agent's exploration**, not fixed categories.
+Before dispatching research or architecture lanes, display:
 
-**Common lens patterns:**
+- Mode and decision scope
+- Evidence already available and evidence gaps
+- Selected local and global expertise, with a concrete reason for each
+- Proposed lenses and what each optimizes
+- Agent count, model/effort when selectable, and assignment boundaries
+- Parallel and sequential dependencies
+- Consolidation owner and artifact writer
+- Expected output
 
-| Decision Domain | Candidate Lenses |
-|---|---|
-| New service/module | Minimal change, Clean architecture, Pragmatic balance |
-| Schema change | Additive-only, Migration-heavy, Denormalize |
-| UI component | Extend existing, New component, Composition pattern |
-| Performance concern | Cache-first, Denormalize reads, Lazy-load, Edge compute |
-| Security/compliance | Minimal exposure, Defense-in-depth, Zero-trust |
-| Integration | Adapter pattern, Direct coupling, Event-driven |
-| Data flow | Push-based, Pull-based, Hybrid |
+Request approval unless the user explicitly requested autonomous execution. Autonomous runs still record the proposal before dispatch.
 
-**User can:**
-- Accept proposed lenses
-- Remove lenses that don't apply
-- Add custom lenses ("also explore an approach that prioritizes accessibility")
-- Adjust agent count
+## Evidence Gathering
 
-### Step 5: ARCHITECTURE TEAM (parallel agents)
+Research is conditional rather than automatic. Use bounded assignments for genuinely missing evidence:
 
-For each decision, dispatch N code-architect agents simultaneously. Each agent gets:
+| Assignment | Use when | Required return |
+|---|---|---|
+| Repository context | Existing patterns or boundaries could change the design | File-specific patterns, comparable implementations, constraints, and gaps |
+| Contract and policy constraints | Schemas, APIs, authorization, compliance, or compatibility are material | Exact contracts, invariants, policies, and migration constraints |
+| External precedent | A platform capability or established solution could avoid custom work | Credible alternatives, source authority, applicability, and unmet requirements |
 
-1. **Shared context:** Research findings, requirements, constraints, codebase patterns
-2. **Lens constraint:** A specific design philosophy that shapes all their choices
+The main conversation may gather straightforward evidence directly. Research agents return evidence; they do not choose the architecture or write shared artifacts.
 
-**Agent prompt pattern:**
-> "You are exploring an architecture approach for: [decision description]
->
-> **Your design lens: [LENS NAME]**
-> [Lens description and what it optimizes for]
->
-> **Constraint:** All your choices must favor [lens priority]. When trade-offs arise, choose [lens priority] over other concerns. Be explicit about what you're trading away.
->
-> **Context:**
-> [Research findings, requirements, codebase patterns]
->
-> **Deliver:** Patterns found, your architecture decision under this lens, component design, implementation map, data flow, build sequence, and explicit trade-offs."
+## Architecture Exploration
 
-### Step 6: SYNTHESIS (main thread)
+### Direct mode
 
-Collect all agent outputs. Build comparison:
+Analyze the evidence and selected expertise in the main conversation. State the recommendation, why alternatives are not material, trade-offs, implementation implications, and verification.
 
-**Comparison matrix format:**
+### Comparison mode
 
-```
-| Criteria              | Approach 1: [Name] | Approach 2: [Name] | Approach 3: [Name] |
-|-----------------------|--------------------|---------------------|---------------------|
-| Complexity            | [low/med/high]     |                     |                     |
-| Risk                  |                    |                     |                     |
-| Reuse of existing     |                    |                     |                     |
-| Testability           |                    |                     |                     |
-| Accessibility impact  |                    |                     |                     |
-| Files changed/created |                    |                     |                     |
-| Migration needed      |                    |                     |                     |
-| PIPEDA compliance     |                    |                     |                     |
-```
+Choose distinct lenses that produce meaningfully different designs. Do not dispatch several unconstrained agents that are likely to converge on the same answer.
 
-**Form a recommendation** with rationale. Be opinionated -- pick the approach you'd choose and explain why. But present all approaches fairly.
+| Complexity | Suggested lanes | Signal |
+|---|---:|---|
+| Simple comparison | 2 | One material trade-off or boundary |
+| Standard | 3 | Several interacting concerns with clear dimensions |
+| Complex | 4–5 | High uncertainty, broad failure impact, difficult migration, or competing quality attributes |
 
-### Step 7: DECISION (interactive)
+Each lane receives the same self-contained evidence and selected expertise, plus one explicit lens. It must return:
 
-Present to the user:
-1. Each approach summarized (3-5 bullets: what it does, key trade-off)
-2. Comparison matrix
-3. Your recommendation with rationale
+- Architecture under that lens
+- Components and ownership
+- Data and control flow
+- State transitions and failure recovery
+- Implementation and migration implications
+- Verification strategy
+- Benefits, costs, risks, and what the lens trades away
 
-User can:
-- Pick an approach
-- Request a hybrid ("approach 2's data model with approach 1's API surface")
-- Request a new lens ("none of these consider X, explore that")
-- Ask clarifying questions about any approach
+Use the available orchestration runtime rather than hardcoding a particular agent tool or agent name. Run independent lanes concurrently. Give each shared artifact exactly one writer.
 
-If user requests hybrid or new lens, dispatch additional agents and re-synthesize.
+### Assigned ADR mode
 
-### Step 8: OUTPUT
+Treat the supplied decision as the entire resolution scope. Preserve its stable ID and exact path. Do not discover or write unrelated ADRs. Choose direct or comparison exploration according to the material uncertainty in that decision.
 
-After all decisions are resolved, write `architecture-decisions.md` to the work folder.
+### Aggregate mode
 
-**Output format:**
+Identify the material decisions and their true dependencies. Run every dependency-ready decision concurrently up to available capacity. Serialize only an input dependency, user checkpoint, or single-writer integration. All decisions converge before implementation task breakdown.
 
-```markdown
-# Architecture Decisions
+## Synthesis and Decision
 
-> Generated by architect-solution from plan-prep.md
+The main conversation owns synthesis and recommendation.
 
-## Decision 1: [Title]
+1. Validate that every lane addressed the same decision and constraints.
+2. Normalize approaches into a comparison whose criteria come from the requirements, quality attributes, and selected expertise.
+3. Identify genuine disagreements, hidden assumptions, and combinations that are internally inconsistent.
+4. Present each credible approach fairly.
+5. Recommend one approach and state the accepted trade-offs.
+6. Ask the user to choose, refine, request a hybrid, or add another lens unless autonomous execution was explicit.
+7. Re-run only the affected exploration when new evidence or a material scope change justifies it.
 
-### Context
-[What needs to be decided and why]
+A hybrid must be checked as a complete architecture rather than assembled from individually attractive parts.
 
-### Approaches Explored
+## Output
 
-#### Approach 1: [Name] -- [Lens]
-- [Key design choices]
-- **Pros:** [strengths]
-- **Cons:** [trade-offs]
+### Chat output
 
-#### Approach 2: [Name] -- [Lens]
-...
+When no artifact is requested, return:
 
-### Comparison
-[Matrix from Step 6]
+- Context and assumptions
+- Selected expertise and why it applied
+- Considered approaches
+- Comparison
+- Recommendation and rationale
+- Consequences and implementation implications
+- Verification
+- Unresolved follow-ups
 
-### Decision
-**Chosen: [Approach name]**
 
-**Rationale:** [Why this approach, what trade-offs accepted]
+### Assigned ADR output
 
-**Implementation implications:**
-- [Key files/components affected]
-- [Migration or schema changes needed]
-- [Testing considerations]
+Write exactly one ADR to the supplied path. It is complete only when it contains:
 
----
+- Stable ID and title
+- Decision context
+- Constraints and drivers
+- Considered approaches
+- Research and sources where relevant
+- Diagrams where useful
+- Selected decision and rationale
+- Trade-offs and consequences
+- Implementation implications
+- Failure handling and observability
+- Verification considerations
+- Unresolved follow-ups
 
-## Decision 2: [Title]
-...
-```
+Do not also create `architecture-decisions.md`.
 
-## Common Mistakes
+### Aggregate output
 
-| Mistake | Fix |
-|---------|-----|
-| Running architect-solution for obvious decisions | Skip it -- if there's one clear approach, just document it in plan-prep |
-| Fixed 3 lenses for every decision | Lenses are dynamic -- match them to the decision domain |
-| Agents exploring without constraints | Each agent MUST have a lens constraint, otherwise they converge on the same answer |
-| Synthesizing without recommendation | Always form an opinion -- the user wants guidance, not just options |
-| Skipping user approval of lenses | Lenses shape the exploration -- wrong lenses waste agent work |
-| Recording decision without rationale | Future readers need to know WHY, not just WHAT |
+When the caller requests an aggregate artifact, write `architecture-decisions.md` in the supplied work folder. Give each decision its context, approaches, comparison, chosen option, rationale, consequences, implementation implications, and verification. Keep dedicated ADRs as the source of truth when they already exist; summarize and link rather than duplicating them.
+
+## Completion Criteria
+
+Before finishing, verify that:
+
+- expertise routing considered every available local expert and every `ACTIVE` global trigger;
+- the chosen mode was no heavier than the decision required;
+- all architecture claims have evidence or visible assumptions;
+- ownership, boundaries, state, data flow, and failure paths are explicit;
+- credible alternatives and accepted trade-offs are recorded;
+- selected expertise materially affected or validated the decision;
+- one actor owns each written artifact;
+- assigned ADR mode preserved the exact ID and path;
+- proposed verification can distinguish a correct architecture from an incorrect one;
+- unresolved blocking evidence is routed rather than hidden.
