@@ -58,7 +58,7 @@ For each approved decision, hand off to the `architect-solution` skill:
 
 The skill will:
 
-1. Inspect plugin-local expertise first, then consult the global expertise index for uncovered material concerns.
+1. Read `{user}/.agents/expertise/table-of-content.md` first, consider every `ACTIVE` routing trigger, load the materially relevant global expertise, and then inspect plugin-local expertise for relevant supplements.
 2. Gather only missing evidence, choose direct or multi-perspective resolution, and display any proposed lenses, assignments, and parallelization for approval unless autonomous execution was explicit.
 3. Synthesize the evidence and any independent architecture lanes, present a recommendation, and record the user's decision.
 4. Produce the ADR required by the shared protocol at the assigned path through exactly one artifact owner.

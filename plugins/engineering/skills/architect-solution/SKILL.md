@@ -26,29 +26,29 @@ A bug fix, pure implementation task, or purely visual UI choice belongs to its s
 
 Expertise is progressively disclosed and never loaded as one undifferentiated library.
 
-### 1. Inspect plugin-local expertise first
+### 1. Read the global expertise router
 
-Inspect this skill's `experts/` directory for `*/expertise.md` entry points. The directory is intentionally empty by default so the plugin remains portable and does not duplicate global expertise. Treat an absent directory as empty, because version control does not preserve empty directories.
+Always read this router before selecting architecture expertise:
+
+```text
+~/.agents/expertise/table-of-content.md
+```
+
+Consider every `ACTIVE` entry and its semantic routing trigger. Ignore entries in all other statuses. Load only materially relevant `expertise.md` entry points and the references they require. If the router is unavailable, disclose that global expertise could not be routed and proceed with general architectural reasoning.
+
+### 2. Inspect plugin-local supplements
+
+After global routing, inspect this skill's optional `experts/` directory for `*/expertise.md` entry points. Treat an absent directory as empty because version control does not preserve empty directories.
 
 For every local entry point found:
 
 1. Read its routing trigger.
 2. Compare it with the problem, proposed solution, constraints, likely failure modes, and quality attributes.
-3. Load the complete entry point and required relative references only when materially relevant.
+3. Load the complete entry point and required relative references only when it adds materially relevant plugin-specific guidance.
 
-### 2. Fall back to global expertise by concern
+Global expertise is the mandatory routing baseline. Plugin-local expertise may supplement it but does not replace reading the global router. When both apply, combine nonconflicting guidance and make any conflict and controlling source explicit.
 
-For every material concern without an applicable local expert, read:
-
-```text
-/Users/abtinghods/.agents/expertise/table-of-content.md
-```
-
-Consider every `ACTIVE` entry and its semantic routing trigger. Ignore entries in all other statuses. Load only materially relevant `expertise.md` entry points and the references they require.
-
-Local expertise takes precedence for plugin-specific guidance. Global expertise fills concerns that local experts do not cover. When both are relevant, combine only nonconflicting guidance and state which source controls. If neither local expertise nor the global index is available, proceed with general architectural reasoning and disclose that no supplemental expertise was loaded.
-
-Expertise routing is complete when every local entry and every `ACTIVE` global trigger has been considered and each material match has been loaded or explicitly accounted for.
+Expertise routing is complete when the global router has been read, every `ACTIVE` global trigger has been considered, and each material global or local match has been loaded or explicitly accounted for.
 
 ## Architecture Baseline
 
@@ -197,7 +197,7 @@ When the caller requests an aggregate artifact, write `architecture-decisions.md
 
 Before finishing, verify that:
 
-- expertise routing considered every available local expert and every `ACTIVE` global trigger;
+- expertise routing read the global table of contents, considered every `ACTIVE` global trigger, and accounted for every material global or plugin-local match;
 - the chosen mode was no heavier than the decision required;
 - all architecture claims have evidence or visible assumptions;
 - ownership, boundaries, state, data flow, and failure paths are explicit;

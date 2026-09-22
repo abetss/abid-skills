@@ -32,9 +32,12 @@ Send this as the subagent's `prompt` (general-purpose agent). Paste real context
 > [Paste design artifacts if relevant — design-discovery-result.md, view-model-props.md, [design folder]/requirements.md, any component variants referenced in plan-prep.md's design artifact section]
 > [Paste discussion outcomes if Step 3 of SKILL.md happened: agreed signature, paths, and targeted tests]
 > [Paste task-level QA only when the user explicitly requested it; otherwise state that QA is omitted]
-> [List the knowledge-base guides matched from the KB index for this task in Step 2, if any — the subagent must read each in full]
+> [Name the selected convention router from Step 2 and list each matched convention with its path/content match reason]
+> [List the knowledge-base guides matched from the KB index for this task in Step 2, if any]
 >
-> **Before writing, consult the knowledge base.** Read the project's KB index (`a-kb/table-of-content.md`, or the repo's equivalent docs/KB table of contents). For every guide whose scope matches what this task touches — including any listed above — read it in full, cite it in the `Conventions / SOPs / Skills / Rules` block, add it to `Read for Context`, and make the Implementation follow it. Decide the relevant set from the index based on THIS task; do not assume a fixed list and do not skip the scan.
+> **Before writing, consult the convention library.** Use `~/.agents/conventions/table-of-content.md` when it exists; only when it is absent, use `{project}/.agents/conventions/table-of-content.md`. Read the selected router completely, verify each supplied match against this task's target paths or actual behavior, and read every selected convention document in full. Cite each applicable convention and its concrete match reason in `Conventions / SOPs / Skills / Rules`, add it to `Read for Context`, and make the Implementation follow it. Load only matched convention documents, not the entire library.
+>
+> **Also consult the project knowledge base.** Read `a-kb/table-of-content.md`, or the repository's equivalent docs/KB table of contents. For every guide whose scope matches what this task touches — including any listed above — read it in full, cite it in the same reference block, add it to `Read for Context`, and make the Implementation follow it. Decide the relevant set from the index based on THIS task; do not assume a fixed list and do not skip the scan.
 >
 > **The task file must have exactly these four top-level sections, in this order:**
 >
@@ -78,7 +81,8 @@ Send this as the subagent's `prompt` (general-purpose agent). Paste real context
 - `path/to/similar_test.test.ts` — [test pattern to follow]
 
 **Conventions / SOPs / Skills / Rules:**
-- `agents/conventions/naming.md` — [relevance]
+- `~/.agents/conventions/path-matched/example.md` — [path match: exact pattern and owned file]
+- `.agents/conventions/content-matched/example.md` — [content match: observed behavior]
 - `agents/sops/relevant.md` — [relevance]
 - `.claude/rules/transformers.md` — [relevance]
 - `/Users/abtinghods/.claude/skills/relevant-skill.md` — [relevance]
@@ -191,8 +195,9 @@ Example after verification has surfaced follow-ups:
 > - All items start as `- [ ]`. The three states are: `- [ ]` (todo), `- [-]` (in progress), `- [x]` (done).
 > - `## Post verification tasks` starts empty. When items are added later, the reset rule for `## Verification` applies (see below).
 > - When the user explicitly requested task-level QA, keep those cases inline and limited to the supplied scope. Otherwise omit QA entirely.
-> - All paths are project-relative (not absolute), except skill references under `/Users/abtinghods/.claude/skills/`.
+> - All paths are project-relative except global convention references under `~/.agents/conventions/` and skill references under `/Users/abtinghods/.claude/skills/`.
 > - Inline types in the `Interface Contracts` — do not invent separate type files.
+> - Use the global convention router first and the project `.agents/conventions/` router only as fallback. Cite every matched convention with a concrete path/content reason.
 > - Consult the KB index and cite every guide relevant to what this task touches in the `Conventions / SOPs / Skills / Rules` block — decide the set from the index per task, never a fixed list.
 
 ---
@@ -264,6 +269,7 @@ Open the file and confirm:
 - Reset-on-change, reset-on-new-post-verification-task, and all-must-check rules are stated in the `## Verification` header and the `## Post verification tasks` header
 - Any explicitly requested QA cases are inline and limited to the supplied scope
 - Every actionable item across Implementation, Verification, and Post verification tasks uses the `- [ ]` checkbox format — not plain bullets or numbered lists
+- The global convention router was preferred over the project router; every applicable convention is cited with a concrete path/content match reason and reflected in the Implementation
 - Knowledge-base guides relevant to what this task touches (matched from the KB index) are cited in the `Conventions / SOPs / Skills / Rules` block and reflected in the Implementation
 
 If anything is missing, send a targeted follow-up to the subagent — do not rewrite the file yourself.

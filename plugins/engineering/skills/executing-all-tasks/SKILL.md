@@ -103,9 +103,9 @@ The agent's return summary is **not** authoritative — `task-NN.md` on disk is.
 | Interface Contracts honored | The diff matches the shape declared in `## Implementation → Interface Contracts`. |
 | Deviations documented | Any plan deviation lives in `walkthrough.md`. |
 
-**If every row passes:** mark the task entry `[x]` in `task-list.md` yourself. The agent does not have authority to close its own task — closing it is the supervisor boundary.
+**If every row passes:** mark the task entry `[x]` in `task-list.md` yourself. The agent does not have authority to close its own task — closing it and accepting task artifacts is the supervisor boundary. Successful specialist outcome delivery occurs upon completion before optional review; review is an independent verification phase rather than a blocker to outcome delivery.
 
-**If any row fails:** send the agent back with concrete feedback ("In `task-NN.md`, these checkboxes are not `[x]`: …"). Continue the *same* agent if the harness supports it — it keeps working context. If it can't, dispatch a fresh agent whose prompt includes the failure list plus the prior agent's summary. Max 2 send-backs per task; escalate to the user after that.
+**If any row fails:** send the agent back with concrete feedback ("In `task-NN.md`, these checkboxes are not `[x]`: …"). Require the agent to follow `FIX → REVERIFY` on implementation failures. Continue the *same* agent if the harness supports it — it keeps working context. If it can't, dispatch a fresh agent whose prompt includes the failure list plus the prior agent's summary. Max 2 send-backs per task; escalate to the user after that.
 
 ### Step 6 — Manage supervisor context
 

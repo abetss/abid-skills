@@ -86,9 +86,18 @@ Read whichever of these exist (skip silently if absent):
 - `{work-folder}/code-review.md` — if the standalone task is a code-review follow-up
 - `{work-folder}/qa.md` — if the standalone task is a QA follow-up
 - Design artifacts referenced by `plan-prep.md` (`design-discovery-result.md`, `view-model-props.md`, etc.)
-- The project's knowledge-base index (`a-kb/table-of-content.md`, or the repo's equivalent docs/KB table of contents) — scan it for EVERY task. Based on what this specific task touches, decide which listed guides are relevant, and pass them to the subagent in Step 4 so it reads them in full, cites them in the task's `Conventions / SOPs / Skills / Rules` block, and makes the Implementation follow them. The relevant set is task-specific — re-decide it per task from the index; never assume a fixed list, and never skip the scan. These are how domain conventions that aren't auto-loaded `.claude/rules/` reach the task.
 
-You only need to skim — the detailed reading is done by the subagent in Step 4.
+Select one convention-library router for EVERY task, in this order:
+
+1. If `~/.agents/conventions/table-of-content.md` exists, use `~/.agents/conventions/`.
+2. Otherwise, if `{project}/.agents/conventions/table-of-content.md` exists, use `{project}/.agents/conventions/`.
+3. If neither exists, report: `Convention files are needed under ~/.agents/conventions/ or {project}/.agents/conventions/.`
+
+Read the selected `table-of-content.md` completely. Use the task's target paths and actual behavior, APIs, schemas, and imports to select relevant path-matched and content-matched convention documents. Pass the selected router, convention paths, and concrete match reasons to the subagent in Step 4; the subagent reads every selected convention in full, cites it in `Conventions / SOPs / Skills / Rules`, and makes the Implementation follow it. Never load the entire convention library.
+
+Also scan the project's knowledge-base index (`a-kb/table-of-content.md`, or the repository's equivalent docs/KB table of contents) for EVERY task. Select the guides relevant to what this task touches and pass them to the subagent so it reads them in full, cites them in the same reference block, and applies them. The convention router and project KB are separate inputs: the first supplies routed global or project conventions; the second supplies project-specific domain guides, SOPs, and other documentation.
+
+Only the router and KB index need to be read in the main thread; detailed reading of selected documents is delegated to the subagent in Step 4.
 
 ### Step 3 — Clarify with the user (skip when obvious)
 
@@ -132,8 +141,9 @@ Open the file. Confirm:
 - `## Post verification tasks` exists as a placeholder with the Code Review follow-ups structure, optional QA follow-ups only when QA was requested, and the reset-rule note
 - Every actionable item is a `- [ ]` checkbox (not a numbered list, not a plain bullet)
 - User-requested QA cases, when present, are inline in full detail (preconditions, numbered steps, expected, single `- [ ] Pass` checkbox), not linked out to `qa.md`
-- Knowledge-base guides relevant to what this task touches (matched from the KB index in Step 2) are cited in the `Conventions / SOPs / Skills / Rules` block and reflected in the Implementation
-- Paths are project-relative (except skill paths under `/Users/abtinghods/.claude/skills/`)
+- Conventions selected through the global-first router in Step 2 are cited with their match reasons in the `Conventions / SOPs / Skills / Rules` block and reflected in the Implementation
+- Knowledge-base guides relevant to what this task touches (matched from the KB index in Step 2) are cited in the same block and reflected in the Implementation
+- Paths are project-relative except global convention references under `~/.agents/conventions/` and skill paths under `/Users/abtinghods/.claude/skills/`
 
 If any of the above is missing, send the subagent a targeted follow-up to fix only that gap. Do not rewrite the whole file.
 
@@ -185,7 +195,8 @@ End with a terse summary:
 - **Don't ask scripted questions.** Have a brief, targeted conversation only when the task is genuinely ambiguous. The point of having `plan-prep.md` is so the skill can pull most context from there.
 - **Don't renumber existing tasks.** New tasks always take the next integer. Even if Final Validation tasks (`task-05`, `task-06`, etc.) are already numbered higher, the new task gets the next number — only the task-list.md ordering changes.
 - **Stay surgical with task-list.md.** Insert one new section or one new bullet. Don't reformat the rest of the file.
-- **Subagent does the writing.** Main thread orchestrates and verifies; subagent reads conventions/SOPs and writes `task-NN.md`. Same pattern as `plan-prep` Phase 2.
+- **Global-first convention routing.** For every task, use `~/.agents/conventions/table-of-content.md` when present; consult `{project}/.agents/conventions/table-of-content.md` only when the global router is absent.
+- **Subagent does the writing.** Main thread orchestrates and verifies; subagent reads selected conventions/SOPs and writes `task-NN.md`. Same pattern as `plan-prep` Phase 2.
 - **Verify before reporting done.** Open the file, run the Step 5 checklist. Failed checks → targeted follow-up subagent message, not a rewrite.
 
 ## Common Mistakes
@@ -200,6 +211,7 @@ End with a terse summary:
 - Asking the user a script of questions when the answer is already in `plan-prep.md`
 - Updating task-list.md in `from-plan-prep` mode (causes duplicate entries)
 - Numbered lists (`1.`, `2.`) or plain bullets for actionable items — every actionable item is `- [ ]`
+- Skipping the global-first convention router or loading the entire convention library instead of selecting materially applicable documents
 - Skipping the knowledge-base index scan — writing a task without checking the KB table of contents for guides relevant to what the task touches
 
 ## Files

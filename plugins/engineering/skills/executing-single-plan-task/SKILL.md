@@ -104,7 +104,7 @@ The task's `## Verification` section has four subsections. Each is a gate — fa
 
 2. **Use the three states.** `- [ ]` = queued, `- [-]` = running now, `- [x]` = passed. Move each item through the states as you run it. Don't skip the `[-]` state for long-running checks — it's how interrupted work gets resumed without confusion.
 
-3. **Check only when verified.** Mark `- [x]` ONLY after the check actually passes. If it fails, it stays `- [ ]` (or goes back to `- [ ]` from `- [-]`) and becomes a **BLOCKER** — fix the issue or report it.
+3. **Check only when verified.** Mark `- [x]` ONLY after the check actually passes. If it fails, it stays `- [ ]` (or goes back to `- [ ]` from `- [-]`) and becomes a **BLOCKER** — follow `FIX → REVERIFY` to diagnose and repair the defect, re-running the verification until it passes cleanly, or report it if unresolvable. Successful specialist execution is delivered upon completion before any optional review phase; review is not a prerequisite for task success.
 
 4. **Reset on ANY code change.** If a code review finding or QA bug requires you to modify files, reset ALL `## Verification` checkboxes back to `- [ ]` and re-run them ALL. A previous pass is meaningless after code changes.
 
@@ -147,6 +147,7 @@ The task's `## Verification` section has four subsections. Each is a gate — fa
    - Deviations from plan (if any)
    - Files created/modified
    (Only document significant items — skip if nothing notable.)
+5. commit your changes (using any commit skill available that is closes to the repo your are in now, otherwise with your best ability)
 
 ---
 
