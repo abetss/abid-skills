@@ -1,6 +1,0 @@
-{
-  "name": "qa",
-  "description": "QA workflow: scripted and exploratory QA runs, manual QA case writing, and the qa-runner agent.",
-  "version": "0.1.0",
-  "author": { "name": "Abid Ghods" }
-}

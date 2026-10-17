@@ -1,6 +1,0 @@
-{
-  "name": "engineering",
-  "description": "Engineering workflow: planning suite, code cleanup, standalone and orchestrated multi-lens review, debugging, component prop modeling, product guides, engineering docs, plus code-reviewer/architect/explorer agents.",
-  "version": "0.1.0",
-  "author": { "name": "Abid Ghods" }
-}
